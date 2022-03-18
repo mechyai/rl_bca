@@ -255,6 +255,7 @@ class Agent:
 
         return self.actuation_dict
 
+    # IN USE
     def act_strict_setpoints(self, actuate=True):
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
@@ -299,27 +300,32 @@ class Agent:
 
         return self.actuation_dict
 
+    # IN USE
     def _reward(self):
         """Reward function - per component, per zone."""
 
         # TODO add some sort of normalization
         lambda_comfort = 0.1
         lambda_rtp = 0.01
+        lambda_intermittant = 1
 
         n_zones = self.bdq.action_branches
         reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
 
         # -- GET DATA SINCE LAST INTERACTION --
         interaction_span = range(self.interaction_frequency)
-
+        # ALL
+        building_hours = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
         # COMFORT
-        temp_schedule = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
-        temp_bounds = [self.indoor_temp_ideal_range if temp_schedule[i] == 1 else self.indoor_temp_unoccupied_range
+        # get comfortable temp bounds based on building hours - occupied vs. unoccupied
+        temp_bounds = [self.indoor_temp_ideal_range if building_hours[i] == 1 else self.indoor_temp_unoccupied_range
                        for i in interaction_span]
         temp_bounds = np.asarray(temp_bounds)
-
         # $RTP
         rtp_since_last_interaction = np.asarray(self.sim.get_ems_data(['rtp'], interaction_span))
+        # WIND
+        wind_gen_since_last_interaction = np.asarray(self.sim.get_ems_data(['wind_gen'], interaction_span))
+        total_gen_since_last_interaction = np.asarray(self.sim.get_ems_data(['total_gen'], interaction_span))
 
         # Per Controlled Zone
         for zone_i, reward_list in reward_components_per_zone_dict.items():
@@ -358,17 +364,150 @@ class Agent:
             timestep will be accounted for. Note, that this is not multiplied by the energy used, such that this reward
             is agnostic to the zone size and incident load. 
             """
+
             heating_electricity_since_last_interaction = np.asarray(
                 self.sim.get_ems_data([f'{zone_i}_heating_electricity'], interaction_span)
             )
             # heating_gas_since_last_interaction = np.asarray(
-            #     self.sim.get_ems_data([f'{zone_i}_heating_gas'], interaction_span)
-            # )
-            heating_energy = heating_electricity_since_last_interaction  # + heating_gas_since_last_interaction
+            #     self.sim.get_ems_data([f'{zone_i}_heating_gas'], interaction_span))
 
-            cooling_energy = np.asarray(
+            cooling_energy_since_last_interaction = np.asarray(
                 self.sim.get_ems_data([f'{zone_i}_cooling_electricity'], interaction_span)
             )
+
+            fan_electricity_since_last_interaction = np.asarray(
+                self.sim.get_ems_data([f'{zone_i}_fan_electricity'], interaction_span)
+            )
+
+            # Don't penalize for fan usage during day when it is REQUIRED for occupant ventilation, only Off-hours
+            fan_electricity_off_hours = np.multiply(building_hours == 0, fan_electricity_since_last_interaction)
+
+            heating_energy = fan_electricity_since_last_interaction + heating_electricity_since_last_interaction  # + heating_gas_since_last_interaction
+            cooling_energy = fan_electricity_since_last_interaction + cooling_energy_since_last_interaction
+
+            # Timestep-wise RTP cost, not accounting for energy-usage, only that energy was used
+            cooling_factor = 1
+            heating_factor = 1
+
+            # Only account for heating or cooling actions
+            cooling_timesteps_cost = - cooling_factor * np.multiply(cooling_energy > heating_energy,
+                                                                    rtp_since_last_interaction)
+            heating_timesteps_cost = - heating_factor * np.multiply(heating_energy > cooling_energy,
+                                                                    rtp_since_last_interaction)
+
+            reward = (cooling_timesteps_cost + heating_timesteps_cost).sum()
+            reward *= lambda_rtp
+
+            reward_per_component = np.append(reward_per_component, reward)
+
+            """
+            -- INTERMITTENT RENEWABLE ENERGY USAGE --
+            Quantify how much HVAC electricity consumed came from wind and total.
+            """
+            # TODO need to find a way to normalize energy usage between different sized zones
+            total_hvac_electricity = heating_electricity_since_last_interaction + cooling_energy_since_last_interaction\
+                                     + fan_electricity_since_last_interaction
+            intermittent_gen_mix = np.divide(wind_gen_since_last_interaction, total_gen_since_last_interaction)
+
+            reward = np.multiply(total_hvac_electricity, intermittent_gen_mix - 1)
+            reward *= lambda_intermittant
+
+            reward_per_component = np.append(reward_per_component, reward)
+
+            """
+            All Reward Components / Zone
+            """
+            reward_components_per_zone_dict[zone_i] = reward_per_component
+            print(f'\tReward - {zone_i}: {reward_per_component}')
+
+        return reward_components_per_zone_dict
+
+    def _reward_components_conditional(self, comfort=True, rtp=True, wind=True):
+        """Reward function - per component, per zone."""
+        # TODO
+
+        # TODO add some sort of normalization
+        lambda_comfort = 0.1
+        lambda_rtp = 0.01
+        lambda_intermittant = 1
+
+        n_zones = self.bdq.action_branches
+        reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
+
+        # -- GET DATA SINCE LAST INTERACTION --
+        interaction_span = range(self.interaction_frequency)
+        # ALL
+        building_hours = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
+        # COMFORT
+        if comfort:
+            # get comfortable temp bounds based on building hours - occupied vs. unoccupied
+            temp_bounds = [self.indoor_temp_ideal_range if building_hours[i] == 1 else self.indoor_temp_unoccupied_range
+                           for i in interaction_span]
+            temp_bounds = np.asarray(temp_bounds)
+        # $RTP
+        if rtp:
+            rtp_since_last_interaction = np.asarray(self.sim.get_ems_data(['rtp'], interaction_span))
+        # WIND
+        if wind:
+            pass
+
+            # Per Controlled Zone
+        for zone_i, reward_list in reward_components_per_zone_dict.items():
+            reward_per_component = np.array([])
+
+            """
+             -- COMFORTABLE TEMPS --
+            For each zone, and array of minute interactions, each temperature is compared with the comfortable
+            temperature bounds for the given timestep. If temperatures are out of bounds, the (-) MSE of that
+            temperature from the nearest comfortable bound will be accounted for the reward.
+            """
+            zone_temps_since_last_interaction = np.asarray(
+                self.sim.get_ems_data([f'{zone_i}_temp'], interaction_span))
+
+            too_cold_temps = np.multiply(zone_temps_since_last_interaction < temp_bounds[:, 0],
+                                         zone_temps_since_last_interaction)
+            temp_bounds_cold = temp_bounds[too_cold_temps != 0]
+            too_cold_temps = too_cold_temps[too_cold_temps != 0]  # only cold temps left
+
+            too_warm_temps = np.multiply(zone_temps_since_last_interaction > temp_bounds[:, 1],
+                                         zone_temps_since_last_interaction)
+            temp_bounds_warm = temp_bounds[too_warm_temps != 0]
+            too_warm_temps = too_warm_temps[too_warm_temps != 0]  # only warm temps left
+
+            # MSE penalty for temps above and below comfortable bounds
+            reward = - ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() \
+                     - ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
+            reward *= lambda_comfort
+
+            reward_per_component = np.append(reward_per_component, reward)
+
+            """
+             -- DR, RTP $ --
+            For each zone, and array of minute interactions, heating and cooling energy will be compared to see if HVAC
+            heating, cooling, or Off actions occurred per each timestep. If heating or cooling occurs, the -$RTP for the
+            timestep will be accounted for. Note, that this is not multiplied by the energy used, such that this reward
+            is agnostic to the zone size and incident load. 
+            """
+
+            heating_electricity_since_last_interaction = np.asarray(
+                self.sim.get_ems_data([f'{zone_i}_heating_electricity'], interaction_span)
+            )
+            # heating_gas_since_last_interaction = np.asarray(
+            #     self.sim.get_ems_data([f'{zone_i}_heating_gas'], interaction_span))
+
+            cooling_energy_since_last_interaction = np.asarray(
+                self.sim.get_ems_data([f'{zone_i}_cooling_electricity'], interaction_span)
+            )
+
+            fan_electricity_since_last_interaction = np.asarray(
+                self.sim.get_ems_data([f'{zone_i}_fan_electricity'], interaction_span)
+            )
+
+            # Don't penalize for fan usage during day when it is REQUIRED for occupant ventilation, only Off-hours
+            fan_electricity_off_hours = np.multiply(building_hours == 0, fan_electricity_since_last_interaction)
+
+            heating_energy = fan_electricity_since_last_interaction + heating_electricity_since_last_interaction  # + heating_gas_since_last_interaction
+            cooling_energy = fan_electricity_since_last_interaction + cooling_energy_since_last_interaction
 
             # Timestep-wise RTP cost, not accounting for energy-usage, only that energy was used
             cooling_factor = 1
@@ -385,8 +524,8 @@ class Agent:
 
             reward_per_component = np.append(reward_per_component, reward)
 
-            # -- RENEWABLE ENERGY USAGE --
             """
+            # -- INTERMITTENT RENEWABLE ENERGY USAGE --
             TODO
             """
 
@@ -396,6 +535,7 @@ class Agent:
 
         return reward_components_per_zone_dict
 
+    # IN USE
     def _get_total_reward(self, aggregate_type: str):
         """Aggregates value from reward dict organized by zones and reward components"""
         if aggregate_type == 'sum':
@@ -403,6 +543,7 @@ class Agent:
         elif aggregate_type == 'mean':
             return np.array(list(self.reward_dict.values())).mean()
 
+    # IN USE
     def _get_comfort_results(self):
         """
         For each timestep, and each zone, we calculate the weighted sum of temps outside the comfortable bounds.
@@ -453,65 +594,7 @@ class Agent:
 
         return uncomfortable_metric
 
-    def _get_rtp_hvac_cost_results(self):
-        """
-        For each timestep, and each zone, we calculate the cost of HVAC electricity use based on RTP.
-        This represents a DR compliance and monetary cost metric.
-        :return: monetary cost of HVAC per interaction span metric. $0 is optimal.
-        """
-
-        n_zones = self.bdq.action_branches
-        interaction_span = range(self.interaction_frequency)
-        controlled_zone_names = [f'zn{zone_i}' for zone_i in range(n_zones)]
-
-        building_hours = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
-
-        # RTP of last X timesteps
-        rtp_since_last_interaction = np.asarray(self.sim.get_ems_data(['rtp'], interaction_span))
-
-        # Per Controlled Zone
-        rtp_hvac_costs = 0
-        for zone_i in controlled_zone_names:
-            # -- DR, RTP $ --
-            """
-            For each zone, and array of minute interactions, heating and cooling energy will be compared to see if HVAC
-            heating, cooling, or Off actions occurred per each timestep. If heating or cooling occurs, the -$RTP for the
-            timestep will be accounted for proportional to the energy used.
-            """
-
-            heating_electricity = np.asarray(
-                self.sim.get_ems_data([f'{zone_i}_heating_electricity'], interaction_span)
-            )
-
-            cooling_electricity = np.asarray(
-                self.sim.get_ems_data([f'{zone_i}_cooling_electricity'], interaction_span)
-            )
-
-            fan_electricity_since_last_interaction = np.asarray(
-                self.sim.get_ems_data([f'{zone_i}_fan_electricity'], interaction_span)
-            )
-
-            # Don't penalize for fan usage during day when it is REQUIRED for occupant ventilation, only Off-hours
-            fan_electricity_off_hours = np.multiply(building_hours == 0, fan_electricity_since_last_interaction)
-
-            joules_to_MWh = 2.77778e-10
-            total_hvac_electricity = joules_to_MWh * \
-                                     (heating_electricity + cooling_electricity + fan_electricity_off_hours)
-
-            # timestep-wise RTP cost, accounting for HVAC electricity usage
-            hvac_electricity_costs = np.multiply(total_hvac_electricity, rtp_since_last_interaction)
-            rtp_hvac_costs += hvac_electricity_costs.sum()
-
-            # RTP Histogram - collect rtp prices when a zone is heating/cooling
-            rtp_hvac_usage = rtp_since_last_interaction[heating_electricity != cooling_electricity]
-            # get rid of 0s for when heat/cool OFF
-            self.rtp_histogram_data.extend(list(rtp_hvac_usage))
-
-        print(
-            f'\tRTP: ${round(rtp_hvac_costs, 2)}, Cumulative: ${round(self.hvac_rtp_costs_total + rtp_hvac_costs, 2)}')
-
-        return rtp_hvac_costs
-
+    # IN USE
     def _get_rtp_hvac_cost_and_wind_results(self):
         """
         - $RTP -
@@ -591,6 +674,64 @@ class Agent:
 
         return rtp_hvac_costs
 
+    def _get_rtp_hvac_cost_results(self):
+        """
+        For each timestep, and each zone, we calculate the cost of HVAC electricity use based on RTP.
+        This represents a DR compliance and monetary cost metric.
+        :return: monetary cost of HVAC per interaction span metric. $0 is optimal.
+        """
+
+        n_zones = self.bdq.action_branches
+        interaction_span = range(self.interaction_frequency)
+        controlled_zone_names = [f'zn{zone_i}' for zone_i in range(n_zones)]
+
+        building_hours = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
+
+        # RTP of last X timesteps
+        rtp_since_last_interaction = np.asarray(self.sim.get_ems_data(['rtp'], interaction_span))
+
+        # Per Controlled Zone
+        rtp_hvac_costs = 0
+        for zone_i in controlled_zone_names:
+            # -- DR, RTP $ --
+            """
+            For each zone, and array of minute interactions, heating and cooling energy will be compared to see if HVAC
+            heating, cooling, or Off actions occurred per each timestep. If heating or cooling occurs, the -$RTP for the
+            timestep will be accounted for proportional to the energy used.
+            """
+
+            heating_electricity = np.asarray(
+                self.sim.get_ems_data([f'{zone_i}_heating_electricity'], interaction_span)
+            )
+
+            cooling_electricity = np.asarray(
+                self.sim.get_ems_data([f'{zone_i}_cooling_electricity'], interaction_span)
+            )
+
+            fan_electricity_since_last_interaction = np.asarray(
+                self.sim.get_ems_data([f'{zone_i}_fan_electricity'], interaction_span)
+            )
+
+            # Don't penalize for fan usage during day when it is REQUIRED for occupant ventilation, only Off-hours
+            fan_electricity_off_hours = np.multiply(building_hours == 0, fan_electricity_since_last_interaction)
+
+            joules_to_MWh = 2.77778e-10
+            total_hvac_electricity = joules_to_MWh * \
+                                     (heating_electricity + cooling_electricity + fan_electricity_off_hours)
+
+            # timestep-wise RTP cost, accounting for HVAC electricity usage
+            hvac_electricity_costs = np.multiply(total_hvac_electricity, rtp_since_last_interaction)
+            rtp_hvac_costs += hvac_electricity_costs.sum()
+
+            # RTP Histogram - collect rtp prices when a zone is heating/cooling
+            rtp_hvac_usage = rtp_since_last_interaction[heating_electricity != cooling_electricity]
+            # get rid of 0s for when heat/cool OFF
+            self.rtp_histogram_data.extend(list(rtp_hvac_usage))
+
+        print(
+            f'\tRTP: ${round(rtp_hvac_costs, 2)}, Cumulative: ${round(self.hvac_rtp_costs_total + rtp_hvac_costs, 2)}')
+
+        return rtp_hvac_costs
 
     def _is_terminal(self):
         """Determines whether the current state is a terminal state or not. Dictates TD update values."""
