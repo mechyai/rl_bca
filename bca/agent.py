@@ -100,7 +100,7 @@ class Agent:
         self.loss = 0
         self.once = True
 
-    def observe(self):
+    def observe(self, learn=True):
         # -- FETCH/UPDATE SIMULATION DATA --
         self.time = self.sim.get_ems_data(['t_datetimes'])
         self.var_vals = self.mdp.update_ems_value_from_dict(self.sim.get_ems_data(self.var_names, return_dict=True))
@@ -135,7 +135,7 @@ class Agent:
                              self.reward, self.termination)  # <S, A, S', R, t> - push experience to Replay Memory
 
         # -- LEARN BATCH --
-        if self.learning:
+        if learn:
             if self.memory.can_provide_sample():  # must have enough interactions stored
                 for i in range(self.learning_loop):
                     batch = self.memory.sample()
