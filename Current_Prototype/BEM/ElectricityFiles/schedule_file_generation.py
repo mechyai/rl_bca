@@ -19,8 +19,8 @@ year = 2019
 settlement_point_name = 'HB_NORTH'
 settlement_point_type = 'HU'
 # output paths
-save_schedule_file_csv = r'A:/Files/PycharmProjects/RL-EmsPy/Current_Prototype/BEM/ScheduleFiles/'
-save_schedule_file_idf = r'A:/Files/PycharmProjects/RL-EmsPy/Current_Prototype/BEM/CustomIdfFiles/Automated/'
+save_schedule_file_csv = r'A:/Files/PycharmProjects/rl_bca/Current_Prototype/BEM/ScheduleFiles/'
+save_schedule_file_idf = r'A:/Files/PycharmProjects/rl_bca/Current_Prototype/BEM/CustomIdfFiles/Automated/'
 
 
 # -- RTP --
@@ -129,7 +129,7 @@ def fuel_mix_file():
 
 
 if __name__ == "__main__":
-    # rtm_df = rtm_schedule_file()
-    # dam_df = dam_schedule_file()
-    # dam_forecast_df = dam_forecast_schedule_file()
+    rtm_df = rtm_schedule_file()
+    dam_df = dam_schedule_file()
+    dam_forecast_df = dam_forecast_schedule_file()
     fmix_df = fuel_mix_file()
