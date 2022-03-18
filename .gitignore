@@ -1,0 +1,16 @@
+/Current_Prototype/BEM/OpenStudioModels
+
+/example_usage/Testscripts
+
+/.idea
+/__pycache__
+
+*.pyc
+
+*/out
+*.sql
+*.osm
+
+Current_Prototype/Output_Saved
+/docs
+/simple_office_5zone_building_model
