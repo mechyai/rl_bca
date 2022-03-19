@@ -206,7 +206,7 @@ class BranchingDQN(nn.Module):
         self.optim.zero_grad()
         loss.backward()
 
-        print(f'\n\tLoss = {loss.item()}, Learning...')
+        # print(f'\n\tLoss = {loss.item()}, Learning...')
 
         # gradient constraints
         # for p in self.policy_network.parameters():

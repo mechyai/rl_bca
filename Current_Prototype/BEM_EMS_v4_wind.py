@@ -89,7 +89,7 @@ interaction_ts_frequency = 10
 hyperparameter_dict = {
     # --- BDQ ---
     # architecture
-    'observation_dim': 36,
+    'observation_dim': 40,
     'action_branches': action_branches,  # n building zones
     'action_dim': 5,
     'shared_network_size': [96],
@@ -118,7 +118,7 @@ hyperparameter_dict = {
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 1,
-    'run_benchmark': True,
+    'run_benchmark': False,
     'exploit_final_epoch': False,
     'save_model': False,
     'save_model_final_epoch': True,
@@ -181,7 +181,7 @@ for i, study in enumerate(study_params):
 
         # -- Clear Up Memory --
         if 'dfs' in locals():
-            del dfs
+            del dfs, df_loss
 
         time_start = time.time()
         model_name = f'bdq_{time.strftime("%Y%m%d_%H%M")}_{epoch}.pt'
@@ -199,21 +199,16 @@ for i, study in enumerate(study_params):
         # -- Instantiate RL Agent --
         my_agent = Agent(sim, my_mdp, bdq_model, policy, experience_replay, interaction_ts_frequency, learning_loop=1)
 
-        # -- Set Sim Calling Point(s) & Callback Function(s) --
-        sim.set_calling_point_and_callback_function(cp, my_agent.observe, my_agent.act_strict_setpoints, True,
-                                                    experiment_params_dict['interaction_ts_freq'],
-                                                    experiment_params_dict['interaction_ts_freq'],
-                                                    observation_function_kwargs={
-                                                        'learn': not experiment_params_dict['run_benchmark']
-                                                    },
-                                                    actuation_function_kwargs={
-                                                        'actuate': experiment_params_dict['run_benchmark']
-                                                    })
         # Do once
         if experiment_params_dict['run_benchmark']:
+            learn = False
+            act = False
             experiment_params_dict['run_benchmark'] = False  # TODO why does benchmark take so long without learning
+        else:
+            learn = True
+            act = True
 
-        # -- Final Epoch --
+        # -- @ Final Epoch --
         if epoch == experiment_params_dict['epochs'] - 1:
             # save final model
             if experiment_params_dict['save_model_final_epoch']:
@@ -222,58 +217,101 @@ for i, study in enumerate(study_params):
                 experiment_params_dict['save_results'] = True
             # exploit final
             if experiment_params_dict['exploit_final_epoch']:
-                my_agent.learning = False
+                learning = False
                 policy.start = 0
                 hyperparameter_dict['eps_start'] = 0
                 policy.decay = 0
                 hyperparameter_dict['eps_decay'] = 0
 
-        # -- Run Sim --
+        # -- Set Sim Calling Point(s) & Callback Function(s) --
+        sim.set_calling_point_and_callback_function(cp, my_agent.observe, my_agent.act_strict_setpoints, True,
+                                                    experiment_params_dict['interaction_ts_freq'],
+                                                    experiment_params_dict['interaction_ts_freq'],
+                                                    observation_function_kwargs={
+                                                        'learn': learn
+                                                    },
+                                                    actuation_function_kwargs={
+                                                        'actuate': act
+                                                    })
+
+        # ------------------------------------------------ Run Sim ------------------------------------------------
         sim.run_env(ep_weather_path)
         sim.reset_state()
 
         # -- Get Sim DFs --
+        ts_mod = 0
+        # Reward
         dfs = sim.get_df()
         dfs['reward']['cumulative'] = dfs['reward'][['reward']].cumsum()  # create cumulative reward column
         cumulative_reward = float(dfs['reward'][['cumulative']].iloc[-1])  # get final cumulative reward
-
-        # -- Plot Results --
-        # Reward
-        fig, axs = plt.subplots(nrows=2, ncols=1)
-        axs[0].plot(dfs['reward'][['Datetime']], dfs['reward'][['reward']])
-        axs0_2 = axs[0].twinx()
-        axs0_2.plot(dfs['reward'][['Datetime']], dfs['reward'][['cumulative']])
-        axs[0].set_title('Reward')
         # Loss
-        axs[1].set_yscale('log')
-        axs[1].plot(dfs['actuator'][['Datetime']], dfs['actuator'][['loss']])
-        axs[1].set_title('Log Loss')
+        # get at interaction interval
+        df_loss = dfs['actuator'][['Datetime', 'Timestep', 'loss']]
+        df_loss = df_loss[df_loss['Timestep'] % experiment_params_dict['interaction_ts_freq'] == ts_mod]
 
-        # dfs['reward'].plot(x='Datetime', y='reward', ax=ax)
-        # dfs['reward'].plot(x='Datetime', y='cumulative', ax=ax, secondary_y=True)
-        # plt.title(model_name[:-3] + f'epoch:{epoch},{experiment_params_dict["reward_plot_title"]}')
+        # RTP
+        rtp_hvac_agent = my_agent.rtp_histogram_data
+        rtp_hvac_control = np.load(
+            r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Output_Saved\rtp_histo_control.npy')
+        n_controlled_zones = action_branches
+        rtp_all = np.tile(dfs['var'][['rtp']].to_numpy().squeeze(1), n_controlled_zones)
 
-        energy_source_df = dfs['actuator'][['Datetime', 'Timestep', 'wind_hvac_use', 'total_hvac_use']]
-        energy_source_df = energy_source_df.set_index(
-            pd.DatetimeIndex(energy_source_df['Datetime']))  # make datetime index
+        hist_range = (0, 50)
+        n_bins = 50
+
+        # Wind
+        df_energy_source = dfs['actuator'][['Datetime', 'Timestep', 'wind_hvac_use', 'total_hvac_use']]
+        df_energy_source = df_energy_source.set_index(
+            pd.DatetimeIndex(df_energy_source['Datetime']))  # make datetime index
 
         monthly_wind_hvac_usage_proportion = []
         months_int = range(1, 13, 1)
         for month in months_int:
-            energy_month = energy_source_df[energy_source_df.index.month == month]  # get data for single month
+            energy_month = df_energy_source[df_energy_source.index.month == month]  # get data for single month
             energy_month_ts = energy_month[
-                energy_month['Timestep'] % experiment_params_dict['interaction_ts_freq'] % 10 == 0
-            ]
+                energy_month['Timestep'] % experiment_params_dict['interaction_ts_freq'] == ts_mod
+                ]
             monthly_wind_use = energy_month['wind_hvac_use'].sum() / energy_month['total_hvac_use'].sum()
             monthly_wind_hvac_usage_proportion.append(monthly_wind_use)
 
-        plt.figure()
-        plt.bar(months_int, monthly_wind_hvac_usage_proportion)
-        plt.title('HVAC Renewable Energy Usage')
-        plt.xlabel('Months')
-        plt.ylabel('% HVAC Energy from Wind')
-        plt.show()
+        # -- Plot Results --
+        # Reward
+        fig, axs = plt.subplots(nrows=2, ncols=2)
+        plt.gcf()
+        manager = plt.get_current_fig_manager()
+        manager.window.showMaximized()
 
+        axs[0, 0].plot(dfs['reward'][['Datetime']], dfs['reward'][['reward']])
+        axs0_2 = axs[0, 0].twinx()
+        axs0_2.plot(dfs['reward'][['Datetime']], dfs['reward'][['cumulative']])
+        axs[0, 0].set_title('Reward')
+        axs0_2.set_ylabel('Cumulative')
+        axs[0, 0].set_ylabel('Discrete')
+        axs[0, 0].grid()
+        # Loss
+        axs[1, 0].set_yscale('log')
+        axs[1, 0].plot(df_loss['Datetime'], df_loss['loss'])
+        axs[1, 0].set_title('Log Loss')
+        axs[1, 0].grid()
+        # RTP
+        # plt.yscale('log', nonposy='clip')
+        axs[0, 1].hist(rtp_all, bins=n_bins, range=hist_range, alpha=0.75, label='All Time', color='k')
+        axs[0, 1].hist(rtp_hvac_agent, bins=n_bins, range=hist_range, alpha=0.5, label="Agent")
+        axs[0, 1].hist(rtp_hvac_control, bins=n_bins, range=hist_range, alpha=0.75, label="Control")
+        axs[0, 1].set_xlabel('$RTP Bins')
+        axs[0, 1].set_ylabel('RTP HVAC Usage')
+        axs[0, 1].grid()
+        axs[0, 1].legend()
+
+        # Wind Use
+        axs[1, 1].bar(months_int, monthly_wind_hvac_usage_proportion)
+        axs[1, 1].set_title('HVAC Renewable Energy Usage')
+        axs[1, 1].set_xlabel('Months')
+        axs[1, 1].set_ylabel('% HVAC Energy from Wind')
+        axs[1, 1].set_ylim([0, 1])
+        axs[1, 1].grid()
+
+        plt.tight_layout()
 
         # -- Save / Write Data --
         if experiment_params_dict['save_model'] or experiment_params_dict['save_results']:
@@ -299,7 +337,7 @@ for i, study in enumerate(study_params):
             # save results
             if experiment_params_dict['save_results']:
                 plot_results_name = model_name[:-3] + '_results.png'
-                fig.savefig(os.path.join(folder, plot_results_name))
+                fig.savefig(os.path.join(folder, plot_results_name), bbox_inches='tight')
                 plt.close('all')
 
                 with open(results_file_path, 'a+') as file:

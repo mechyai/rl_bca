@@ -99,6 +99,7 @@ class Agent:
         self.learning_loop = learning_loop
         self.loss = 0
         self.once = True
+        self.print = False
 
     def observe(self, learn=True):
         # -- FETCH/UPDATE SIMULATION DATA --
@@ -110,8 +111,6 @@ class Agent:
 
         self.termination = self._is_terminal()
 
-        print(f'\n\n{str(self.time)}\n')  # \n\n\tVars: {vars}\n\tMeters: {meters}\n\tWeather: {weather}')
-
         # -- MODIFY STATE --
         meter_names = [meter for meter in self.meter_names if 'fan' not in meter]  # remove unwanted fan meters
 
@@ -120,10 +119,24 @@ class Agent:
         self.meter_encoded_vals = self.mdp.get_ems_encoded_values(meter_names)
         self.weather_encoded_vals = self.mdp.get_ems_encoded_values(self.weather_names)
 
+        # Timing
+        month = self.time.month / 12
+        day = self.time.day / 31
+        hour = self.time.hour / 24
+        minute = self.time.minute / 60
+        time_list = [month, day, hour, minute]
+
         # -- ENCODED STATE --
-        self.next_state_normalized = np.array(list(self.var_encoded_vals.values()) +
-                                              list(self.weather_encoded_vals.values()) +
-                                              list(self.meter_encoded_vals.values()), dtype=float)
+        self.next_state_normalized = np.array(
+            time_list +
+            list(self.var_encoded_vals.values()) +
+            list(self.weather_encoded_vals.values()) +
+            list(self.meter_encoded_vals.values()),
+            dtype=float)
+
+        if self.print:
+            print(f'\n\n{str(self.time)}\n')  # \n\n\tVars: {vars}\n\tMeters: {meters}\n\tWeather: {weather}')
+            # print(f'\n\t{self.next_state_normalized}\n')
 
         # -- REWARD --
         self.reward_dict = self._reward()
@@ -154,8 +167,9 @@ class Agent:
         self.current_step += 1
 
         # -- REPORTING --
-        # self._report_time()  # time
-        print(f'\n\t*Reward: {round(self.reward, 2)}, Cumulative: {round(self.reward_sum, 2)}')
+        if self.print:
+            # self._report_time()  # time
+            print(f'\n\t*Reward: {round(self.reward, 2)}, Cumulative: {round(self.reward_sum, 2)}')
 
         # -- DO ONCE --
         if self.once:
@@ -213,7 +227,8 @@ class Agent:
                 self.action = self.bdq.get_greedy_action(torch.Tensor(self.state_normalized).unsqueeze(1))
                 action_type = 'Exploit'
 
-        print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
+        if self.print:
+            print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
 
         # -- ENCODE ACTIONS TO HVAC COMMAND --
         action_cmd_print = {0: 'OFF', 1: 'HEAT', 2: 'COOL', None: 'Availability OFF'}
@@ -246,9 +261,10 @@ class Agent:
             self.actuation_dict[f'zn{zone}_heating_sp'] = heating_sp
             self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
 
-            print(f'\t\tZone{zone} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
-                  f' Heating Sp = {round(heating_sp, 2)},'
-                  f' Cooling Sp = {round(cooling_sp, 2)}')
+            if self.print:
+                print(f'\t\tZone{zone} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
+                      f' Heating Sp = {round(heating_sp, 2)},'
+                      f' Cooling Sp = {round(cooling_sp, 2)}')
 
         aux_actuation = self._get_aux_actuation()
         self.actuation_dict.update(aux_actuation)  # combine
@@ -269,7 +285,8 @@ class Agent:
                 self.action = self.bdq.get_greedy_action(torch.Tensor(self.state_normalized).unsqueeze(1))
                 action_type = 'Exploit'
 
-            print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
+            if self.print:
+                print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
 
             # -- ENCODE ACTIONS TO THERMOSTAT SETPOINTS --
             action_cmd_print = {0: 'LOWEST', 1: 'LOWER', 2: 'IDEAL', 3: 'HIGHER', 4: 'HIGHEST'}
@@ -291,9 +308,10 @@ class Agent:
                 self.actuation_dict[f'zn{zone_i}_heating_sp'] = heating_sp
                 self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_sp
 
-                print(f'\t\tZone{zone_i} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
-                      f' Heating Sp = {round(heating_sp, 2)},'
-                      f' Cooling Sp = {round(cooling_sp, 2)}')
+                if self.print:
+                    print(f'\t\tZone{zone_i} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
+                          f' Heating Sp = {round(heating_sp, 2)},'
+                          f' Cooling Sp = {round(cooling_sp, 2)}')
 
         aux_actuation = self._get_aux_actuation()
         self.actuation_dict.update(aux_actuation)  # combine/replace aux and control actuations
@@ -307,7 +325,7 @@ class Agent:
         # TODO add some sort of normalization
         lambda_comfort = 0.1
         lambda_rtp = 0.01
-        lambda_intermittant = 1
+        lambda_intermittent = 10000
 
         n_zones = self.bdq.action_branches
         reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
@@ -405,12 +423,15 @@ class Agent:
             Quantify how much HVAC electricity consumed came from wind and total.
             """
             # TODO need to find a way to normalize energy usage between different sized zones
-            total_hvac_electricity = heating_electricity_since_last_interaction + cooling_energy_since_last_interaction\
+            total_hvac_electricity = heating_electricity_since_last_interaction + cooling_energy_since_last_interaction \
                                      + fan_electricity_since_last_interaction
+
+            joules_to_MWh = 2.77778e-10
+            total_hvac_electricity = joules_to_MWh * total_hvac_electricity
             intermittent_gen_mix = np.divide(wind_gen_since_last_interaction, total_gen_since_last_interaction)
 
-            reward = np.multiply(total_hvac_electricity, intermittent_gen_mix - 1)
-            reward *= lambda_intermittant
+            reward = np.multiply(total_hvac_electricity, intermittent_gen_mix - 1).sum()
+            reward *= lambda_intermittent
 
             reward_per_component = np.append(reward_per_component, reward)
 
@@ -418,7 +439,9 @@ class Agent:
             All Reward Components / Zone
             """
             reward_components_per_zone_dict[zone_i] = reward_per_component
-            print(f'\tReward - {zone_i}: {reward_per_component}')
+
+            if self.print:
+                print(f'\tReward - {zone_i}: {reward_per_component}')
 
         return reward_components_per_zone_dict
 
@@ -531,7 +554,9 @@ class Agent:
 
             # Reward Components per Zone
             reward_components_per_zone_dict[zone_i] = reward_per_component
-            print(f'\tReward - {zone_i}: {reward_per_component}')
+
+            if self.print:
+                print(f'\tReward - {zone_i}: {reward_per_component}')
 
         return reward_components_per_zone_dict
 
@@ -589,8 +614,9 @@ class Agent:
             uncomfortable_metric += ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() + \
                                     ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()  # sum prev timestep
 
-        print(f'\n\tComfort: {round(uncomfortable_metric, 2)}, '
-              f'Cumulative: {round(self.comfort_dissatisfaction_total + uncomfortable_metric, 2)}')
+        if self.print:
+            print(f'\n\tComfort: {round(uncomfortable_metric, 2)}, '
+                  f'Cumulative: {round(self.comfort_dissatisfaction_total + uncomfortable_metric, 2)}')
 
         return uncomfortable_metric
 
@@ -669,8 +695,9 @@ class Agent:
             self.wind_energy_hvac_data.append(wind_energy_hvac_usage)
             self.total_energy_hvac_data.append(total_energy_hvac_usage)
 
-        print(
-            f'\tRTP: ${round(rtp_hvac_costs, 2)}, Cumulative: ${round(self.hvac_rtp_costs_total + rtp_hvac_costs, 2)}')
+        if self.print:
+            print(
+                f'\tRTP: ${round(rtp_hvac_costs, 2)}, Cumulative: ${round(self.hvac_rtp_costs_total + rtp_hvac_costs, 2)}')
 
         return rtp_hvac_costs
 
