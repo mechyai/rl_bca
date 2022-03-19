@@ -4,12 +4,80 @@ renewable (wind) generation better. The main function here converts the uncomfor
 by time (row) and fuel types (columns)
 """
 
+import numpy as np
 import pandas as pd
 import datetime as dt
 import matplotlib.pyplot as plt
 
 
-def raw_from_CSV(file_path: 'str'):
+def raw_from_CSV_dst(file_path: str):
+    year_df = pd.DataFrame()
+    for i, month in enumerate(('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')):
+        # iterate through all Month sheets
+        month_df = pd.read_excel(file_path, sheet_name=month)
+        year_df = year_df.append(month_df, sort=False, ignore_index=True)
+    # clean up unneeded & erroneous columns
+    # year_df = year_df.drop(columns=['Settlement Type', '01:15 (DST)', '01:30 (DST)', '01:45 (DST)', '02:00 (DST)'])
+    # rename final span
+    year_df = year_df.rename(columns={"0:00": "24:00"})  # last col of day
+    return year_df
+
+
+def transpose_from_raw_dst(raw_df: pd.DataFrame):
+    """Put into form ordered sequentially by datetime with fuels as columns."""
+    # create 15 min intervals thru day
+    minutes = ['00', '15', '30', '45']
+    day_segments = []
+    for hh in range(24):
+        for mm in minutes:
+            day_segments.append(dt.datetime.strptime(str(hh) + ':' + mm, '%H:%M').time())
+
+    # init
+    segment_sum = [0] * (len(day_segments) + 0)  # include 96 15min
+    date = raw_df.at[0, 'Date']  # timestamp
+    start_year = date.year
+    year_datetime = []
+    segment_totals = []
+    generation_history = {'Biomass': [], 'Coal': [], 'Gas': [], 'Gas-CC': [], 'Hydro': [], 'Nuclear': [], 'Wind': [],
+                          'Solar': [], 'Other': []}
+    fuel_columns = list(generation_history.keys())
+
+    while date.year == start_year:
+        for fuel_type in fuel_columns:
+            # select row for given fuel and day
+            row = raw_df[(raw_df['Date'] == date) & (raw_df['Fuel'] == fuel_type)]
+            row = row.iloc[0, 4:].to_list()  # get only fuel generation data
+            row = [x for x in row if np.isnan(x) == False]
+            # add data
+            generation_history[fuel_type] += row
+            segment_sum = [sum(x) for x in zip(segment_sum, row)]  # element wise addition of day
+            if fuel_type == fuel_columns[-1]:  # do once, at end of all fuel types
+                # collect all dates
+                for time_segment in day_segments:
+                    year_datetime.append(dt.datetime.combine(date.date(), time_segment))
+                # updates
+                segment_totals += segment_sum
+                date += dt.timedelta(days=1)  # next day
+                # doing this only to get the len for the next segment sum list
+                # needed so it can adjust to daily rows that are longer/short to DST on data
+                if date.year < start_year + 1:
+                    row = raw_df[(raw_df['Date'] == date) & (raw_df['Fuel'] == fuel_type)]
+                    row = row.iloc[0, 4:].to_list()  # get only fuel generation data
+                    row = [x for x in row if np.isnan(x) == False]
+                    segment_sum = [0] * len(row)
+
+    """
+    After we've collected all the data sequential - we pair them up as if DST didn't happen, so things will be shifted
+    during DST when compared to the raw data which does do DST.
+    """
+    df = pd.DataFrame.from_dict(generation_history)
+    df.insert(0, 'Total', segment_totals)
+    df.insert(0, 'Datetime', year_datetime)
+    df.set_index('Datetime', inplace=True)
+
+    return df
+
+def raw_from_CSV(file_path: str):
     year_df = pd.DataFrame()
     for i, month in enumerate(('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')):
         # iterate through all Month sheets
@@ -68,10 +136,12 @@ def transpose_from_raw(raw_df: pd.DataFrame):
 
 if __name__ == "__main__":
     year = 2019
-    year_df = raw_from_CSV('raw_IntGenbyFuel' + str(year) + '.xlsx')
+    year_df = raw_from_CSV_dst('raw_IntGenbyFuel' + str(year) + '.xlsx')
     # gather only 1 fuel type for annual period
-    df = transpose_from_raw(year_df)
+    df = transpose_from_raw_dst(year_df)
 
+    # NEED this version for plotting since it handles NaN ??
+    year_df = raw_from_CSV('raw_IntGenbyFuel' + str(year) + '.xlsx')
     fuel_type = 'Wind'
     aggr = 'Mean'
     # daily

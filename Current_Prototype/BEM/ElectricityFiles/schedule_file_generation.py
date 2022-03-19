@@ -105,7 +105,10 @@ def dam_forecast_schedule_file():
 
 # -- FuelMix --
 def fuel_mix_file():
-    """This organizes fuel mix data for 15-min increments."""
+    """
+    This organizes fuel mix data for 15-min increments.
+    The methods used her from fmix do not account for nan values created by DST in raw file
+    """
 
     min_per_fmix = 15
     file_dam_path = 'raw_IntGenbyFuel' + str(year) + '.xlsx'
@@ -127,9 +130,37 @@ def fuel_mix_file():
 
     return fmix_df
 
+def fuel_mix_file_dst():
+    """
+    This organizes fuel mix data for 15-min increments.
+    This method handles DST gaps/extras from the raw data, but does not include it in the output, it does not follow
+    DST, so data will be shifted during DST when compared to raw data, BUT now ALL data is inlcuded - this is good
+    """
+
+    min_per_fmix = 15
+    file_dam_path = 'raw_IntGenbyFuel' + str(year) + '.xlsx'
+    file_out_fmix_name = f'ERCOT_FMIX_{year}'
+
+    # process raw data from source
+    fmix_df = fmix.transpose_from_raw_dst(fmix.raw_from_CSV_dst(file_dam_path))  # HANDLES DST *************
+
+    # IDF Schedule:File creation
+
+    output_fmix_csv = save_schedule_file_csv + file_out_fmix_name + '.csv'
+    dam.to_csv_schedule_file(fmix_df, output_fmix_csv)
+    fuel_types = fmix_df.columns.to_list()
+    for fuel in fuel_types:
+        fuel_index = fuel_types.index(fuel) + 2  # get index of specific fuel of interest, +2 time & Python 0 indexing
+        idf_save_file = save_schedule_file_idf + file_out_fmix_name + f'_{fuel}.idf'
+        idf_editor.create_schedule_file(output_fmix_csv, idf_save_file, f'ERCOT FMIX {year} - {fuel}', fuel_index, 1,
+                                        min_per_fmix)
+
+    return fmix_df
+
 
 if __name__ == "__main__":
-    rtm_df = rtm_schedule_file()
-    dam_df = dam_schedule_file()
-    dam_forecast_df = dam_forecast_schedule_file()
-    fmix_df = fuel_mix_file()
+    # rtm_df = rtm_schedule_file()
+    # dam_df = dam_schedule_file()
+    # dam_forecast_df = dam_forecast_schedule_file()
+    # fmix_df = fuel_mix_file()  # dont use
+    fmix_df = fuel_mix_file_dst()  # handles the DST data

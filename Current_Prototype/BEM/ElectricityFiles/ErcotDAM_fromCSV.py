@@ -61,21 +61,30 @@ if __name__ == "__main__":
     daily_df = datetime_from_clean(cleaned_df)
 
     # weekly, downsample
-    weekly_df = daily_df.resample('1W').mean()
+    weekly_mean_df = daily_df.resample('1W').mean()
     # monthly, downsample
-    monthly_df = daily_df.resample('1M').mean()
+    monthly_mean_df = daily_df.resample('1M').mean()
+    # daily, downsample
+    daily_mean_df = daily_df.resample('1D').mean()
 
     # PLOT
+    # RAW
     # daily
     plt.figure()
     daily_df.plot(y='Settlement Point Price', title=f'DAM$ for {settlement_point_name}', label='Daily')
     plt.legend()
-    # weekly
+
+    # MEAN
     plt.figure()
-    weekly_df.iloc[:,0].plot(x='Weekly', y='DAP $ / MW', title=f'DAM$ for {settlement_point_name}'
-                                                             f'- Mean', label='Weekly')
+    # daily
+    daily_mean_df.iloc[:, 0].plot(x='Daily', y='DAP $ / MW', title=f'DAM$ for {settlement_point_name}'
+                                                              f' - Mean', label='Daily')
+    # weekly
+    weekly_mean_df.iloc[:, 0].plot(x='Weekly', y='DAP $ / MW', title=f'DAM$ for {settlement_point_name}'
+                                                              f'- Mean', label='Weekly')
     # monthly
-    monthly_df.iloc[:,0].plot(x='Monthly', y='DAP $ / MW', title=f'DAM$ for {settlement_point_name}'
-                                                             f' - Mean', label='Monthly')
+    monthly_mean_df.iloc[:, 0].plot(x='Monthly', y='DAP $ / MW', title=f'DAM$ for {settlement_point_name}'
+                                                              f' - Mean', label='Monthly')
     plt.legend()
+    plt.show()
 
