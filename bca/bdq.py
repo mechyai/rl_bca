@@ -16,6 +16,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+from torch.utils.tensorboard import SummaryWriter
 
 """ 
 -- Vanilla BDQN --
@@ -33,6 +34,7 @@ Repos-
 # subclass tuple for experiences
 Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'reward', 'terminal'))
 
+# TB = SummaryWriter()
 
 class ReplayMemory(object):
     """Manages a replay memory, where data is stored as numpy arrays in a named tuple."""
@@ -72,10 +74,9 @@ class BranchingQNetwork(nn.Module):
         prev_layer_size = observation_dim
 
         for i, layer_size in enumerate(shared_network_size):
-            current_layer_size = layer_size
-            layers.append(nn.Linear(prev_layer_size, current_layer_size))
+            layers.append(nn.Linear(prev_layer_size, layer_size))
             # layers.append(nn.Relu)
-            prev_layer_size = current_layer_size
+            prev_layer_size = layer_size
         shared_final_layer = prev_layer_size
 
         self.shared_model = nn.Sequential(*layers)
@@ -84,31 +85,33 @@ class BranchingQNetwork(nn.Module):
         layers = []
         prev_layer_size = shared_final_layer
         for i, layer_size in enumerate(value_stream_size):
-            current_layer_size = layer_size
-            layers.append(nn.Linear(prev_layer_size, current_layer_size))
-            prev_layer_size = current_layer_size
+            layers.append(nn.Linear(prev_layer_size, layer_size))
+            prev_layer_size = layer_size
 
-        self.value_stream = nn.Sequential(*layers, nn.Linear(prev_layer_size, 1))
+        final_layer = nn.Linear(prev_layer_size, 1)  # output state-value
+        self.value_stream = nn.Sequential(*layers, final_layer)
 
         # --- Advantage Streams ---
         layers = []
         prev_layer_size = shared_final_layer
         for i, layer_size in enumerate(advantage_streams_size):
-            current_layer_size = layer_size
-            layers.append(nn.Linear(prev_layer_size, current_layer_size))
-            prev_layer_size = current_layer_size
+            layers.append(nn.Linear(prev_layer_size, layer_size))
+            prev_layer_size = layer_size
 
+        final_layer = nn.Linear(prev_layer_size, action_dim)
         self.advantage_streams = nn.ModuleList(
-            [nn.Sequential(*layers, nn.Linear(prev_layer_size, action_dim)) for i in range(action_branches)]
+            [nn.Sequential(*layers, final_layer) for i in range(action_branches)]
         )
 
-    def forward(self, x):
-        out = self.shared_model(x)
-        # branch
+    def forward(self, state_input):
+        # Shared Network
+        out = self.shared_model(state_input)
+        # Value Branch
         value = self.value_stream(out)
+        # Advantage Streams
         advs = torch.stack([advantage_stream(out) for advantage_stream in self.advantage_streams], dim=1)
 
-        # recombine branches, compute Q-Value
+        # Q-Value - Recombine Branches
         q_vals = value.unsqueeze(2) + advs - advs.mean(2, keepdim=True)  # identifiable method eqn #1
 
         return q_vals
@@ -148,9 +151,11 @@ class BranchingDQN(nn.Module):
         self.target_network.to(self.device)
 
         self.target_update_freq = target_update_freq
-        self.update_counter = 0
+        self.update_count = 0
+        self.step_count = 0
 
         self.td_target = td_target
+
 
     def get_greedy_action(self, state_tensor):
         x = state_tensor.to(self.device).T  # single action row vector
@@ -172,9 +177,9 @@ class BranchingDQN(nn.Module):
             return self.target_network(next_states).gather(2, argmax.unsqueeze(2)).squeeze(-1)
 
     def update_target_net(self):
-        self.update_counter += 1
-        if self.update_counter % self.target_update_freq == 0:
-            self.update_counter = 0
+        self.update_count += 1
+        if self.update_count % self.target_update_freq == 0:
+            self.update_count = 0
             self.target_network.load_state_dict(self.policy_network.state_dict())
 
     def update_policy(self, batch):
@@ -221,6 +226,13 @@ class BranchingDQN(nn.Module):
 
         self.optim.step()
         self.update_target_net()
+
+        # TensorBoard
+        # TB.add_scalar('Loss', loss.detach().cpu(), self.step_count)
+
+        # Update
+        self.step_count += 1
+
 
         return loss.detach().cpu()
 

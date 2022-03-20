@@ -1,0 +1,12 @@
+
+!- Custom Schedule File
+Schedule:File,
+	ERCOT FMIX 2019 - Solar,
+	Any Number,
+	A:/Files/PycharmProjects/rl_bca/Current_Prototype/BEM/ScheduleFiles/ERCOT_FMIX_2019.csv,
+	10,
+	1,
+	,
+	,
+	No,
+	15;

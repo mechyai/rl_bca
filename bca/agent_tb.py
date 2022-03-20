@@ -62,6 +62,7 @@ class Agent:
         self.reward_dict = None
         self.reward = 0
         self.reward_sum = 0
+        self.reward_component_sum = [0, 0, 0]
 
         # -- CONTROL GOALS --
         self.indoor_temp_ideal_range = np.array([21.1, 23.89])  # occupied hours, based on OS model
@@ -99,10 +100,13 @@ class Agent:
         self.tb = summary_writer
         self.tb.add_graph(dqn_model.policy_network, torch.rand(dqn_model.observation_space).unsqueeze(0))
 
-        # -- Misc. --
+        # -- LEARNING --
         self.learning = True
         self.learning_loop = learning_loop
         self.loss = 0
+        self.loss_total = 0
+
+        # -- Misc. --
         self.once = True
         self.print = False
 
@@ -145,7 +149,10 @@ class Agent:
 
         # -- REWARD --
         self.reward_dict = self._reward()
-        self.reward = self._get_total_reward('sum')  # aggregate 'mean' or 'sum'
+        self.reward = max(self._get_total_reward('sum'), -50)  # aggregate 'mean' or 'sum'
+        # Get total reward per component
+        reward_component_sums = np.array(list(self.reward_dict.values())).sum(axis=0)
+        self.reward_component_sum = np.array(list(zip(self.reward_component_sum, reward_component_sums))).sum(axis=1)
 
         # -- STORE INTERACTIONS --
         if self.action is not None:  # after first action, enough data available
@@ -158,19 +165,22 @@ class Agent:
                 for i in range(self.learning_loop):
                     batch = self.memory.sample()
                     self.loss = float(self.bdq.update_policy(batch))  # batch learning
-
+                    self.loss_total += self.loss
 
         # -- PERFORMANCE RESULTS --
         self.comfort_dissatisfaction = self._get_comfort_results()
-        # self.hvac_rtp_costs = self._get_rtp_hvac_cost_results()
         self.hvac_rtp_costs = self._get_rtp_hvac_cost_and_wind_results()
+        # Update Sum
         self.comfort_dissatisfaction_total += self.comfort_dissatisfaction
         self.hvac_rtp_costs_total += self.hvac_rtp_costs
 
         # -- TensorBoard
-        self.tb.add_scalar('Model/Loss', self.loss, self.current_step)
-        self.tb.add_scalar('Model/Reward', self.reward, self.current_step)
-        self.tb.add_scalar('Model/Reward Cumulative', self.reward_sum, self.current_step)
+        self.tb.add_scalar('Loss', self.loss, self.current_step)
+        self.tb.add_scalar('Reward/All Reward', self.reward, self.current_step)
+        self.tb.add_scalar('Reward/Reward Cumulative', self.reward_sum, self.current_step)
+        self.tb.add_scalar('Reward/Comfort Reward', self.reward_component_sum[0], self.current_step)
+        self.tb.add_scalar('Reward/RTP-HVAC Reward', self.reward_component_sum[1], self.current_step)
+        self.tb.add_scalar('Reward/Wind-HVAC Reward', self.reward_component_sum[2], self.current_step)
         # Sim Data
         self.tb.add_scalar('_SimData/RTP', self.mdp.get_mdp_element('rtp').value, self.current_step)
         # Sim Results
@@ -339,7 +349,7 @@ class Agent:
         """Reward function - per component, per zone."""
 
         # TODO add some sort of normalization
-        lambda_comfort = 0.1
+        lambda_comfort = 0.2
         lambda_rtp = 0.01
         lambda_intermittent = 10000
 
