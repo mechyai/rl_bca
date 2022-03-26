@@ -9,7 +9,9 @@ import numpy as np
 # import openstudio  # ver 3.2.0 !pip list
 
 from emspy import EmsPy, BcaEnv, MdpManager, idf_editor
-from bca import Agent, BranchingDQN, ReplayMemory, EpsilonGreedyStrategy, mdp
+from bca import Agent, BranchingDQN, ReplayMemory, EpsilonGreedyStrategy, mdp_manager
+
+import process_results
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 # OMP: Error #15: Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.
@@ -18,55 +20,69 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 # E+ Download Path
 ep_path = 'A:/Programs/EnergyPlusV9-5-0/'
 # IDF File / Modification Paths
-idf_file_name = r'/IdfFiles/BEM_5z_V1.idf'  # ***********************************************************
-idf_final_file = r'A:/Files/PycharmProjects/RL-EmsPy/Current_Prototype/BEM/BEM_5z_V1.idf'
-os_folder = r'A:/Files/PycharmProjects/RL-emspy/Current_Prototype/BEM'
-idf_file_base = os_folder + idf_file_name
+repo_root = 'A:/Files/PycharmProjects/rl_bca'
+os_folder = os.path.join(repo_root, 'Current_Prototype/BEM')
+idf_file_name = 'IdfFiles/BEM_5z_V1.idf'  # ***********************************************************
+idf_file_base = os.path.join(os_folder, idf_file_name)
+idf_final_file = os.path.join(os_folder, 'BEM_5z_V1.idf')
 # Weather Path
-ep_weather_path = os_folder + r'/WeatherFiles/EPW/DallasTexas_2019CST.epw'
+ep_weather_path = os.path.join(os_folder, 'WeatherFiles/EPW/DallasTexas_2019CST.epw')
 # Output .csv Path
 cvs_output_path = ''
 
+
 # -- INSTANTIATE MDP --
-my_mdp = MdpManager.generate_mdp_from_tc(mdp.tc_intvars, mdp.tc_vars, mdp.tc_meters, mdp.tc_weather, mdp.tc_actuators)
+my_mdp = MdpManager.generate_mdp_from_tc(mdp_manager.tc_intvars, mdp_manager.tc_vars, mdp_manager.tc_meters, mdp_manager.tc_weather, mdp_manager.tc_actuators)
+
 
 # -- CUSTOM SQL TRACKING --
 data_tracking = {  # custom tracking for actuators, (handle + unit type)
+    # -- Reward --
     'reward': ('Schedule:Constant', 'Schedule Value', 'Reward Tracker', 'Dimensionless'),
     'reward_cumulative': ('Schedule:Constant', 'Schedule Value', 'Reward Cumulative', 'Dimensionless'),
+    # -- Results Metrics --
+    # Comfort
     'comfort': ('Schedule:Constant', 'Schedule Value', 'Comfort Tracker', 'Dimensionless'),
     'comfort_cumulative': ('Schedule:Constant', 'Schedule Value', 'Comfort Cumulative', 'Dimensionless'),
+    # RTP
     'rtp_tracker': ('Schedule:Constant', 'Schedule Value', 'RTP Tracker', 'Dimensionless'),
     'rtp_cumulative': ('Schedule:Constant', 'Schedule Value', 'RTP Cumulative', 'Dimensionless'),
+    # Wind
+    'wind_hvac_use': ('Schedule:Constant', 'Schedule Value', 'Wind Energy HVAC Usage Tracker', 'Dimensionless'),
+    'total_hvac_use': ('Schedule:Constant', 'Schedule Value', 'Total HVAC Energy Usage Tracker', 'Dimensionless'),
+    # -- Learning --
     'loss': ('Schedule:Constant', 'Schedule Value', 'Loss Tracker', 'Dimensionless'),
-    # 'loss_total': ('Schedule:Const', 'Schedule Value', 'Loss', 'Dimensionless')
-    # 'wind_gen_relative': ('Schedule:Constant', 'Schedule Value', 'Wind Gen of Total', 'Dimensionless')
 }
 # link with ToC Actuators, remove unit types first
 data_tracking_actuators = {}
 for key, values in data_tracking.items():
     my_mdp.add_ems_element('actuator', key, values[0:3])  # exclude unit, leave handle
 
+
 # -- Automated IDF Modification --
 year = 2019
 # create final file from IDF base
-idf_editor.append_idf(idf_file_base, r'BEM/CustomIdfFiles/Automated/V1_IDF_modifications.idf', idf_final_file)
+auto_idf_folder = os.path.join(os_folder, 'CustomIdfFiles/Automated')
+idf_editor.append_idf(idf_file_base, os.path.join(auto_idf_folder, 'V1_IDF_modifications.idf'), idf_final_file)
 # daylight savings & holidays
 # IDFeditor.append_idf(idf_final_file, f'BEM/CustomIdfFiles/Automated/TEXAS_CST_Daylight_Savings_{year}.idf')
 # add Schedule:Files
-idf_editor.append_idf(idf_final_file, f'BEM/CustomIdfFiles/Automated/ERCOT_RTM_{year}.idf')  # RTP
-idf_editor.append_idf(idf_final_file, f'BEM/CustomIdfFiles/Automated/ERCOT_FMIX_{year}_Wind.idf')  # FMIX, wind
-idf_editor.append_idf(idf_final_file, f'BEM/CustomIdfFiles/Automated/ERCOT_FMIX_{year}_Total.idf')  # FMIX, total
+idf_editor.append_idf(idf_final_file, os.path.join(auto_idf_folder, f'ERCOT_RTM_{year}.idf'))  # RTP
+idf_editor.append_idf(idf_final_file, os.path.join(auto_idf_folder, f'ERCOT_FMIX_{year}_Wind.idf'))  # FMIX, wind
+idf_editor.append_idf(idf_final_file, os.path.join(auto_idf_folder, f'ERCOT_FMIX_{year}_Solar.idf'))  # FMIX, solar
+idf_editor.append_idf(idf_final_file, os.path.join(auto_idf_folder, f'ERCOT_FMIX_{year}_Total.idf'))  # FMIX, total
 for h in range(12):  # DAM 12 hr forecast
-    idf_editor.append_idf(idf_final_file, f'BEM/CustomIdfFiles/Automated/ERCOT_DAM_12hr_forecast_{year}_{h}hr_ahead.idf')
+    idf_editor.append_idf(idf_final_file,
+                          os.path.join(auto_idf_folder, f'ERCOT_DAM_12hr_forecast_{year}_{h}hr_ahead.idf'))
 # add Custom Meters
-idf_editor.append_idf(idf_final_file, r'BEM/CustomIdfFiles/Automated/V1_custom_meters.idf')
+idf_editor.append_idf(idf_final_file, os.path.join(auto_idf_folder, 'V1_custom_meters.idf'))
 # add Custom Data Tracking IDF Objs (reference ToC of Actuators)
 for _, value in data_tracking.items():
     idf_editor.insert_custom_data_tracking(value[2], idf_final_file, value[3])
 
+
 # -- Simulation Params --
-cp = EmsPy.available_calling_points[6]  # 5-15 valid for timestep loop
+cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 timesteps = 60
 
 # -- Agent Params --
@@ -78,16 +94,16 @@ interaction_ts_frequency = 10
 hyperparameter_dict = {
     # --- BDQ ---
     # architecture
-    'observation_dim': 33,
+    'observation_dim': 40,
     'action_branches': action_branches,  # n building zones
     'action_dim': 5,
-    'shared_network_size': [96],
-    'value_stream_size': [48, 48],
+    'shared_network_size': [96, 96],
+    'value_stream_size': [48],
     'advantage_streams_size': [56],
     # hyperparameters
-    'target_update_freq': 250,  # ***
-    'learning_rate': 0.001,  # **
-    'gamma': 0.6,  # ***
+    'target_update_freq': 250,  #
+    'learning_rate': 0.0005,  #
+    'gamma': 0.5,  #
 
     # network mods
     'td_target': 'mean',  # mean or max
@@ -95,8 +111,8 @@ hyperparameter_dict = {
     'rescale_shared_grad_factor': 1 / (1 + action_branches),
 
     # --- Experience Replay ---
-    'replay_capacity': int(60 / ((60 / timesteps) * interaction_ts_frequency) * 24 * 28),  # 21 days
-    'batch_size': 256,
+    'replay_capacity': int(60 / ((60 / timesteps) * interaction_ts_frequency) * 24 * 14),  # 14 days
+    'batch_size': 128,
 
     # --- Behavioral Policy ---
     'eps_start': 0.15,  # epsilon
@@ -106,23 +122,23 @@ hyperparameter_dict = {
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 1,
+    'epochs': 20,
     'run_benchmark': True,
-    'exploit_final_epoch': True,
-    'save_model': False,
+    'exploit_final_epoch': False,
+    'save_model': True,
     'save_model_final_epoch': True,
     'save_results': True,
     'save_final_results': True,
     'reward_plot_title': '',
     'experiment_title': '',
-    'experiment_notes': 'new hyperparameters, bigger network, getting data for RTP histo.',
+    'experiment_notes': '',
     'interaction_ts_freq': interaction_ts_frequency,  # interaction ts intervals
-    'load_model': r'A:\Files\PycharmProjects\RL-EmsPy\Current_Prototype\Tuning_Data\Exp_20220316_2119\bdq_20220316_2307_4.pt'
+    'load_model': r''
 }
 
 # --- Study Parameters ---
-study_params = [{}] #, {'gamma': 0.8}, {'gamma': 0.9}]  # leave empty [{}] for No study
-epoch_params = []# 'learning_rate': 0.01}, {'learning_rate': 0.005}, {'learning_rate': 0.001},
+study_params = [{}]  # , {'gamma': 0.8}, {'gamma': 0.9}]  # leave empty [{}] for No study
+epoch_params = []  # 'learning_rate': 0.01}, {'learning_rate': 0.005}, {'learning_rate': 0.001},
 #                 {'learning_rate': 0.001}, {'learning_rate': 0.001}, {'learning_rate': 0.0005},
 #                 {'learning_rate': 0.0005}, {'learning_rate': 0.0005}, {'learning_rate': 0.0005},
 #                 {'learning_rate': 0.0001}, {'learning_rate': 0.00005}, {'learning_rate': 0.0001}]
@@ -170,7 +186,8 @@ for i, study in enumerate(study_params):
 
         # -- Clear Up Memory --
         if 'dfs' in locals():
-            del dfs
+            del dfs, df_loss, df_energy_source
+            del rtp_hvac_agent, rtp_hvac_control, rtp_all
 
         time_start = time.time()
         model_name = f'bdq_{time.strftime("%Y%m%d_%H%M")}_{epoch}.pt'
@@ -182,28 +199,22 @@ for i, study in enumerate(study_params):
 
         # -- Create Building Energy Simulation Instance --
         sim = BcaEnv(ep_path, idf_final_file, timesteps,
-                                   my_mdp.tc_var, my_mdp.tc_intvar, my_mdp.tc_meter,
-                                   my_mdp.tc_actuator, my_mdp.tc_weather)
+                     my_mdp.tc_var, my_mdp.tc_intvar, my_mdp.tc_meter,
+                     my_mdp.tc_actuator, my_mdp.tc_weather)
 
         # -- Instantiate RL Agent --
         my_agent = Agent(sim, my_mdp, bdq_model, policy, experience_replay, interaction_ts_frequency, learning_loop=1)
 
-        # -- Set Sim Calling Point(s) & Callback Function(s) --
-        # Benchmark
+        # Do once
         if experiment_params_dict['run_benchmark']:
-            experiment_params_dict['run_benchmark'] = False
-            my_agent.learning = False  # TODO why does benchmark take so long without learning
-            sim.set_calling_point_and_callback_function(cp, my_agent.observe, None, True,
-                                                        experiment_params_dict['interaction_ts_freq'],
-                                                        experiment_params_dict['interaction_ts_freq'])
-        # Experiment
+            learn = False
+            act = False
+            experiment_params_dict['run_benchmark'] = False  # TODO why does benchmark take so long without learning
         else:
-            my_agent.learning = True
-            sim.set_calling_point_and_callback_function(cp, my_agent.observe, my_agent.act_strict_setpoints, True,
-                                                        experiment_params_dict['interaction_ts_freq'],
-                                                        experiment_params_dict['interaction_ts_freq'])
+            learn = True
+            act = True
 
-        # -- Final Epoch --
+        # -- @ Final Epoch --
         if epoch == experiment_params_dict['epochs'] - 1:
             # save final model
             if experiment_params_dict['save_model_final_epoch']:
@@ -212,36 +223,111 @@ for i, study in enumerate(study_params):
                 experiment_params_dict['save_results'] = True
             # exploit final
             if experiment_params_dict['exploit_final_epoch']:
-                my_agent.learning = False
+                learning = False
                 policy.start = 0
                 hyperparameter_dict['eps_start'] = 0
                 policy.decay = 0
                 hyperparameter_dict['eps_decay'] = 0
 
-        # -- Run Sim --
+        # -- Set Sim Calling Point(s) & Callback Function(s) --
+        sim.set_calling_point_and_callback_function(cp, my_agent.observe, my_agent.act_strict_setpoints, True,
+                                                    experiment_params_dict['interaction_ts_freq'],
+                                                    experiment_params_dict['interaction_ts_freq'],
+                                                    observation_function_kwargs={
+                                                        'learn': learn
+                                                    },
+                                                    actuation_function_kwargs={
+                                                        'actuate': act
+                                                    })
+
+        # ------------------------------------------------ Run Sim ------------------------------------------------
         sim.run_env(ep_weather_path)
         sim.reset_state()
 
         # -- Get Sim DFs --
+        ts_mod = 0
+        # Reward
         dfs = sim.get_df()
         dfs['reward']['cumulative'] = dfs['reward'][['reward']].cumsum()  # create cumulative reward column
         cumulative_reward = float(dfs['reward'][['cumulative']].iloc[-1])  # get final cumulative reward
+        # Loss
+        # get at interaction interval
+        df_loss = dfs['actuator'][['Datetime', 'Timestep', 'loss']]
+        df_loss = df_loss[df_loss['Timestep'] % experiment_params_dict['interaction_ts_freq'] == ts_mod]
+
+        # RTP
+        rtp_hvac_agent = my_agent.rtp_histogram_data
+        rtp_hvac_control = np.load(
+            r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Output_Saved\rtp_histo_control.npy')
+        n_controlled_zones = action_branches
+        rtp_all = np.tile(dfs['var'][['rtp']].to_numpy().squeeze(1), n_controlled_zones)
+
+        # Wind
+        df_energy_source = dfs['actuator'][['Datetime', 'Timestep', 'wind_hvac_use', 'total_hvac_use']]
+        df_energy_source = df_energy_source.set_index(
+            pd.DatetimeIndex(df_energy_source['Datetime']))  # make datetime index
+
+        monthly_wind_hvac_usage_proportion = []
+        months_int = range(1, 13, 1)
+        for month in months_int:
+            energy_month = df_energy_source[df_energy_source.index.month == month]  # get data for single month
+            energy_month_ts = energy_month[
+                energy_month['Timestep'] % experiment_params_dict['interaction_ts_freq'] == ts_mod
+                ]
+            monthly_wind_use = energy_month['wind_hvac_use'].sum() / energy_month['total_hvac_use'].sum()
+            monthly_wind_hvac_usage_proportion.append(monthly_wind_use)
 
         # -- Plot Results --
         # Reward
-        fig, axs = plt.subplots(nrows=2, ncols=1)
-        axs[0].plot(dfs['reward'][['Datetime']], dfs['reward'][['reward']])
-        axs0_2 = axs[0].twinx()
-        axs0_2.plot(dfs['reward'][['Datetime']], dfs['reward'][['cumulative']])
-        axs[0].set_title('Reward')
-        # Loss
-        axs[1].set_yscale('log')
-        axs[1].plot(dfs['actuator'][['Datetime']], dfs['actuator'][['loss']])
-        axs[0].set_title('Log Loss')
+        fig, axs = plt.subplots(nrows=2, ncols=3)
+        plt.gcf()
+        manager = plt.get_current_fig_manager()
+        manager.window.showMaximized()
 
-        # dfs['reward'].plot(x='Datetime', y='reward', ax=ax)
-        # dfs['reward'].plot(x='Datetime', y='cumulative', ax=ax, secondary_y=True)
-        # plt.title(model_name[:-3] + f'epoch:{epoch},{experiment_params_dict["reward_plot_title"]}')
+        axs[0, 0].plot(dfs['reward'][['Datetime']], dfs['reward'][['reward']])
+        axs0_2 = axs[0, 0].twinx()
+        axs0_2.plot(dfs['reward'][['Datetime']], dfs['reward'][['cumulative']])
+        axs[0, 0].set_title('Reward')
+        axs0_2.set_ylabel('Cumulative')
+        axs[0, 0].set_ylabel('Discrete')
+        axs[0, 0].grid()
+        # Loss
+        axs[1, 0].set_yscale('log')
+        axs[1, 0].plot(df_loss['Datetime'], df_loss['loss'])
+        axs[1, 0].set_title('Log Loss')
+        axs[1, 0].grid()
+        # RTP
+        # plt.yscale('log', nonposy='clip')
+        hist_range = (0, 50)
+        n_bins = 50
+        axs[0, 1].hist(rtp_all, bins=n_bins, range=hist_range, alpha=0.75, label='All Time', color='k')
+        axs[0, 1].hist(rtp_hvac_agent, bins=n_bins, range=hist_range, alpha=0.5, label="Agent")
+        axs[0, 1].hist(rtp_hvac_control, bins=n_bins, range=hist_range, alpha=0.75, label="Control")
+        axs[0, 1].set_title('RTP Price Awareness')
+        axs[0, 1].set_xlabel('$RTP Bins - Lower Range')
+        axs[0, 1].set_ylabel('RTP HVAC Usage')
+        axs[0, 1].grid()
+        axs[0, 1].legend()
+        # higher scale
+        hist_range = (500, 10000)
+        n_bins = 50
+        axs[0, 1].hist(rtp_all, bins=n_bins, range=hist_range, alpha=0.75, label='All Time', color='k')
+        axs[0, 1].hist(rtp_hvac_agent, bins=n_bins, range=hist_range, alpha=0.5, label="Agent")
+        axs[0, 1].hist(rtp_hvac_control, bins=n_bins, range=hist_range, alpha=0.75, label="Control")
+        axs[1, 1].set_xlabel('$RTP Bins - Lower Range')
+        axs[1, 1].set_ylabel('RTP HVAC Usage')
+        axs[1, 1].set_ylim([0, 1])
+        axs[1, 1].grid()
+
+        # Wind Use
+        axs[0, 2].bar(months_int, monthly_wind_hvac_usage_proportion)
+        axs[0, 2].set_title('HVAC Renewable Energy Usage')
+        axs[0, 2].set_xlabel('Months')
+        axs[0, 2].set_ylabel('% HVAC Energy from Wind')
+        axs[0, 2].set_ylim([0, 1])
+        axs[0, 2].grid()
+
+        plt.tight_layout()
 
         # -- Save / Write Data --
         if experiment_params_dict['save_model'] or experiment_params_dict['save_results']:
@@ -251,7 +337,7 @@ for i, study in enumerate(study_params):
                 folder_made = True
                 experiment_time = time.strftime("%Y%m%d_%H%M")
                 experiment_name = f'Exp_{experiment_time}'
-                folder = os.path.join('Tuning_Data', experiment_name)
+                folder = os.path.join('Output_Saved', 'Tuning_Data', experiment_name)
                 results_file_path = os.path.join(folder, f'bdq_report_{experiment_time}.txt')
                 os.mkdir(folder)
 
@@ -261,12 +347,13 @@ for i, study in enumerate(study_params):
 
             if experiment_params_dict['save_final_results'] and epoch == experiment_params_dict['epochs'] - 1:
                 # save RTP data
-                np.save(os.path.join(folder, experiment_time + '_rtp_histo_agent'), np.asarray(my_agent.rtp_histogram_data))
+                np.save(os.path.join(folder, experiment_time + '_rtp_histo_agent'),
+                        np.asarray(my_agent.rtp_histogram_data))
 
             # save results
             if experiment_params_dict['save_results']:
                 plot_results_name = model_name[:-3] + '_results.png'
-                fig.savefig(os.path.join(folder, plot_results_name))
+                fig.savefig(os.path.join(folder, plot_results_name), bbox_inches='tight')
                 plt.close('all')
 
                 with open(results_file_path, 'a+') as file:
@@ -285,4 +372,3 @@ for i, study in enumerate(study_params):
                         file.write(f'\n\t\t{key}: {val}')
                     file.write(f'\n\nModel Architecture:\n{bdq_model.policy_network}')
                     file.write(f'\n\n\t\tNotes:\n\t\t\t{experiment_params_dict["experiment_notes"]}')
-

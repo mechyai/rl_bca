@@ -17,9 +17,7 @@ def normalize_min_max_strict(value, min: float, max: float):
         return ((value - min) / (max - min))*(upper - lower) + lower
 
 
-def normalize_min_max_saturate(value: float, min: float, max: float):
-    lower = -1
-    upper = 1
+def normalize_min_max_saturate(value: float, min: float, max: float, lower: float = -1, upper: float = 1):
     if value > max:
         return upper
     elif value < min:
@@ -126,30 +124,35 @@ tc_meters = {
     # Solar (custom)
     # 'PV_generation_meter': ['Solar Generation'],
     # -- Zn0 (custom meters) --
-    'zn0_heating_electricity': ['Zn0 HVAC Heating Electricity', normalize_min_max_saturate, 0, 141000],
+    'zn0_heating_electricity': ['Zn0 HVAC Heating Electricity', normalize_min_max_saturate, 0, 141000, 0, 1],
     # 'zn0_heating_gas': ['Zn0 HVAC Heating Natural Gas'],
-    'zn0_cooling_electricity': ['Zn0 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 142000],
+    'zn0_cooling_electricity': ['Zn0 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 142000, -1, 0],
     'zn0_fan_electricity': ['Zn0 HVAC Fan Electricity', normalize_min_max_saturate, 0, 22000],
+    # 'zn0_hvac_electricity': ['Zn0 HVAC Electricity', normalize_min_max_saturate, 0, 150000],
     # -- Zn1 (custom meters) --
-    'zn1_heating_electricity': ['Zn1 HVAC Heating Electricity', normalize_min_max_saturate, 0, 182000],
+    'zn1_heating_electricity': ['Zn1 HVAC Heating Electricity', normalize_min_max_saturate, 0, 182000, 0, 1],
     # 'zn1_heating_gas': ['Zn1 HVAC Heating Natural Gas'],
-    'zn1_cooling_electricity': ['Zn1 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 154000],
+    'zn1_cooling_electricity': ['Zn1 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 154000, -1, 0],
     'zn1_fan_electricity': ['Zn1 HVAC Fan Electricity', normalize_min_max_saturate, 0, 24000],
+    # 'zn1_hvac_electricity': ['Zn1 HVAC Electricity', normalize_min_max_saturate, 0, 190000],
     # -- Zn2 (custom meters) --
-    'zn2_heating_electricity': ['Zn2 HVAC Heating Electricity', normalize_min_max_saturate, 0, 146000],
+    'zn2_heating_electricity': ['Zn2 HVAC Heating Electricity', normalize_min_max_saturate, 0, 146000, 0, 1],
     # 'zn2_heating_gas': ['Zn2 HVAC Heating Natural Gas'],
-    'zn2_cooling_electricity': ['Zn2 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 111000],
+    'zn2_cooling_electricity': ['Zn2 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 111000, -1, 0],
     'zn2_fan_electricity': ['Zn2 HVAC Fan Electricity', normalize_min_max_saturate, 0, 18000],
+    # 'zn2_hvac_electricity': ['Zn2 HVAC Electricity', normalize_min_max_saturate, 0, 150000],
     # -- Zn3 (custom meters) --
-    'zn3_heating_electricity': ['Zn3 HVAC Heating Electricity', normalize_min_max_saturate, 0, 169000],
+    'zn3_heating_electricity': ['Zn3 HVAC Heating Electricity', normalize_min_max_saturate, 0, 169000, 0, 1],
     # 'zn3_heating_gas': ['Zn3 HVAC Heating Natural Gas'],
-    'zn3_cooling_electricity': ['Zn3 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 139000],
+    'zn3_cooling_electricity': ['Zn3 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 139000, -1, 0],
     'zn3_fan_electricity': ['Zn3 HVAC Fan Electricity', normalize_min_max_saturate, 0, 21000],
+    # 'zn3_hvac_electricity': ['Zn3 HVAC Electricity', normalize_min_max_saturate, 0, 170000],
     # -- Zn4 (custom meters) --
     # 'zn4_heating_electricity': ['Zn4 HVAC Heating Electricity', normalize_min_max_saturate, 0, 162000],  # TODO update
     # 'zn4_heating_gas': ['Zn4 HVAC Heating Natural Gas'],
     # 'zn4_cooling_electricity': ['Zn4 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 135000],  # TODO update
     # 'zn4_fan_electricity': ['Zn4 HVAC Fan Electricity', normalize_min_max_saturate, 0, 22000]  # TODO update
+    # 'zn4_hvac_electricity': ['Zn4 HVAC Electricity', normalize_min_max_saturate, 0, 170000]
 
 }
 
@@ -158,7 +161,7 @@ tc_weather = {  # used for current and forecasted weather
     'oa_db': ['outdoor_dry_bulb', normalize_min_max_saturate, utils.f_to_c(20), utils.f_to_c(100)],  # IDD - C, -70-70
     'oa_pa': ['outdoor_barometric_pressure', normalize_min_max_saturate, 90000, 120000],  # IDD - Pa, 31000-120000
     'sun_up': ['sun_is_up', digitize_bool],  # T/F
-    'rain': ['is_raining', digitize_bool],  # T/F
+    # 'rain': ['is_raining', digitize_bool],  # T/F
     # 'snow': ['is_snowing', digitize_bool],  # T/F
     'wind_dir': ['wind_direction', normalize_min_max_strict, 0, 360],  # IDD - deg, 0-360
     'wind_speed': ['wind_speed', normalize_min_max_strict, 0, 400]  # IDD - m/s, 0-40

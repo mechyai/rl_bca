@@ -11,7 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 # import openstudio  # ver 3.2.0 !pip list
 
 from emspy import EmsPy, BcaEnv, MdpManager, idf_editor
-from bca import Agent_TB, BranchingDQN, ReplayMemory, EpsilonGreedyStrategy, mdp
+from bca import Agent_TB, BranchingDQN, ReplayMemory, EpsilonGreedyStrategy, mdp_manager
 
 import process_results
 
@@ -24,16 +24,16 @@ ep_path = 'A:/Programs/EnergyPlusV9-5-0/'
 # IDF File / Modification Paths
 repo_root = 'A:/Files/PycharmProjects/rl_bca'
 os_folder = os.path.join(repo_root, 'Current_Prototype/BEM')
-idf_file_name = 'IdfFiles/BEM_5z_V1_May.idf'  # ***********************************************************
+idf_file_name = 'IdfFiles/BEM_5z_V1_test.idf'  # ***********************************************************
 idf_file_base = os.path.join(os_folder, idf_file_name)
-idf_final_file = os.path.join(os_folder, 'BEM_5z_V1_May.idf')
+idf_final_file = os.path.join(os_folder, 'BEM_5z_V1.idf')
 # Weather Path
 ep_weather_path = os.path.join(os_folder, 'WeatherFiles/EPW/DallasTexas_2019CST.epw')
 # Output .csv Path
 cvs_output_path = ''
 
 # -- INSTANTIATE MDP --
-my_mdp = MdpManager.generate_mdp_from_tc(mdp.tc_intvars, mdp.tc_vars, mdp.tc_meters, mdp.tc_weather, mdp.tc_actuators)
+my_mdp = MdpManager.generate_mdp_from_tc(mdp_manager.tc_intvars, mdp_manager.tc_vars, mdp_manager.tc_meters, mdp_manager.tc_weather, mdp_manager.tc_actuators)
 
 # -- CUSTOM SQL TRACKING --
 data_tracking = {  # custom tracking for actuators, (handle + unit type)
@@ -84,23 +84,21 @@ cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 timesteps = 60
 
 # -- Agent Params --
-
-# misc
 action_branches = 4
 interaction_ts_frequency = 15
 
 hyperparameter_dict = {
     # --- BDQ ---
     # architecture
-    'observation_dim': 40,
+    'observation_dim': 36,
     'action_branches': action_branches,  # n building zones
     'action_dim': 5,
-    'shared_network_size': [48],
-    'value_stream_size': [24],
-    'advantage_streams_size': [24],
+    'shared_network_size': [96, 64],
+    'value_stream_size': [48],
+    'advantage_streams_size': [48],
     # hyperparameters
-    'target_update_freq': 100,  #
-    'learning_rate': 0.001,  #
+    'target_update_freq': 250,  #
+    'learning_rate': 0.005,  #
     'gamma': 0.8,  #
 
     # network mods
@@ -109,8 +107,8 @@ hyperparameter_dict = {
     'rescale_shared_grad_factor': 1 / (1 + action_branches),
 
     # --- Experience Replay ---
-    'replay_capacity': int(60 / ((60 / timesteps) * interaction_ts_frequency) * 24 * 14),  # 14 days
-    'batch_size': 128,
+    'replay_capacity': int(60 / ((60 / timesteps) * interaction_ts_frequency) * 24 * 75),  # 14 days
+    'batch_size': 64,
 
     # --- Behavioral Policy ---
     'eps_start': 0.1,  # epsilon
@@ -121,7 +119,7 @@ hyperparameter_dict = {
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 50,
-    'run_benchmark': False,
+    'run_benchmark': True,
     'exploit_final_epoch': False,
     'save_model': False,
     'save_model_final_epoch': True,
@@ -177,6 +175,7 @@ for i, study in enumerate(study_params):
     if experiment_params_dict['load_model']:
         bdq_model.import_model(experiment_params_dict['load_model'])
 
+    do_1_epoch = False
     for epoch in range(experiment_params_dict['epochs']):  # train under same condition
 
         # -- Adjust Study Params for Epoch --
@@ -190,29 +189,32 @@ for i, study in enumerate(study_params):
         model_name = f'bdq_{time.strftime("%Y%m%d_%H%M")}_{epoch}.pt'
 
         # ---- Tensor Board ----
-        TB = SummaryWriter(f'runs/full_year_{time.strftime("%m_%d_%H-%M")}_50rcap_{epoch}')
+        TB_1 = SummaryWriter(f'runs/A/A_epoch{epoch}')  # {time.strftime("%m_%d_%H-%M")}_{epoch}')
+        TB_2 = SummaryWriter(f'runs/B/B_epoch{epoch}')
 
         # -- Create Building Energy Simulation Instance --
-        sim = BcaEnv(ep_path=ep_path,
-                     ep_idf_to_run=idf_final_file,
-                     timesteps=timesteps,
-                     tc_vars=my_mdp.tc_var,
-                     tc_intvars=my_mdp.tc_intvar,
-                     tc_meters=my_mdp.tc_meter,
-                     tc_actuator=my_mdp.tc_actuator,
-                     tc_weather=my_mdp.tc_weather
-                     )
+        sim = BcaEnv(
+            ep_path=ep_path,
+            ep_idf_to_run=idf_final_file,
+            timesteps=timesteps,
+            tc_vars=my_mdp.tc_var,
+            tc_intvars=my_mdp.tc_intvar,
+            tc_meters=my_mdp.tc_meter,
+            tc_actuator=my_mdp.tc_actuator,
+            tc_weather=my_mdp.tc_weather
+        )
 
         # -- Instantiate RL Agent --
-        my_agent = Agent_TB(emspy_sim=sim,
-                            mdp=my_mdp,
-                            dqn_model=bdq_model,
-                            policy=policy,
-                            replay_memory=experience_replay,
-                            interaction_frequency=interaction_ts_frequency,
-                            learning_loop=1,
-                            summary_writer=TB
-                            )
+        my_agent = Agent_TB(
+            emspy_sim=sim,
+            mdp=my_mdp,
+            dqn_model=bdq_model,
+            policy=policy,
+            replay_memory=experience_replay,
+            interaction_frequency=interaction_ts_frequency,
+            learning_loop=1,
+            summary_writer=TB_1
+        )
 
         # -- Benchmark -- (do once)
         if experiment_params_dict['run_benchmark']:
@@ -257,17 +259,53 @@ for i, study in enumerate(study_params):
         sim.reset_state()
 
         # -- RECORD RESULTS --
-        TB.add_scalar('__Epoch/Total Loss', my_agent.loss_total, epoch)
-        TB.add_scalar('__Epoch/Reward/All Reward', my_agent.reward_sum, epoch)
-        TB.add_scalar('__Epoch/Reward/Comfort Reward', my_agent.reward_component_sum[0], epoch)
-        TB.add_scalar('__Epoch/Reward/RTP-HVAC Reward', my_agent.reward_component_sum[1], epoch)
-        TB.add_scalar('__Epoch/Reward/Wind-HVAC Reward', my_agent.reward_component_sum[2], epoch)
+        TB_1.add_scalar('__Epoch/Total Loss', my_agent.loss_total, epoch)
+        TB_1.add_scalar('__Epoch/Reward/All Reward', my_agent.reward_sum, epoch)
+        TB_1.add_scalar('__Epoch/Reward/Comfort Reward', my_agent.reward_component_sum[0], epoch)
+        TB_1.add_scalar('__Epoch/Reward/RTP-HVAC Reward', my_agent.reward_component_sum[1], epoch)
+        TB_1.add_scalar('__Epoch/Reward/Wind-HVAC Reward', my_agent.reward_component_sum[2], epoch)
         # Sim Results
-        TB.add_scalar('__Epoch/_Results/Comfort Dissatisfied Total', my_agent.comfort_dissatisfaction_total, epoch)
-        TB.add_scalar('__Epoch/_Results/HVAC RTP Cost Total', my_agent.hvac_rtp_costs_total, epoch)
+        TB_1.add_scalar('__Epoch/_Results/Comfort Dissatisfied Total', my_agent.comfort_dissatisfaction_total, epoch)
+        TB_1.add_scalar('__Epoch/_Results/HVAC RTP Cost Total', my_agent.hvac_rtp_costs_total, epoch)
+        # Hyperparameter
+        TB_1.add_hparams(
+            hparam_dict=
+            {
+                'epoch': int(epoch),
+                'target_update_freq': 250,
+                'learning_rate': 0.005,
+                'gamma': 0.8
+            },
+            metric_dict=
+            {
+                'Comfort Reward': my_agent.reward_component_sum[0],
+                'RTP-HVAC Reward': my_agent.reward_component_sum[1],
+                'Wind-HVAC Reward': my_agent.reward_component_sum[2],
+                'Comfort Dissatisfied Total': my_agent.comfort_dissatisfaction_total,
+                'HVAC RTP Cost Total': my_agent.hvac_rtp_costs_total
+            },
+            hparam_domain_discrete=
+            {
+                'epoch': list(range(10))
+            },
+            run_name='_test2_'
+        )
+        TB_2.add_hparams({'epoch': epoch},
+                         {
+                             'Total Loss': my_agent.loss_total,
+                             'Total Reward': my_agent.reward_sum,
+                             'Comfort Dissatisfied Total': my_agent.comfort_dissatisfaction_total,
+                             'HVAC RTP Cost Total': my_agent.hvac_rtp_costs_total
+                         },
+                         run_name=f'_test1_'
+                         )
+
+        for name, param in bdq_model.policy_network.named_parameters():
+            TB_1.add_histogram(name, param, epoch)
+            # TB.add_histogram(f'{name}.grad', param.grad, epoch)
 
         # -- Get Sim DFs --
-        dfs = sim.get_df()
+        # dfs = sim.get_df()
 
         # -- Save / Write Data --
         if experiment_params_dict['save_model'] or experiment_params_dict['save_results']:

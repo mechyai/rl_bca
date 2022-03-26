@@ -5,7 +5,7 @@ import torch
 
 # import openstudio  # ver 3.2.0 !pip list
 
-from bca import agent, bdq, mdp
+from bca import agent, bdq, mdp_manager
 from emspy import emspy, idf_editor
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
@@ -25,7 +25,7 @@ ep_weather_path = os_folder + r'/WeatherFiles/EPW/DallasTexas_2019CST.epw'
 cvs_output_path = ''
 
 # -- INSTANTIATE MDP --
-my_mdp = mdp.generate_mdp()
+my_mdp = mdp_manager.generate_mdp()
 
 # -- CUSTOM TRACKING --
 data_tracking = {  # custom tracking for actuators, (handle + unit type)

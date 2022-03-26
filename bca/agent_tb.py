@@ -98,7 +98,7 @@ class Agent:
         self.total_energy_hvac_data = []
         # TensorBoard
         self.tb = summary_writer
-        self.tb.add_graph(dqn_model.policy_network, torch.rand(dqn_model.observation_space).unsqueeze(0))
+        # self.tb.add_graph(dqn_model.policy_network, torch.rand(dqn_model.observation_space).unsqueeze(0))
 
         # -- LEARNING --
         self.learning = True
@@ -112,44 +112,19 @@ class Agent:
 
     def observe(self, learn=True):
         # -- FETCH/UPDATE SIMULATION DATA --
-        self.time = self.sim.get_ems_data(['t_datetimes'])
-        self.var_vals = self.mdp.update_ems_value_from_dict(self.sim.get_ems_data(self.var_names, return_dict=True))
-        self.meter_vals = self.mdp.update_ems_value_from_dict(self.sim.get_ems_data(self.meter_names, return_dict=True))
-        self.weather_vals = self.mdp.update_ems_value_from_dict(
-            self.sim.get_ems_data(self.weather_names, return_dict=True))
-
-        self.termination = self._is_terminal()
-
-        # -- MODIFY STATE --
-        meter_names = [meter for meter in self.meter_names if 'fan' not in meter]  # remove unwanted fan meters
-
-        # -- GET ENCODING --
-        self.var_encoded_vals = self.mdp.get_ems_encoded_values(self.var_names)
-        self.meter_encoded_vals = self.mdp.get_ems_encoded_values(meter_names)
-        self.weather_encoded_vals = self.mdp.get_ems_encoded_values(self.weather_names)
-
-        # Timing
-        month = self.time.month / 12
-        day = self.time.day / 31
-        hour = self.time.hour / 24
-        minute = self.time.minute / 60
-        time_list = [month, day, hour, minute]
-
-        # -- ENCODED STATE --
-        self.next_state_normalized = np.array(
-            time_list +
-            list(self.var_encoded_vals.values()) +
-            list(self.weather_encoded_vals.values()) +
-            list(self.meter_encoded_vals.values()),
-            dtype=float)
+        self.next_state_normalized = self._get_encoded_state()
 
         if self.print:
-            print(f'\n\n{str(self.time)}\n')  # \n\n\tVars: {vars}\n\tMeters: {meters}\n\tWeather: {weather}')
+            print(f'\n\n{str(self.time)}\n')
+            # print(f'\n\n\tVars: {vars}\n\tMeters: {meters}\n\tWeather: {weather}')
             # print(f'\n\t{self.next_state_normalized}\n')
+
+        # -- TERMINAL STATE --
+        self.termination = self._is_terminal()
 
         # -- REWARD --
         self.reward_dict = self._reward()
-        self.reward = max(self._get_total_reward('sum'), -50)  # aggregate 'mean' or 'sum'
+        self.reward = max(self._get_total_reward('sum'), -100)  # aggregate 'mean' or 'sum'
         # Get total reward per component
         reward_component_sums = np.array(list(self.reward_dict.values())).sum(axis=0)
         self.reward_component_sum = np.array(list(zip(self.reward_component_sum, reward_component_sums))).sum(axis=1)
@@ -183,6 +158,8 @@ class Agent:
         self.tb.add_scalar('Reward/Wind-HVAC Reward', self.reward_component_sum[2], self.current_step)
         # Sim Data
         self.tb.add_scalar('_SimData/RTP', self.mdp.get_mdp_element('rtp').value, self.current_step)
+        self.tb.add_scalar('_SimData/Epsilon', self.epsilon, self.current_step)
+
         # Sim Results
         self.tb.add_scalar('_Results/Comfort Dissatisfied Total', self.comfort_dissatisfaction_total, self.current_step)
         self.tb.add_scalar('_Results/HVAC RTP Cost Total', self.hvac_rtp_costs_total, self.current_step)
@@ -197,13 +174,65 @@ class Agent:
             # self._report_time()  # time
             print(f'\n\t*Reward: {round(self.reward, 2)}, Cumulative: {round(self.reward_sum, 2)}')
 
+        # -- TRACK REWARD --
+        return self.reward  # return reward for emspy pd.df tracking
+
+    def _get_encoded_state(self):
+        """Gets and processes state input from simulation at every timestep. Returns the current encoded state."""
+
+        self.time = self.sim.get_ems_data(['t_datetimes'])
+        self.var_vals = self.mdp.update_ems_value_from_dict(self.sim.get_ems_data(self.var_names, return_dict=True))
+        self.meter_vals = self.mdp.update_ems_value_from_dict(self.sim.get_ems_data(self.meter_names, return_dict=True))
+        self.weather_vals = self.mdp.update_ems_value_from_dict(
+            self.sim.get_ems_data(self.weather_names, return_dict=True))
+
+        # -- MODIFY STATE --
+        meter_names = [meter for meter in self.meter_names if 'fan' not in meter]  # remove unwanted fan meters
+
+        # -- GET ENCODING --
+        self.var_encoded_vals = self.mdp.get_ems_encoded_values(self.var_names)
+        self.meter_encoded_vals = self.mdp.get_ems_encoded_values(meter_names)
+        self.weather_encoded_vals = self.mdp.get_ems_encoded_values(self.weather_names)
+
+        # Combine Heating & Cooling Electricity
+        for meter_name in self.meter_encoded_vals.copy():
+            # combine heating and cooling into 1 val [-1, 0]:cooling + [0, 1]:heating, then remove individuals
+            if 'heating' in meter_name:
+                zone_n = meter_name.split('_')[0]
+                heating_val = self.meter_encoded_vals.pop(meter_name)
+                cooling_val = self.meter_encoded_vals.pop(zone_n + '_cooling_electricity')
+                self.meter_encoded_vals[zone_n + '_hvac_electricity'] = heating_val + cooling_val
+
+        # RTP High-Price Signal
+        rtp = self.var_vals['rtp']
+        # add extra RTP pricing state
+        if rtp > 100:
+            rtp_alert = [1]
+        elif rtp < 15:
+            rtp_alert = [-1]
+        else:
+            rtp_alert = [0]
+
+        # Timing
+        month = self.time.month / 12
+        day = self.time.day / 31
+        hour = self.time.hour / 24
+        minute = self.time.minute / 60
+        time_list = [month, day, hour, minute]
+
         # -- DO ONCE --
         if self.once:
             self.state_var_names = self.var_names + self.weather_names + meter_names
             self.once = False
 
-        # -- TRACK REWARD --
-        return self.reward  # return reward for emspy pd.df tracking
+        # -- ENCODED STATE --
+        return np.array(
+            rtp_alert +
+            time_list +
+            list(self.var_encoded_vals.values()) +
+            list(self.weather_encoded_vals.values()) +
+            list(self.meter_encoded_vals.values()),
+            dtype=float)
 
     def _get_aux_actuation(self):
         """

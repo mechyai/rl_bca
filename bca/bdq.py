@@ -144,7 +144,7 @@ class BranchingDQN(nn.Module):
                                                 value_stream_size, advantage_streams_size)
         self.target_network.load_state_dict(self.policy_network.state_dict())  # copy params
 
-        self.optim = optim.Adam(self.policy_network.parameters(), lr=self.learning_rate)  # learned policy
+        self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.learning_rate)  # learned policy
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.policy_network.to(self.device)
@@ -190,12 +190,12 @@ class BranchingDQN(nn.Module):
         current_Q = self.get_current_qval(self.policy_network, batch_states, batch_actions)
         next_Q = self.get_next_double_qval(batch_next_states)
 
-        # get global target across branches, if desired
+        # Get global target across branches, if desired
         if self.td_target:
             with torch.no_grad():
-                if self.td_target == "mean":
+                if self.td_target == 1:  # mean
                     next_Q = next_Q.mean(1, keepdim=True)
-                elif self.td_target == "max":
+                elif self.td_target == 0:  # max
                     next_Q, _ = next_Q.max(1, keepdim=True)
                 else:
                     raise ValueError(f'Either "mean" or "max" must be entered to td_target keyword of BranchingDQN.'
@@ -208,31 +208,25 @@ class BranchingDQN(nn.Module):
 
         loss = F.mse_loss(expected_Q, current_Q)  # minimize TD error with Mean-Squared-Error
 
-        self.optim.zero_grad()
+        self.optimizer.zero_grad()
         loss.backward()
 
-        # print(f'\n\tLoss = {loss.item()}, Learning...')
+        # -- Modify Gradients --
+        if self.gradient_clip_norm != 0:
+            # If 0, don't clip norm
+            nn.utils.clip_grad_norm_(self.policy_network.parameters(), max_norm=self.gradient_clip_norm)
 
-        # gradient constraints
-        # for p in self.policy_network.parameters():
-        #     p.grad.data.clamp_(-1., 1.)
-
-        nn.utils.clip_grad_norm_(self.policy_network.parameters(), max_norm=self.gradient_clip_norm)
-
-        # normalize gradients converging at shared network from action branches and value stream
+        # Normalize gradients converging at shared network from action branches and value stream
         if self.rescale_shared_grad_factor is not None:
             for layer in self.policy_network.shared_model:
                 layer.weight.grad = layer.weight.grad * self.rescale_shared_grad_factor
 
-        self.optim.step()
+        # -- Optimize --
+        self.optimizer.step()
+
+        # -- Update --
         self.update_target_net()
-
-        # TensorBoard
-        # TB.add_scalar('Loss', loss.detach().cpu(), self.step_count)
-
-        # Update
         self.step_count += 1
-
 
         return loss.detach().cpu()
 
@@ -267,8 +261,11 @@ class EpsilonGreedyStrategy:
         self.start = start
         self.end = end
         self.decay = decay
+        self.current_exploration_rate = 0
 
     def get_exploration_rate(self, current_step, fixed_epsilon: float = None):
         if fixed_epsilon is not None:
+            self.current_exploration_rate = fixed_epsilon
             return fixed_epsilon
-        return self.end + (self.start - self.end) * math.exp(-1. * current_step * self.decay)
+        self.current_exploration_rate = self.end + (self.start - self.end) * math.exp(-1. * current_step * self.decay)
+        return self.current_exploration_rate

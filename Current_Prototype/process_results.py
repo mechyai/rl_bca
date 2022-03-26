@@ -8,17 +8,7 @@ from bca.agent import Agent
 def make_results_plot(sim_env: BcaEnv, rl_agent: Agent, all_dfs: pd.DataFrame):
     pass
 
-
-
-
-if __name__ == "__main__":
-    # Load data
-    # rtp_hvac_agent = np.load(r'A:\Files\PycharmProjects\RL-EmsPy\Current_Prototype\Output_Saved\rtp_histo_agent.npy')
-    rtp_hvac_agent = np.load(r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Output_Saved\20220317_0951_rtp_histo_agent.npy')
-    rtp_hvac_control = np.load(r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Output_Saved\rtp_histo_control.npy')
-
-    df_all = pd.read_csv(r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Output_Saved\dfs_results')
-
+def rtp_hvac_histogram():
     # transform data
     n_controlled_zones = 4
     rtp_all = df_all['rtp'].to_numpy()
@@ -26,8 +16,6 @@ if __name__ == "__main__":
 
 
     # plot data
-
-
     hist_range = (0, 50)
     hist_range = (0, 100)
     hist_range = (0, 10000)
@@ -35,7 +23,6 @@ if __name__ == "__main__":
     hist_range = (500, 10000)
     hist_range = (2000, 10000)
     hist_range = (5000, 10000)
-
 
     hist_range = (0, 50)
     hist_range = (0, 100)
@@ -54,15 +41,6 @@ if __name__ == "__main__":
     plt.xlabel('$RTP Bins')
     plt.ylabel('RTP HVAC Usage')
     plt.legend()
-
-
-
-
-
-
-
-
-
     # By BIN Sequence
 
     rtp_bins_full_coverage = [0, 5, 10, 15, 20, 25, 50, 100, 500, 1000, 5000, 10000]
@@ -79,5 +57,16 @@ if __name__ == "__main__":
     plt.xlabel('$RTP Bins')
     plt.ylabel('RTP HVAC Usage')
     plt.legend()
+
+
+if __name__ == "__main__":
+    # Load data
+    # rtp_hvac_agent = np.load(r'A:\Files\PycharmProjects\RL-EmsPy\Current_Prototype\Output_Saved\rtp_histo_agent.npy')
+    rtp_hvac_agent = np.load(r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Output_Saved\20220317_0951_rtp_histo_agent.npy')
+    rtp_hvac_control = np.load(r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Output_Saved\rtp_histo_control.npy')
+
+    df_all = pd.read_csv(r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Output_Saved\dfs_results')
+
+
 
 
