@@ -151,7 +151,3 @@ class RunManager:
         )
 
         return self.dqn
-
-    def load_bdq(self, model_path: str):
-        """Loads Pytorch Model from file"""
-        pass

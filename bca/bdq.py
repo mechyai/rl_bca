@@ -16,7 +16,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-from torch.utils.tensorboard import SummaryWriter
 
 """ 
 -- Vanilla BDQN --
@@ -34,7 +33,6 @@ Repos-
 # subclass tuple for experiences
 Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'reward', 'terminal'))
 
-# TB = SummaryWriter()
 
 class ReplayMemory(object):
     """Manages a replay memory, where data is stored as numpy arrays in a named tuple."""

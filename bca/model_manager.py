@@ -1,7 +1,7 @@
 import os
 
 from emspy import MdpManager, BcaEnv, idf_editor
-from bca import mdp_manager
+from bca import mdp_manager, paths_config
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 # OMP: Error #15: Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.
@@ -10,7 +10,8 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 class ModelManager:
     # -- FILE PATHS --
     # IDF File / Modification Paths
-    repo_root = 'A:/Files/PycharmProjects/rl_bca'
+    ep_path = paths_config.ep_path
+    repo_root = paths_config.repo_root
     os_folder = os.path.join(repo_root, 'Current_Prototype/BEM')
     auto_idf_folder = os.path.join(os_folder, 'CustomIdfFiles/Automated')
 
@@ -34,7 +35,7 @@ class ModelManager:
         'loss': ('Schedule:Constant', 'Schedule Value', 'Loss Tracker', 'Dimensionless'),
     }
 
-    def __init__(self, mdp_manager_file, idf_file_input, idf_file_output, year):
+    def __init__(self, mdp_manager_file: mdp_manager, idf_file_input: str, idf_file_output: str, year: int):
         """
         :param mdp_manager_file: Imported file that contains all MDP definitions
         :param idf_file_input: Base input EnergyPlus IDF file
@@ -50,7 +51,7 @@ class ModelManager:
     def create_sim(self, mdp: MdpManager):
         """Creates and returns BcaEnv simulation object."""
         return BcaEnv(
-            ep_path='A:/Programs/EnergyPlusV9-5-0/',
+            ep_path=self.ep_path,
             ep_idf_to_run=self.idf_file_output,
             timesteps=60,
             tc_vars=mdp.tc_var,

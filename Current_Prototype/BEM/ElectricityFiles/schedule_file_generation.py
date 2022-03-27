@@ -4,6 +4,8 @@ data from ERCOT.
 Usage: select year, file paths of EXCEL data from ERCOT and this will import the EXCEL data, transform them with
 Pandas, and spit out the .CSV & .IDF to be used in E+ Schedule:Files
 """
+import os
+
 import pandas as pd
 
 import ErcotRTM_fromCSV as rtm
@@ -11,6 +13,7 @@ import ErcotDAM_fromCSV as dam
 import ErcotFuelMix_fromCSV as fmix
 
 from emspy import idf_editor
+from bca import paths_config
 
 # -- OUTPUT PARAMS --
 # metadata
@@ -19,9 +22,9 @@ year = 2019
 settlement_point_name = 'HB_NORTH'
 settlement_point_type = 'HU'
 # output paths
-save_schedule_file_csv = r'A:/Files/PycharmProjects/rl_bca/Current_Prototype/BEM/ScheduleFiles/'
-save_schedule_file_idf = r'A:/Files/PycharmProjects/rl_bca/Current_Prototype/BEM/CustomIdfFiles/Automated/'
-
+repo_root = paths_config.repo_root
+save_schedule_file_csv = os.path.join(repo_root, 'Current_Prototype/BEM/ScheduleFiles/')
+save_schedule_file_idf = os.path.join(repo_root, 'Current_Prototype/BEM/CustomIdfFiles/Automated/')
 
 # -- RTP --
 def rtm_schedule_file():
