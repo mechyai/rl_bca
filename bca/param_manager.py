@@ -16,17 +16,17 @@ class RunManager:
     action_branches = 4
 
     agent_params = {
-        'interaction_ts_frequency': [15],  # [5, 10, 15, 30],
-        'learning_loops': [1, 5],  # [1, 2, 5],
+        'interaction_ts_frequency': [5],  # * [5, 10, 15],
+        'learning_loops': [10],
 
         # --- Behavioral Policy ---
         'eps_start': [0.15],
         'eps_end': [0.05],
-        'eps_decay': [1e-6],
+        'eps_decay': [1e-5],
 
         # --- Experience Replay ---
-        'replay_capacity': [500, 1000, 10000],
-        'batch_size': [64, 256, 512, 1024],
+        'replay_capacity': [500, 1000, 5000],
+        'batch_size': [32, 64, 128],
     }
 
     bdq_fixed_params = {
@@ -44,14 +44,14 @@ class RunManager:
         'advantage_streams_size': [48],
 
         # TD Update
-        'learning_rate': [1e-2, 1e-3, 1e-4, 1e-5],
-        'gamma': [0.2, 0.5, 0.9],
+        'learning_rate': [1e-3, 1e-4, 1e-5],
+        'gamma': [0.3, 0.5, 0.7],
 
         # Network mods
-        'td_target': [0, 1],  # (0) mean or (1) max
+        'td_target': [1],  # (0) mean or (1) max
         'gradient_clip_norm': [1],  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': [1 / (1 + action_branches)],
-        'target_update_freq': [1e3]  # [50, 150, 500, 1e3, 1e4],
+        'target_update_freq': [500, 1e3, 2e3]  # [50, 150, 500, 1e3, 1e4],
     }
 
     hyperparameter_dict = {**agent_params, **bdq_fixed_params, **bdq_params}
@@ -77,8 +77,13 @@ class RunManager:
         Run = namedtuple('Run', params.keys())
 
         runs = []
-        for v in product(*params.values()):
-            runs.append(Run(*v))
+        for config in product(*params.values()):
+            run_config = Run(*config)
+            if run_config.batch_size > run_config.replay_capacity:
+                # Incompatible hyperparam configuration
+                pass
+            else:
+                runs.append(run_config)
 
         return runs
 
@@ -89,14 +94,6 @@ class RunManager:
         random.shuffle(runs)
 
         return runs
-
-    def get_random_run(self):
-        """Randomly select run from list of runs, without replacement."""
-
-        index_select = random.randrange(0, len(self.runs_list_left))
-        self.current_run = self.runs_list_left.pop(index_select)
-
-        return self.current_run
 
     def create_agent(self, run, mdp: MdpManager, sim: BcaEnv, summary_writer: tb.SummaryWriter):
         """Creates and returns new RL Agent from defined parameters."""
