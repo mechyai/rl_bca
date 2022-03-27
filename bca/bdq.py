@@ -156,7 +156,6 @@ class BranchingDQN(nn.Module):
 
         self.td_target = td_target
 
-
     def get_greedy_action(self, state_tensor):
         x = state_tensor.to(self.device).T  # single action row vector
         with torch.no_grad():

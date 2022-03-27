@@ -1,4 +1,5 @@
 import os
+import gc
 import matplotlib.pyplot as plt
 import time
 import torch
@@ -25,10 +26,9 @@ epw_file = os.path.join(os_folder, 'WeatherFiles/EPW/DallasTexas_2019CST.epw')
 # -- Simulation Params --
 cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 
-
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 50,
+    'epochs': 1,
     'run_benchmark': True,
     'exploit_final_epoch': False,
     'save_model': False,
@@ -55,12 +55,8 @@ run_manager = RunManager()
 runs = run_manager.shuffle_runs()
 
 # ------------------------------------------------ Run Study ------------------------------------------------
-epochs = 2
-runs_limit = 5
+runs_limit = 1
 for i, run in enumerate(runs):
-
-    # ---- Tensor Board ----
-    TB = SummaryWriter(comment=f'_run{i}')
 
     # -- Create New Model Components --
     my_bdq = run_manager.create_bdq(run)
@@ -78,7 +74,14 @@ for i, run in enumerate(runs):
         learn = True
         act = True
 
-    for epoch in range(epochs):  # train under same condition
+    for epoch in range(experiment_params_dict['epochs']):  # train under same condition
+
+        # ---- Tensor Board ----
+        TB = SummaryWriter(comment=f'_run{i}_epoch{epoch}')
+
+        if 'my_mdp' in locals():
+            del my_mdp, my_sim, my_policy, my_memory, my_agent
+            gc.collect()  # release memory
 
         # -- Create MDP & Building Sim Instance --
         my_mdp = my_model.create_mdp()
@@ -134,7 +137,7 @@ for i, run in enumerate(runs):
             },
             hparam_domain_discrete=
             {
-                **{'epoch': list(range(epochs))},
+                **{'epoch': list(range(experiment_params_dict['epochs']))},
                 **RunManager.hyperparameter_dict
             },
             run_name=''
@@ -153,5 +156,6 @@ for i, run in enumerate(runs):
     # if experiment_params_dict['save_model'] and not (epoch == 1 and experiment_params_dict['run_benchmark']):
     #     torch.save(bdq_model.policy_network.state_dict(), os.path.join(folder, model_name))  # save model
 
-    if i >= runs_limit:
+    if i >= runs_limit - 1 * experiment_params_dict['run_benchmark']:
+        "Breaking from loop"
         break

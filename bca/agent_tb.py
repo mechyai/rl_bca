@@ -158,8 +158,6 @@ class Agent:
         self.tb.add_scalar('Reward/Wind-HVAC Reward', self.reward_component_sum[2], self.current_step)
         # Sim Data
         self.tb.add_scalar('_SimData/RTP', self.mdp.get_mdp_element('rtp').value, self.current_step)
-        self.tb.add_scalar('_SimData/Epsilon', self.epsilon, self.current_step)
-
         # Sim Results
         self.tb.add_scalar('_Results/Comfort Dissatisfied Total', self.comfort_dissatisfaction_total, self.current_step)
         self.tb.add_scalar('_Results/HVAC RTP Cost Total', self.hvac_rtp_costs_total, self.current_step)
@@ -254,7 +252,6 @@ class Agent:
             'wind_hvac_use': self.wind_energy_hvac_data[-1],
             'total_hvac_use': self.total_energy_hvac_data[-1],
             # -- Learning --
-            # loss
             'loss': self.loss
         }
 
