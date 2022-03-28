@@ -9,6 +9,32 @@ from .bdq import BranchingDQN, EpsilonGreedyStrategy, ReplayMemory
 from emspy import BcaEnv, MdpManager
 
 
+# -- Normalization Params --
+# Zn0
+zn0_heating_electricity_max = None
+zn0_cooling_electricity_max = None
+zn0_fan_electricity_max = None
+# Zn1
+zn1_heating_electricity_max = None
+zn1_cooling_electricity_max = None
+zn1_fan_electricity_max = None
+# Zn2
+zn2_heating_electricity_max = None
+zn2_cooling_electricity_max = None
+zn2_fan_electricity_max = None
+# Zn3
+zn3_heating_electricity_max = None
+zn3_cooling_electricity_max = None
+zn3_fan_electricity_max = None
+# Zn4
+zn4_heating_electricity_max = None
+zn4_cooling_electricity_max = None
+zn4_fan_electricity_max = None
+
+unoccupied_temp_range = []
+occupied_temp_range = []
+
+
 class Agent:
     def __init__(self,
                  emspy_sim: BcaEnv,
@@ -54,7 +80,8 @@ class Agent:
         self.epsilon = policy.start
         self.fixed_epsilon = None  # optional fixed exploration rate
         self.greedy_epsilon = policy
-        # misc
+
+        # -- ACTION ENCODING --
         self.temp_deadband = 5  # distance between heating and cooling setpoints
         self.temp_buffer = 3  # new setpoint distance from current temps
 
@@ -76,9 +103,9 @@ class Agent:
         self.current_step = 0
 
         # -- INTERACTION FREQUENCIES --
-        self.observation_ts = 15  # how often agent will observe state & keep fixed action - off-policy
-        self.action_ts = 15  # how often agent will observe state & act - on-policy
-        self.action_delay = 15  # how many ts will agent be fixed at beginning of simulation
+        self.observation_ts = interaction_frequency  # how often agent will observe state & keep fixed action - off-policy
+        self.action_ts = interaction_frequency  # how often agent will observe state & act - on-policy
+        self.action_delay = interaction_frequency  # how many ts will agent be fixed at beginning of simulation
 
         # -- REPLAY MEMORY --
         self.memory = replay_memory
@@ -93,12 +120,12 @@ class Agent:
         self.hvac_rtp_costs_total = 0
 
         # -- RESULTS TRACKING --
+        self.discomfort_histogram_data = []
         self.rtp_histogram_data = []
         self.wind_energy_hvac_data = []
         self.total_energy_hvac_data = []
         # TensorBoard
-        self.tb = summary_writer
-        # self.tb.add_graph(dqn_model.policy_network, torch.rand(dqn_model.observation_space).unsqueeze(0))
+        self.TB = summary_writer
 
         # -- LEARNING --
         self.learning = True
@@ -150,17 +177,17 @@ class Agent:
         self.hvac_rtp_costs_total += self.hvac_rtp_costs
 
         # -- TensorBoard
-        self.tb.add_scalar('Loss', self.loss, self.current_step)
-        self.tb.add_scalar('Reward/All Reward', self.reward, self.current_step)
-        self.tb.add_scalar('Reward/Reward Cumulative', self.reward_sum, self.current_step)
-        self.tb.add_scalar('Reward/Comfort Reward', self.reward_component_sum[0], self.current_step)
-        self.tb.add_scalar('Reward/RTP-HVAC Reward', self.reward_component_sum[1], self.current_step)
-        self.tb.add_scalar('Reward/Wind-HVAC Reward', self.reward_component_sum[2], self.current_step)
+        self.TB.add_scalar('Loss', self.loss, self.current_step)
+        self.TB.add_scalar('Reward/All Reward', self.reward, self.current_step)
+        self.TB.add_scalar('Reward/Reward Cumulative', self.reward_sum, self.current_step)
+        self.TB.add_scalar('Reward/Comfort Reward', self.reward_component_sum[0], self.current_step)
+        self.TB.add_scalar('Reward/RTP-HVAC Reward', self.reward_component_sum[1], self.current_step)
+        self.TB.add_scalar('Reward/Wind-HVAC Reward', self.reward_component_sum[2], self.current_step)
         # Sim Data
-        self.tb.add_scalar('_SimData/RTP', self.mdp.get_mdp_element('rtp').value, self.current_step)
+        self.TB.add_scalar('_SimData/RTP', self.mdp.get_mdp_element('rtp').value, self.current_step)
         # Sim Results
-        self.tb.add_scalar('_Results/Comfort Dissatisfied Total', self.comfort_dissatisfaction_total, self.current_step)
-        self.tb.add_scalar('_Results/HVAC RTP Cost Total', self.hvac_rtp_costs_total, self.current_step)
+        self.TB.add_scalar('_Results/Comfort Dissatisfied Total', self.comfort_dissatisfaction_total, self.current_step)
+        self.TB.add_scalar('_Results/HVAC RTP Cost Total', self.hvac_rtp_costs_total, self.current_step)
 
         # -- UPDATE DATA --
         self.state_normalized = self.next_state_normalized

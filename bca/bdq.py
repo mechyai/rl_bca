@@ -54,13 +54,66 @@ class ReplayMemory(object):
         return len(self.memory) >= self.batch_size
 
 
+# class ReplayMemory(object):
+#     """Manages a replay memory, where data is stored as numpy arrays in a named tuple."""
+#     def __init__(self, capacity, batch_size):
+#         self.interaction_count = 0
+#         self.capacity = capacity
+#         self.batch_size = batch_size
+#         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#
+#         self.state_memory = None
+#         self.action_memory = None
+#         self.next_state_memory = None
+#         self.reward_memory = None
+#         self.terminal_memory = None
+#         self.first_sample = True
+#
+#     def push(self, state, action, next_state, reward, terminal_flag):
+#         """Save a transition to replay memory"""
+#         if self.first_sample:
+#             self.state_memory = torch.zeros([self.capacity, len(state)]).to(self.device)
+#             self.action_memory = torch.zeros([self.capacity, len(action)]).to(self.device)
+#             self.next_state_memory = torch.zeros([self.capacity, len(next_state)]).to(self.device)
+#             self.reward_memory = torch.zeros([self.capacity, 1]).to(self.device)
+#             self.terminal_memory = torch.zeros([self.capacity, 1]).to(self.device)
+#             self.first_sample = False
+#
+#         index = self.interaction_count % self.capacity
+#
+#         self.state_memory[index] = torch.Tensor(state).to(self.device)
+#         self.action_memory[index] = torch.Tensor(action).to(self.device)
+#         self.next_state_memory[index] = torch.Tensor(next_state).to(self.device)
+#         self.reward_memory[index] = torch.Tensor([reward]).to(self.device)
+#         self.terminal_memory[index] = torch.Tensor([terminal_flag]).to(self.device)
+#
+#         self.interaction_count += 1
+#
+#     def sample(self):
+#         """Sample a transition randomly"""
+#         sample_width = self.interaction_count if self.interaction_count < self.capacity else self.capacity
+#         sample_indices = np.random.choice(range(sample_width), self.batch_size, replace=False)
+#
+#         state_batch = self.state_memory[sample_indices].to(self.device)
+#         action_batch = self.action_memory[sample_indices].long().to(self.device)
+#         next_state_batch = self.next_state_memory[sample_indices].to(self.device)
+#         reward_batch = self.reward_memory[sample_indices].to(self.device)
+#         terminal_batch = self.terminal_memory[sample_indices].to(self.device)
+#
+#         return state_batch, action_batch, next_state_batch, reward_batch, terminal_batch
+#
+#     def can_provide_sample(self):
+#         """Check if replay memory has enough experience tuples to sample batch from"""
+#         return self.interaction_count >= self.batch_size
+
+
 class BranchingQNetwork(nn.Module):
     """BDQ network architecture."""
 
     def __init__(self, observation_dim, action_branches, action_dim,
                  shared_network_size, value_stream_size, advantage_streams_size):
         """
-        Below, we define the BDQN architecture's network segments, consisting of a MLP shared representation,
+        Below, we define the BDQN architecture's network segments, consisting of RNN node & MLP shared representation,
         then a dueling state value module and individual advantage branches. At the end, the value and advantage streams
         are combined to get the branched Q-value output.
         """
@@ -182,6 +235,7 @@ class BranchingDQN(nn.Module):
     def update_policy(self, batch):
         # get converted batch of tensors
         batch_states, batch_actions, batch_next_states, batch_rewards, batch_terminals = self._extract_tensors(batch)
+        # batch_states, batch_actions, batch_next_states, batch_rewards, batch_terminals = batch
 
         # Bellman TD update
         current_Q = self.get_current_qval(self.policy_network, batch_states, batch_actions)

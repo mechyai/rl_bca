@@ -6,7 +6,7 @@ from itertools import product
 import torch.utils.tensorboard as tb
 
 from emspy import BcaEnv, MdpManager
-from bca import BranchingDQN, ReplayMemory, EpsilonGreedyStrategy, Agent_TB
+from bca import BranchingDQN, BranchingDQN_RNN, ReplayMemory, SequenceReplayMemory, EpsilonGreedyStrategy, Agent_TB
 
 
 class RunManager:
@@ -21,9 +21,9 @@ class RunManager:
         'learning_loops': [10],
 
         # --- Behavioral Policy ---
-        'eps_start': [0.15],
-        'eps_end': [0.05],
-        'eps_decay': [1e-5],
+        'eps_start': [1],
+        'eps_end': [0],
+        'eps_decay': [0],
 
         # --- Experience Replay ---
         'replay_capacity': [500],
@@ -111,6 +111,7 @@ class RunManager:
 
     def get_runs(self, params: dict):
         """Get all permutations of hyperparameters passed."""
+
         Run = namedtuple('Run', params.keys())
 
         runs = []
@@ -159,32 +160,59 @@ class RunManager:
 
         return self.policy
 
-    def create_exp_replay(self, run: namedtuple):
+    def create_exp_replay(self, run: namedtuple, rnn: False):
         """Creates and returns new Experience Replay from defined parameters."""
 
-        self.experience_replay = ReplayMemory(
-            capacity=run.replay_capacity,
-            batch_size=run.batch_size
-        )
+        if rnn:
+            self.experience_replay = SequenceReplayMemory(
+                capacity=run.replay_capacity,
+                batch_size=run.batch_size,
+                sequence_length=5,
+                interaction_spacing=3
+            )
+        else:
+            self.experience_replay = ReplayMemory(
+                capacity=run.replay_capacity,
+                batch_size=run.batch_size
+            )
 
         return self.experience_replay
 
-    def create_bdq(self, run: namedtuple):
+    def create_bdq(self, run: namedtuple, rnn: False):
         """Creates and returns new BDQ model from defined parameters."""
 
-        self.dqn = BranchingDQN(
-            observation_dim=run.observation_dim,
-            action_branches=run.action_branches,
-            action_dim=run.action_dim,
-            shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
-            value_stream_size=[run.value_stream_size],
-            advantage_streams_size=[run.advantage_streams_size],
-            target_update_freq=run.target_update_freq,
-            learning_rate=run.learning_rate,
-            gamma=run.gamma,
-            td_target=run.td_target,
-            gradient_clip_norm=run.gradient_clip_norm,
-            rescale_shared_grad_factor=run.rescale_shared_grad_factor
-        )
+        if rnn:
+            self.dqn = BranchingDQN_RNN(
+                observation_dim=run.observation_dim,
+                rnn_hidden_size=128,
+                rnn_num_layers=1,
+                action_branches=run.action_branches,
+                action_dim=run.action_dim,
+                shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
+                value_stream_size=[run.value_stream_size],
+                advantage_streams_size=[run.advantage_streams_size],
+                target_update_freq=run.target_update_freq,
+                learning_rate=run.learning_rate,
+                gamma=run.gamma,
+                td_target=run.td_target,
+                gradient_clip_norm=run.gradient_clip_norm,
+                rescale_shared_grad_factor=run.rescale_shared_grad_factor
+            )
+
+        else:
+            self.dqn = BranchingDQN(
+                observation_dim=run.observation_dim,
+                action_branches=run.action_branches,
+                action_dim=run.action_dim,
+                shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
+                value_stream_size=[run.value_stream_size],
+                advantage_streams_size=[run.advantage_streams_size],
+                target_update_freq=run.target_update_freq,
+                learning_rate=run.learning_rate,
+                gamma=run.gamma,
+                td_target=run.td_target,
+                gradient_clip_norm=run.gradient_clip_norm,
+                rescale_shared_grad_factor=run.rescale_shared_grad_factor
+            )
 
         return self.dqn

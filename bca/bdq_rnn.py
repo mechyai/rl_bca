@@ -35,12 +35,12 @@ class SequenceReplayMemory(object):
     """Manages a sequential replay memory, where data is stored as numpy arrays."""
 
     def __init__(self, capacity: int, batch_size: int, sequence_length: int, interaction_spacing: int = 1):
+
         self.capacity = capacity
         self.batch_size = batch_size
+
         self.sequence_length = sequence_length
         self.interaction_spacing = interaction_spacing
-
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         self.state_memory = None
         self.action_memory = None
@@ -48,6 +48,7 @@ class SequenceReplayMemory(object):
         self.reward_memory = None
         self.terminal_memory = None
 
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.interaction_count = 0
         self.first_sample = True
 
@@ -62,6 +63,7 @@ class SequenceReplayMemory(object):
             self.terminal_memory = torch.zeros([self.capacity, 1]).to(self.device)
             self.first_sample = False
 
+        # Loop through indices based on size of memory
         index = self.interaction_count % self.capacity
 
         self.state_memory[index] = torch.Tensor(state).to(self.device)
@@ -73,14 +75,28 @@ class SequenceReplayMemory(object):
         self.interaction_count += 1
 
     def sample(self):
-        """Sample a transition randomly"""
+        """Sample a sequence of transitions randomly"""
 
-        sample_width = self.interaction_count if self.interaction_count < self.capacity else self.capacity
-        sample_indices = np.random.choice(range(sample_width), self.batch_size, replace=False)
+        # Get appropriate indices to sample from replay
+        sample_range = self.interaction_count if self.interaction_count < self.capacity else self.capacity
+        sample_start = self.sequence_length * self.interaction_spacing
+        sample_indices = np.random.choice(range(sample_start, sample_range), self.batch_size, replace=False)
 
-        state_batch = self.state_memory[sample_indices].to(self.device)
+        # Get full range of sequence indices for each random sample starting point
+        sequence_indices = np.copy(sample_indices)
+        for _ in range(self.sequence_length - 1):
+            sequence_indices = \
+                np.concatenate((sequence_indices, sequence_indices[-self.batch_size:] - self.interaction_spacing))
+
+        # Sequence sampling
+        # RNN input shape: batch size, sequence len, input size
+        state_batch = self.state_memory[sequence_indices]
+        state_batch = torch.reshape(state_batch, (self.batch_size, -1)).to(self.device)
+        next_state_batch = self.next_state_memory[sequence_indices]
+        next_state_batch = torch.reshape(next_state_batch, (self.batch_size, -1)).to(self.device)
+
+        # No sequence sampling needed
         action_batch = self.action_memory[sample_indices].long().to(self.device)
-        next_state_batch = self.next_state_memory[sample_indices].to(self.device)
         reward_batch = self.reward_memory[sample_indices].to(self.device)
         terminal_batch = self.terminal_memory[sample_indices].to(self.device)
 
@@ -90,15 +106,16 @@ class SequenceReplayMemory(object):
         """Check if replay memory has enough experience tuples to sample batch from"""
 
         enough_interactions = self.interaction_count >= self.batch_size
-        enough_sequences = self.interaction_count >= (self.interaction_spacing * self.sequence_length)
+        enough_sequences1 = self.interaction_count >= (self.interaction_spacing * self.sequence_length)
+        enough_sequences2 = self.interaction_count - (self.sequence_length * self.interaction_spacing) > self.capacity
 
-        return enough_interactions and enough_sequences
+        return enough_interactions and enough_sequences2
 
 
-class BranchingQNetwork(nn.Module):
-    """BDQ network architecture."""
+class BranchingQNetwork_RNN(nn.Module):
+    """BDQ network architecture with recurrent node."""
 
-    def __init__(self, observation_dim, action_branches, action_dim,
+    def __init__(self, observation_dim, rnn_hidden_size, rnn_num_layers, action_branches, action_dim,
                  shared_network_size, value_stream_size, advantage_streams_size):
         """
         Below, we define the BDQN architecture's network segments, consisting of a MLP shared representation,
@@ -107,10 +124,16 @@ class BranchingQNetwork(nn.Module):
         """
 
         super().__init__()
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+        # -- RNN Node --
+        self.rnn_hidden_size = rnn_hidden_size
+        self.rnn_num_layers = rnn_num_layers
+        self.rnn = nn.RNN(observation_dim, rnn_hidden_size, rnn_num_layers, batch_first=True)
 
         # -- Shared State Feature Estimator --
         layers = []
-        prev_layer_size = observation_dim
+        prev_layer_size = rnn_hidden_size
 
         for i, layer_size in enumerate(shared_network_size):
             layers.append(nn.Linear(prev_layer_size, layer_size))
@@ -143,8 +166,12 @@ class BranchingQNetwork(nn.Module):
         )
 
     def forward(self, state_input):
+        # RNN Node
+        h0 = torch.zeros(self.rnn_num_layers, state_input.size(0), self.rnn_hidden_size).to(self.device)
+        out, _ = self.rnn(state_input, h0)  # out: batch size, seq len, hidden siz
+        out = out[:, -1, :]  # get last timestep
         # Shared Network
-        out = self.shared_model(state_input)
+        out = self.shared_model(out)
         # Value Branch
         value = self.value_stream(out)
         # Advantage Streams
@@ -156,11 +183,11 @@ class BranchingQNetwork(nn.Module):
         return q_vals
 
 
-class BranchingDQN(nn.Module):
+class BranchingDQN_RNN(nn.Module):
     """A branching, dueling, & double DQN algorithm."""
 
-    def __init__(self, observation_dim: int, action_branches: int, action_dim: int,
-                 shared_network_size: list, value_stream_size: list, advantage_streams_size: list,
+    def __init__(self, observation_dim: int, rnn_hidden_size: int, rnn_num_layers: int, action_branches: int,
+                 action_dim: int, shared_network_size: list, value_stream_size: list, advantage_streams_size: list,
                  target_update_freq: int, learning_rate: float, gamma: float, td_target: str,
                  gradient_clip_norm: float, rescale_shared_grad_factor: float = None):
 
@@ -177,10 +204,10 @@ class BranchingDQN(nn.Module):
         self.gradient_clip_norm = gradient_clip_norm
         self.rescale_shared_grad_factor = rescale_shared_grad_factor
 
-        self.policy_network = BranchingQNetwork(observation_dim, action_branches, action_dim, shared_network_size,
-                                                value_stream_size, advantage_streams_size)
-        self.target_network = BranchingQNetwork(observation_dim, action_branches, action_dim, shared_network_size,
-                                                value_stream_size, advantage_streams_size)
+        self.policy_network = BranchingQNetwork_RNN(observation_dim, rnn_hidden_size, rnn_num_layers, action_branches,
+                                                    action_dim, shared_network_size, value_stream_size, advantage_streams_size)
+        self.target_network = BranchingQNetwork_RNN(observation_dim, rnn_hidden_size, rnn_num_layers, action_branches,
+                                                    action_dim, shared_network_size, value_stream_size, advantage_streams_size)
         self.target_network.load_state_dict(self.policy_network.state_dict())  # copy params
 
         self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.learning_rate)  # learned policy
@@ -195,7 +222,7 @@ class BranchingDQN(nn.Module):
 
         self.td_target = td_target
 
-    def get_greedy_action(self, state_tensor):
+    def get_greedy_action(self, state_tensor):  # TODO how to get state input sequence? 1, seq, feature (use most recent entries in replay)
         x = state_tensor.to(self.device).T  # single action row vector
         with torch.no_grad():
             out = self.policy_network(x).squeeze(0)
@@ -221,7 +248,7 @@ class BranchingDQN(nn.Module):
             self.target_network.load_state_dict(self.policy_network.state_dict())
 
     def update_policy(self, batch):
-        # get converted batch of tensors
+        # Get converted batch of tensors
         batch_states, batch_actions, batch_next_states, batch_rewards, batch_terminals = batch
 
         # Bellman TD update

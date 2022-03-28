@@ -14,7 +14,7 @@ from bca import ModelManager, RunManager, mdp_manager, paths_config
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(paths_config.repo_root, 'Current_Prototype/BEM')
-idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_5z_V1_baseline_May.idf')  # !--------------------------------------------
+idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_5z_V1_test.idf')  # !--------------------------------------------
 idf_final_file = os.path.join(bem_folder, 'BEM_5z_V1.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, 'WeatherFiles/EPW/DallasTexas_2019CST.epw')
@@ -48,14 +48,15 @@ my_model.create_custom_idf()
 
 # --- Study Parameters ---
 run_manager = RunManager()
-runs = run_manager.shuffle_runs()
+# runs = run_manager.shuffle_runs()
+runs = run_manager.get_runs(run_manager.selected_params)
 
 # ------------------------------------------------ Run Study ------------------------------------------------
 runs_limit = 1
 for i, run in enumerate(runs):
 
     # -- Create New Model Components --
-    my_bdq = run_manager.create_bdq(run)
+    my_bdq = run_manager.create_bdq(run, rnn=True)
 
     # Load model, if desired
     if experiment_params_dict['load_model']:
@@ -85,7 +86,7 @@ for i, run in enumerate(runs):
 
         # -- Instantiate RL Agent --
         my_policy = run_manager.create_policy(run)
-        my_memory = run_manager.create_exp_replay(run)
+        my_memory = run_manager.create_exp_replay(run, rnn=True)
         my_agent = run_manager.create_agent(run, my_mdp, my_sim, TB)
 
         # -- Set Sim Calling Point(s) & Callback Function(s) --
@@ -119,7 +120,7 @@ for i, run in enumerate(runs):
             hparam_dict=
             {
                 **{
-                    'run': run,
+                    'run': i,
                     'epoch': epoch
                    },
                 **run._asdict()
