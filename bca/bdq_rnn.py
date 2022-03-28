@@ -91,9 +91,9 @@ class SequenceReplayMemory(object):
         # Sequence sampling
         # RNN input shape: batch size, sequence len, input size
         state_batch = self.state_memory[sequence_indices]
-        state_batch = torch.reshape(state_batch, (self.batch_size, -1)).to(self.device)
+        state_batch = torch.reshape(state_batch, (self.batch_size, self.sequence_length, -1)).to(self.device)
         next_state_batch = self.next_state_memory[sequence_indices]
-        next_state_batch = torch.reshape(next_state_batch, (self.batch_size, -1)).to(self.device)
+        next_state_batch = torch.reshape(next_state_batch, (self.batch_size, self.sequence_length, -1)).to(self.device)
 
         # No sequence sampling needed
         action_batch = self.action_memory[sample_indices].long().to(self.device)
