@@ -32,7 +32,7 @@ class RunManager:
     bdq_fixed_params = {
         'observation_dim': [36],
         'action_branches': [action_branches],  # n building zones
-        'action_dim': [5],
+        'action_dim': [6],
     }
 
     bdq_params = {
@@ -51,7 +51,7 @@ class RunManager:
         'td_target': [1],  # (0) mean or (1) max
         'gradient_clip_norm': [1],  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': [1 / (1 + action_branches)],
-        'target_update_freq': [500, 1e3, 2e3]  # [50, 150, 500, 1e3, 1e4],
+        'target_update_freq': [500.0, 1e3, 2e3]  # [50, 150, 500, 1e3, 1e4],
     }
 
     hyperparameter_dict = {**agent_params, **bdq_fixed_params, **bdq_params}
