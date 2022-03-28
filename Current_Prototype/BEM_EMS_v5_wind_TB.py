@@ -9,15 +9,15 @@ import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 
 from emspy import EmsPy
-from bca import ModelManager, RunManager, mdp_manager
+from bca import ModelManager, RunManager, mdp_manager, paths_config
 
 # -- FILE PATHS --
 # IDF File / Modification Paths
-os_folder = 'A:/Files/PycharmProjects/rl_bca/Current_Prototype/BEM'
-idf_file_base = os.path.join(os_folder, 'IdfFiles/BEM_5z_V1_May.idf')  # !--------------------------------------------
-idf_final_file = os.path.join(os_folder, 'BEM_5z_V1.idf')
+bem_folder = os.path.join(paths_config.repo_root, 'Current_Prototype/BEM')
+idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_5z_V1_May.idf')  # !--------------------------------------------
+idf_final_file = os.path.join(bem_folder, 'BEM_5z_V1.idf')
 # Weather Path
-epw_file = os.path.join(os_folder, 'WeatherFiles/EPW/DallasTexas_2019CST.epw')
+epw_file = os.path.join(bem_folder, 'WeatherFiles/EPW/DallasTexas_2019CST.epw')
 
 # -- Simulation Params --
 cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
@@ -147,11 +147,10 @@ for i, run in enumerate(runs):
         if not act:
             break
 
-
     # # -- Save Model (don't save benchmark model if only 1 epoch)
     # if experiment_params_dict['save_model'] and not (epoch == 1 and experiment_params_dict['run_benchmark']):
     #     torch.save(bdq_model.policy_network.state_dict(), os.path.join(folder, model_name))  # save model
 
-    if i >= runs_limit - 1 * experiment_params_dict['run_benchmark']:
+    if i >= runs_limit - 1:
         "Breaking from loop"
         break
