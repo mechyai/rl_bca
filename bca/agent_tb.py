@@ -346,12 +346,21 @@ class Agent:
             for zone_i, action in enumerate(self.action):
                 zone_temp = self.mdp.ems_master_list[f'zn{zone_i}_temp'].value
 
+                # actuation_cmd_dict = {
+                #     0: [15.1, 18.1],  # LOWEST
+                #     1: [18.1, 21.1],  # LOWER
+                #     2: [21.1, 23.9],  # IDEAL*
+                #     3: [23.9, 26.9],  # HIGHER
+                #     4: [26.9, 29.9]  # HIGHEST
+                # }
+
                 actuation_cmd_dict = {
                     0: [15.1, 18.1],  # LOWEST
                     1: [18.1, 21.1],  # LOWER
                     2: [21.1, 23.9],  # IDEAL*
                     3: [23.9, 26.9],  # HIGHER
-                    4: [26.9, 29.9]  # HIGHEST
+                    4: [26.9, 29.9],  # HIGHEST
+                    5: [15.1, 29.9],  # OUTER
                 }
 
                 heating_sp = actuation_cmd_dict[action][0]
