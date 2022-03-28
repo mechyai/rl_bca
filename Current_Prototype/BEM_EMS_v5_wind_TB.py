@@ -14,7 +14,7 @@ from bca import ModelManager, RunManager, mdp_manager, paths_config
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(paths_config.repo_root, 'Current_Prototype/BEM')
-idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_5z_V1_May.idf')  # !--------------------------------------------
+idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_5z_V1_baseline_May.idf')  # !--------------------------------------------
 idf_final_file = os.path.join(bem_folder, 'BEM_5z_V1.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, 'WeatherFiles/EPW/DallasTexas_2019CST.epw')
@@ -25,7 +25,7 @@ cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 1,
-    'run_benchmark': True,
+    'run_benchmark': False,
     'exploit_final_epoch': False,
     'save_model': False,
     'save_model_final_epoch': True,
@@ -118,7 +118,10 @@ for i, run in enumerate(runs):
         TB.add_hparams(
             hparam_dict=
             {
-                **{'epoch': epoch},
+                **{
+                    'run': run,
+                    'epoch': epoch
+                   },
                 **run._asdict()
             },
             metric_dict=
@@ -133,7 +136,10 @@ for i, run in enumerate(runs):
             },
             hparam_domain_discrete=
             {
-                **{'epoch': list(range(experiment_params_dict['epochs']))},
+                **{
+                    'run': list(range(runs_limit)),
+                    'epoch': list(range(experiment_params_dict['epochs']))
+                },
                 **RunManager.hyperparameter_dict
             },
             run_name=''
