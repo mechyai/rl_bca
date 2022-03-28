@@ -15,6 +15,43 @@ class RunManager:
     # Misc. Params
     action_branches = 4
 
+    selected_params = {
+        # -- Agent Params --
+        'interaction_ts_frequency': [5],  # * [5, 10, 15],
+        'learning_loops': [10],
+
+        # --- Behavioral Policy ---
+        'eps_start': [0.15],
+        'eps_end': [0.05],
+        'eps_decay': [1e-5],
+
+        # --- Experience Replay ---
+        'replay_capacity': [500],
+        'batch_size': [32],
+
+        # -- BDQ --
+        # Fixed
+        'observation_dim': [36],
+        'action_branches': [action_branches],  # n building zones
+        'action_dim': [6],
+
+        # Architecture
+        'shared_network_size_l1': [96],
+        'shared_network_size_l2': [64],
+        'value_stream_size': [48],
+        'advantage_streams_size': [48],
+
+        # TD Update
+        'learning_rate': [1e-4],
+        'gamma': [0.7],
+
+        # Network mods
+        'td_target': [1],  # (0) mean or (1) max
+        'gradient_clip_norm': [1],  # [0, 1, 5, 10],  # 0 is nothing
+        'rescale_shared_grad_factor': [1 / (1 + action_branches)],
+        'target_update_freq': [1e3]  # [50, 150, 500, 1e3, 1e4],
+    }
+
     agent_params = {
         'interaction_ts_frequency': [5],  # * [5, 10, 15],
         'learning_loops': [10],
