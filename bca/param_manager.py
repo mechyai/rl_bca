@@ -18,12 +18,12 @@ class RunManager:
     selected_params = {
         # -- Agent Params --
         'interaction_ts_frequency': [5],  # * [5, 10, 15],
-        'learning_loops': [10],
+        'learning_loops': [5],
 
         # --- Behavioral Policy ---
-        'eps_start': [1.0],
-        'eps_end': [0.0],
-        'eps_decay': [0.0],
+        'eps_start': [0.1],
+        'eps_end': [0.05],
+        'eps_decay': [1e-5],
 
         # --- Experience Replay ---
         'replay_capacity': [500],
@@ -50,6 +50,19 @@ class RunManager:
         'gradient_clip_norm': [1],  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': [1 / (1 + action_branches)],
         'target_update_freq': [1e3]  # [50, 150, 500, 1e3, 1e4],
+    }
+
+    rnn_params = {
+        # -- Agent / Model --
+        'rnn': [True],
+
+        # -- Replay Memory --
+        'sequence_ts_spacing': [1, 3],
+        'sequence_length': [5],
+
+        # -- BDQ Architecture --
+        'rnn_hidden_size': [64],
+        'rnn_num_layers': [1, 2],
     }
 
     agent_params = {
@@ -91,7 +104,8 @@ class RunManager:
         'target_update_freq': [500.0, 1e3, 2e3]  # [50, 150, 500, 1e3, 1e4],
     }
 
-    hyperparameter_dict = {**agent_params, **bdq_fixed_params, **bdq_params}
+    # hyperparameter_dict = {**agent_params, **bdq_fixed_params, **bdq_params}
+    hyperparameter_dict = {**agent_params, **bdq_fixed_params, **bdq_params, **rnn_params}
 
     # The hyperparameters that vary throughout a study
     hyperparameter_study = {}
@@ -142,6 +156,7 @@ class RunManager:
             dqn_model=self.dqn,
             policy=self.policy,
             replay_memory=self.experience_replay,
+            rnn=run.rnn,
             interaction_frequency=run.interaction_ts_frequency,
             learning_loop=run.learning_loops,
             summary_writer=summary_writer
@@ -167,8 +182,8 @@ class RunManager:
             self.experience_replay = SequenceReplayMemory(
                 capacity=run.replay_capacity,
                 batch_size=run.batch_size,
-                sequence_length=5,
-                interaction_spacing=3
+                sequence_length=run.sequence_length,
+                sequence_ts_spacing=run.sequence_ts_spacing
             )
         else:
             self.experience_replay = ReplayMemory(
@@ -184,8 +199,8 @@ class RunManager:
         if rnn:
             self.dqn = BranchingDQN_RNN(
                 observation_dim=run.observation_dim,
-                rnn_hidden_size=64,
-                rnn_num_layers=2,
+                rnn_hidden_size=run.rnn_hidden_size,
+                rnn_num_layers=run.rnn_num_layers,
                 action_branches=run.action_branches,
                 action_dim=run.action_dim,
                 shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],

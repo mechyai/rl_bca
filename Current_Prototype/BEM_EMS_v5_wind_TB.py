@@ -15,7 +15,7 @@ from bca import ModelManager, RunManager, mdp_manager, paths_config
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(paths_config.repo_root, 'Current_Prototype/BEM')
-idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_5z_V1_baseline_May.idf')  # !--------------------------------------------
+idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_5z_V1_May.idf')  # !--------------------------------------------
 idf_final_file = os.path.join(bem_folder, 'BEM_5z_V1.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, 'WeatherFiles/EPW/DallasTexas_2019CST.epw')
@@ -25,8 +25,8 @@ cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 5,
-    'run_benchmark': True,
+    'epochs': 3,
+    'run_benchmark': False,
     'exploit_final_epoch': False,
     'save_model': True,
     'save_model_final_epoch': True,
@@ -53,7 +53,7 @@ run_manager = RunManager()
 runs = run_manager.get_runs(run_manager.selected_params)
 
 # ------------------------------------------------ Run Study ------------------------------------------------
-runs_limit = 1
+runs_limit = 10
 for i, run in enumerate(runs):
 
     # -- Create New Model Components --
