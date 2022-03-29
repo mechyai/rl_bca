@@ -43,6 +43,7 @@ class Agent:
                  policy: EpsilonGreedyStrategy,
                  replay_memory: ReplayMemory,
                  interaction_frequency: int,
+                 rnn: bool = False,
                  learning_loop: int = 1,
                  summary_writer: torch.utils.tensorboard.SummaryWriter = None
                  ):
@@ -112,6 +113,7 @@ class Agent:
 
         # -- BDQ --
         self.bdq = dqn_model
+        self.rnn = rnn
 
         # -- PERFORMANCE RESULTS --
         self.comfort_dissatisfaction = 0
@@ -361,7 +363,16 @@ class Agent:
                 action_type = 'Explore'
             else:
                 # Exploit
-                self.action = self.bdq.get_greedy_action(torch.Tensor(self.state_normalized).unsqueeze(1))
+                if self.rnn:
+                    # Need to have full sequence
+                    # TODO make more robust, need offline learning in the beginning, or ignore early days results
+                    if self.memory.interaction_count >= self.memory.sequence_span:
+                        self.action = self.bdq.get_greedy_action(self.memory.get_single_sequence())
+                    else:
+                        self.action = np.random.randint(0, self.bdq.action_dim, self.bdq.action_branches)
+                        action_type = 'Explore'
+                else:
+                    self.action = self.bdq.get_greedy_action(torch.Tensor(self.state_normalized).unsqueeze(1))
                 action_type = 'Exploit'
 
             if self.print:

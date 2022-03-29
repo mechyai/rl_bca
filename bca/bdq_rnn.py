@@ -34,13 +34,14 @@ Repos-
 class SequenceReplayMemory(object):
     """Manages a sequential replay memory, where data is stored as numpy arrays."""
 
-    def __init__(self, capacity: int, batch_size: int, sequence_length: int, interaction_spacing: int = 1):
+    def __init__(self, capacity: int, batch_size: int, sequence_length: int, sequence_ts_spacing: int = 1):
 
         self.capacity = capacity
         self.batch_size = batch_size
 
+        self.sequence_ts_spacing = sequence_ts_spacing
         self.sequence_length = sequence_length
-        self.interaction_spacing = interaction_spacing
+        self.sequence_span = sequence_length * sequence_ts_spacing
 
         self.state_memory = None
         self.action_memory = None
@@ -79,14 +80,14 @@ class SequenceReplayMemory(object):
 
         # Get appropriate indices to sample from replay
         sample_range = self.interaction_count if self.interaction_count < self.capacity else self.capacity
-        sample_start = self.sequence_length * self.interaction_spacing
+        sample_start = self.sequence_span
         sample_indices = np.random.choice(range(sample_start, sample_range), self.batch_size, replace=False)
 
         # Get full range of sequence indices for each random sample starting point
         sequence_indices = np.copy(sample_indices)
         for _ in range(self.sequence_length - 1):
             sequence_indices = \
-                np.concatenate((sequence_indices, sequence_indices[-self.batch_size:] - self.interaction_spacing))
+                np.concatenate((sequence_indices, sequence_indices[-self.batch_size:] - self.sequence_ts_spacing))
 
         # Sequence sampling
         # RNN input shape: batch size, sequence len, input size
@@ -102,11 +103,21 @@ class SequenceReplayMemory(object):
 
         return state_batch, action_batch, next_state_batch, reward_batch, terminal_batch
 
+    def get_single_sequence(self):
+        """Returns most recent sequence from replay."""
+        # TODO get dynamic sequence len at beginning when not enough samples available?
+        start = (self.interaction_count - 1) % self.capacity
+        prior_sequence_indices = range(start, start - self.sequence_span, -self.sequence_ts_spacing)
+        # RNN input shape: batch size, sequence len, input size
+        state_sequence = self.state_memory[prior_sequence_indices].unsqueeze(0)
+
+        return state_sequence
+
     def can_provide_sample(self):
         """Check if replay memory has enough experience tuples to sample batch from"""
 
         # Such that n sequences of span k can be sampled from batch, interaction > n + k (no negative indices)
-        return self.interaction_count > self.batch_size + self.interaction_spacing * self.sequence_length
+        return self.interaction_count > self.batch_size + self.sequence_span
 
 
 class BranchingQNetwork_RNN(nn.Module):
@@ -126,7 +137,7 @@ class BranchingQNetwork_RNN(nn.Module):
         # -- RNN Node --
         self.rnn_hidden_size = rnn_hidden_size
         self.rnn_num_layers = rnn_num_layers
-        self.rnn = nn.RNN(observation_dim, rnn_hidden_size, rnn_num_layers, batch_first=True)
+        self.rnn = nn.GRU(observation_dim, rnn_hidden_size, rnn_num_layers, batch_first=True)
 
         # -- Shared State Feature Estimator --
         layers = []
@@ -221,8 +232,10 @@ class BranchingDQN_RNN(nn.Module):
 
         self.td_target = td_target
 
-    def get_greedy_action(self, state_tensor):  # TODO how to get state input sequence? 1, seq, feature (use most recent entries in replay)
-        x = state_tensor.to(self.device).T  # single action row vector
+    def get_greedy_action(self, state_tensor):
+        """Get greedy action from current state and past sequence included."""
+        # RNN input shape: batch size, sequence len, input size
+        x = state_tensor.to(self.device)  # single action row vector
         with torch.no_grad():
             out = self.policy_network(x).squeeze(0)
             action = torch.argmax(out, dim=1)  # argmax within each branch
