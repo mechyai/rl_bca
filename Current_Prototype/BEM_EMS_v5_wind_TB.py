@@ -57,7 +57,7 @@ runs_limit = 10
 for i, run in enumerate(runs):
 
     # -- Create New Model Components --
-    my_bdq = run_manager.create_bdq(run, rnn=True)
+    my_bdq = run_manager.create_bdq(run, rnn=run.rnn)
 
     # Load model, if desired
     if experiment_params_dict['load_model']:
@@ -87,7 +87,7 @@ for i, run in enumerate(runs):
 
         # -- Instantiate RL Agent --
         my_policy = run_manager.create_policy(run)
-        my_memory = run_manager.create_exp_replay(run, rnn=True)
+        my_memory = run_manager.create_exp_replay(run, rnn=run.rnn)
         my_agent = run_manager.create_agent(run, my_mdp, my_sim, TB)
 
         # -- Set Sim Calling Point(s) & Callback Function(s) --
