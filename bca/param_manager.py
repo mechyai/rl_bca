@@ -21,9 +21,9 @@ class RunManager:
         'learning_loops': [10],
 
         # --- Behavioral Policy ---
-        'eps_start': [1],
-        'eps_end': [0],
-        'eps_decay': [0],
+        'eps_start': [1.0],
+        'eps_end': [0.0],
+        'eps_decay': [0.0],
 
         # --- Experience Replay ---
         'replay_capacity': [500],
@@ -184,8 +184,8 @@ class RunManager:
         if rnn:
             self.dqn = BranchingDQN_RNN(
                 observation_dim=run.observation_dim,
-                rnn_hidden_size=128,
-                rnn_num_layers=1,
+                rnn_hidden_size=64,
+                rnn_num_layers=2,
                 action_branches=run.action_branches,
                 action_dim=run.action_dim,
                 shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],

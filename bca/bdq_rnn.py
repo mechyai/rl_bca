@@ -105,11 +105,8 @@ class SequenceReplayMemory(object):
     def can_provide_sample(self):
         """Check if replay memory has enough experience tuples to sample batch from"""
 
-        enough_interactions = self.interaction_count >= self.batch_size
-        enough_sequences1 = self.interaction_count >= (self.interaction_spacing * self.sequence_length)
-        enough_sequences2 = self.interaction_count - (self.sequence_length * self.interaction_spacing) > self.capacity
-
-        return enough_interactions and enough_sequences2
+        # Such that n sequences of span k can be sampled from batch, interaction > n + k (no negative indices)
+        return self.interaction_count > self.batch_size + self.interaction_spacing * self.sequence_length
 
 
 class BranchingQNetwork_RNN(nn.Module):
@@ -215,6 +212,8 @@ class BranchingDQN_RNN(nn.Module):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.policy_network.to(self.device)
         self.target_network.to(self.device)
+
+        print('learing')
 
         self.target_update_freq = target_update_freq
         self.update_count = 0

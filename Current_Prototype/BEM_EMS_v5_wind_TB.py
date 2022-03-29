@@ -5,6 +5,7 @@ import time
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import torch
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -14,7 +15,7 @@ from bca import ModelManager, RunManager, mdp_manager, paths_config
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(paths_config.repo_root, 'Current_Prototype/BEM')
-idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_5z_V1_test.idf')  # !--------------------------------------------
+idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_5z_V1_baseline_May.idf')  # !--------------------------------------------
 idf_final_file = os.path.join(bem_folder, 'BEM_5z_V1.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, 'WeatherFiles/EPW/DallasTexas_2019CST.epw')
@@ -24,10 +25,10 @@ cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 1,
-    'run_benchmark': False,
+    'epochs': 5,
+    'run_benchmark': True,
     'exploit_final_epoch': False,
-    'save_model': False,
+    'save_model': True,
     'save_model_final_epoch': True,
     'save_results': False,
     'save_final_results': True,
@@ -74,7 +75,7 @@ for i, run in enumerate(runs):
     for epoch in range(experiment_params_dict['epochs']):  # train under same condition
 
         # ---- Tensor Board ----
-        TB = SummaryWriter(comment=f'_run{i}_epoch{epoch}')
+        TB = SummaryWriter(comment=f'_run{i}_epoch{epoch}-{experiment_params_dict["epochs"]}')
 
         if 'my_mdp' in locals():
             del my_mdp, my_sim, my_policy, my_memory, my_agent
@@ -143,20 +144,22 @@ for i, run in enumerate(runs):
                 },
                 **RunManager.hyperparameter_dict
             },
-            run_name=''
         )
 
         # for name, param in my_bdq.policy_network.named_parameters():
         #     TB_1.add_histogram(name, param, epoch)
         #     TB.add_histogram(f'{name}.grad', param.grad, epoch)
 
+        if epoch % 5 == 0:
+            torch.save(my_bdq.policy_network.state_dict(), os.path.join(f'lstm_50_epoch{epoch}_model'))  # save model
+
         # Only need 1 baseline epoch
         if not act:
-            break
+            continue
 
-    # # -- Save Model (don't save benchmark model if only 1 epoch)
-    # if experiment_params_dict['save_model'] and not (epoch == 1 and experiment_params_dict['run_benchmark']):
-    #     torch.save(bdq_model.policy_network.state_dict(), os.path.join(folder, model_name))  # save model
+    # -- Save Model (don't save benchmark model if only 1 epoch)
+    if experiment_params_dict['save_model'] and not (epoch == 1 and experiment_params_dict['run_benchmark']):
+        torch.save(my_bdq.policy_network.state_dict(), os.path.join('lstm_50_epoch_model'))  # save model
 
     if i >= runs_limit - 1:
         "Breaking from loop"
