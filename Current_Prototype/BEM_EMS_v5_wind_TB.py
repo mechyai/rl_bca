@@ -25,7 +25,7 @@ cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 3,
+    'epochs': 15,
     'run_benchmark': False,
     'exploit_final_epoch': False,
     'save_model': True,
@@ -49,11 +49,11 @@ my_model.create_custom_idf()
 
 # --- Study Parameters ---
 run_manager = RunManager()
-# runs = run_manager.shuffle_runs()
-runs = run_manager.get_runs(run_manager.selected_params)
+runs = run_manager.shuffle_runs()
+# runs = run_manager.get_runs(run_manager.selected_params)
 
 # ------------------------------------------------ Run Study ------------------------------------------------
-runs_limit = 10
+runs_limit = 30
 for i, run in enumerate(runs):
 
     # -- Create New Model Components --
@@ -75,7 +75,7 @@ for i, run in enumerate(runs):
     for epoch in range(experiment_params_dict['epochs']):  # train under same condition
 
         # ---- Tensor Board ----
-        TB = SummaryWriter(comment=f'_run{i}_epoch{epoch}-{experiment_params_dict["epochs"]}')
+        TB = SummaryWriter(comment=f'_run{i}_epoch{epoch + 1}-{experiment_params_dict["epochs"]}')
 
         if 'my_mdp' in locals():
             del my_mdp, my_sim, my_policy, my_memory, my_agent

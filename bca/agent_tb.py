@@ -153,7 +153,7 @@ class Agent:
 
         # -- REWARD --
         self.reward_dict = self._reward()
-        self.reward = max(self._get_total_reward('sum'), -100)  # aggregate 'mean' or 'sum'
+        self.reward = max(self._get_total_reward('mean'), -100)  # aggregate 'mean' or 'sum'
         # Get total reward per component
         reward_component_sums = np.array(list(self.reward_dict.values())).sum(axis=0)
         self.reward_component_sum = np.array(list(zip(self.reward_component_sum, reward_component_sums))).sum(axis=1)

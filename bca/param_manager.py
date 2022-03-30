@@ -18,15 +18,15 @@ class RunManager:
     selected_params = {
         # -- Agent Params --
         'interaction_ts_frequency': [5],  # * [5, 10, 15],
-        'learning_loops': [5],
+        'learning_loops': [10],
 
         # --- Behavioral Policy ---
-        'eps_start': [0.1],
+        'eps_start': [0.15],
         'eps_end': [0.05],
         'eps_decay': [1e-5],
 
         # --- Experience Replay ---
-        'replay_capacity': [500],
+        'replay_capacity': [5000],
         'batch_size': [32],
 
         # -- BDQ --
@@ -48,17 +48,30 @@ class RunManager:
         # Network mods
         'td_target': [1],  # (0) mean or (1) max
         'gradient_clip_norm': [1],  # [0, 1, 5, 10],  # 0 is nothing
-        'rescale_shared_grad_factor': [1 / (1 + action_branches)],
-        'target_update_freq': [1e3]  # [50, 150, 500, 1e3, 1e4],
-    }
+        'rescale_shared_grad_factor': [1 / (action_branches)],
+        'target_update_freq': [1e3],  # [50, 150, 500, 1e3, 1e4],
 
-    rnn_params = {
+        # RNN
         # -- Agent / Model --
         'rnn': [True],
 
         # -- Replay Memory --
+        'sequence_ts_spacing': [3],
+        'sequence_length': [10],
+
+        # -- BDQ Architecture --
+        'rnn_hidden_size': [64],
+        'rnn_num_layers': [2],
+    }
+
+    rnn_params = {
+        # -- Agent / Model --
+
+        'rnn': [True],
+
+        # -- Replay Memory --
         'sequence_ts_spacing': [1, 3],
-        'sequence_length': [5],
+        'sequence_length': [5, 10],
 
         # -- BDQ Architecture --
         'rnn_hidden_size': [64],
