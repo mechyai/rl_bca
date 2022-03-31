@@ -123,21 +123,22 @@ class BranchingQNetwork(nn.Module):
         # -- Shared State Feature Estimator --
         layers = []
         prev_layer_size = observation_dim
-
         for i, layer_size in enumerate(shared_network_size):
-            layers.append(nn.Linear(prev_layer_size, layer_size))
-            # layers.append(nn.Relu)
-            prev_layer_size = layer_size
-        shared_final_layer = prev_layer_size
+            if layer_size != 0:
+                layers.append(nn.Linear(prev_layer_size, layer_size))
+                # layers.append(nn.Relu)
+                prev_layer_size = layer_size
 
+        shared_final_layer = prev_layer_size
         self.shared_model = nn.Sequential(*layers)
 
         # --- Value Stream ---
         layers = []
         prev_layer_size = shared_final_layer
         for i, layer_size in enumerate(value_stream_size):
-            layers.append(nn.Linear(prev_layer_size, layer_size))
-            prev_layer_size = layer_size
+            if layer_size != 0:
+                layers.append(nn.Linear(prev_layer_size, layer_size))
+                prev_layer_size = layer_size
 
         final_layer = nn.Linear(prev_layer_size, 1)  # output state-value
         self.value_stream = nn.Sequential(*layers, final_layer)
@@ -146,8 +147,9 @@ class BranchingQNetwork(nn.Module):
         layers = []
         prev_layer_size = shared_final_layer
         for i, layer_size in enumerate(advantage_streams_size):
-            layers.append(nn.Linear(prev_layer_size, layer_size))
-            prev_layer_size = layer_size
+            if layer_size != 0:
+                layers.append(nn.Linear(prev_layer_size, layer_size))
+                prev_layer_size = layer_size
 
         final_layer = nn.Linear(prev_layer_size, action_dim)
         self.advantage_streams = nn.ModuleList(

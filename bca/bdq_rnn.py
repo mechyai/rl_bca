@@ -142,21 +142,22 @@ class BranchingQNetwork_RNN(nn.Module):
         # -- Shared State Feature Estimator --
         layers = []
         prev_layer_size = rnn_hidden_size
-
         for i, layer_size in enumerate(shared_network_size):
-            layers.append(nn.Linear(prev_layer_size, layer_size))
-            # layers.append(nn.Relu)
-            prev_layer_size = layer_size
-        shared_final_layer = prev_layer_size
+            if layer_size != 0:
+                layers.append(nn.Linear(prev_layer_size, layer_size))
+                # layers.append(nn.Relu)
+                prev_layer_size = layer_size
 
+        shared_final_layer = prev_layer_size
         self.shared_model = nn.Sequential(*layers)
 
         # --- Value Stream ---
         layers = []
         prev_layer_size = shared_final_layer
         for i, layer_size in enumerate(value_stream_size):
-            layers.append(nn.Linear(prev_layer_size, layer_size))
-            prev_layer_size = layer_size
+            if layer_size != 0:
+                layers.append(nn.Linear(prev_layer_size, layer_size))
+                prev_layer_size = layer_size
 
         final_layer = nn.Linear(prev_layer_size, 1)  # output state-value
         self.value_stream = nn.Sequential(*layers, final_layer)
@@ -165,8 +166,9 @@ class BranchingQNetwork_RNN(nn.Module):
         layers = []
         prev_layer_size = shared_final_layer
         for i, layer_size in enumerate(advantage_streams_size):
-            layers.append(nn.Linear(prev_layer_size, layer_size))
-            prev_layer_size = layer_size
+            if layer_size != 0:
+                layers.append(nn.Linear(prev_layer_size, layer_size))
+                prev_layer_size = layer_size
 
         final_layer = nn.Linear(prev_layer_size, action_dim)
         self.advantage_streams = nn.ModuleList(
@@ -234,7 +236,7 @@ class BranchingDQN_RNN(nn.Module):
 
     def get_greedy_action(self, state_tensor):
         """Get greedy action from current state and past sequence included."""
-        # RNN input shape: batch size, sequence len, input size
+
         x = state_tensor.to(self.device)  # single action row vector
         with torch.no_grad():
             out = self.policy_network(x).squeeze(0)
@@ -242,26 +244,41 @@ class BranchingDQN_RNN(nn.Module):
 
         return action.detach().cpu().numpy()  # action.numpy()
 
+    def update_learning_rate(self):
+        """Based on conditions, the optimizer's learning rate is dynamically updated."""
+        lr = 0.004
+        if False:
+            for param_group in self.optimizer.param_groups:
+                param_group['lr'] = lr
+
     @staticmethod
     def get_current_qval(bdq_network, states, actions):
+        """For given state and action, get the associated Q-val from the network output."""
+
         qvals = bdq_network(states)
         return qvals.gather(2, actions.unsqueeze(2)).squeeze(-1)
 
     def get_next_double_qval(self, next_states):
+        """Get next Q-value for a given next-state, via double q-learning method."""
+
         # double q learning
         with torch.no_grad():
             argmax = torch.argmax(self.policy_network(next_states), dim=2)
             return self.target_network(next_states).gather(2, argmax.unsqueeze(2)).squeeze(-1)
 
     def update_target_net(self):
+        """Copy params from policy network to target network at fixed intervals."""
+
         self.update_count += 1
         if self.update_count % self.target_update_freq == 0:
             self.update_count = 0
             self.target_network.load_state_dict(self.policy_network.state_dict())
 
-    def update_policy(self, batch):
+    def update_policy(self, interaction_batch):
+        """Learn from batch of interaction tuples. Optimizes learned policy DQN."""
+
         # Get converted batch of tensors
-        batch_states, batch_actions, batch_next_states, batch_rewards, batch_terminals = batch
+        batch_states, batch_actions, batch_next_states, batch_rewards, batch_terminals = interaction_batch
 
         # Bellman TD update
         current_Q = self.get_current_qval(self.policy_network, batch_states, batch_actions)
