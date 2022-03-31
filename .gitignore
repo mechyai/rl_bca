@@ -7,9 +7,11 @@
 
 *.pyc
 
+# E+/OpenStudio data
 */out
 *.sql
 *.osm
+*.eso
 
 Current_Prototype/Output_Saved
 /docs

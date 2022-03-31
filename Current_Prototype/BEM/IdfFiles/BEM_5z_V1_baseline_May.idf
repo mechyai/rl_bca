@@ -207,8 +207,8 @@ Building,
   0.04,                                   !- Loads Convergence Tolerance Value {W}
   0.2,                                    !- Temperature Convergence Tolerance Value {deltaC}
   FullInteriorAndExterior,                !- Solar Distribution
-  5,                                     !- Maximum Number of Warmup Days
-  1;                                      !- Minimum Number of Warmup Days
+  30,                                     !- Maximum Number of Warmup Days
+  6;                                      !- Minimum Number of Warmup Days
 
 Shading:Building:Detailed,
   Shading Surface 1,                      !- Name
@@ -618,6 +618,13 @@ ScheduleTypeLimits,
   temperature;                            !- Unit Type
 
 Schedule:Day:Interval,
+  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Default, !- Name
+  Temperature,                            !- Schedule Type Limits Name
+  No,                                     !- Interpolate to Timestep
+  24:00,                                  !- Time 1 {hh:mm}
+  15.56;                                  !- Value Until Time 1
+
+Schedule:Day:Interval,
   OfficeSmall HTGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Name
   Temperature,                            !- Schedule Type Limits Name
   No,                                     !- Interpolate to Timestep
@@ -628,30 +635,8 @@ Schedule:Day:Interval,
   24:00,                                  !- Time 3 {hh:mm}
   15.56;                                  !- Value Until Time 3
 
-Schedule:Day:Interval,
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Default, !- Name
-  Temperature,                            !- Schedule Type Limits Name
-  No,                                     !- Interpolate to Timestep
-  24:00,                                  !- Time 1 {hh:mm}
-  15.56;                                  !- Value Until Time 1
-
 Schedule:Week:Daily,
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Week Rule - Jan1-Jan5, !- Name
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Sunday Schedule:Day Name
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Monday Schedule:Day Name
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Tuesday Schedule:Day Name
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Wednesday Schedule:Day Name
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Thursday Schedule:Day Name
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Friday Schedule:Day Name
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Default, !- Saturday Schedule:Day Name
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Default, !- Holiday Schedule:Day Name
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Summer Design Day, !- SummerDesignDay Schedule:Day Name
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Winter Design Day, !- WinterDesignDay Schedule:Day Name
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Default, !- CustomDay1 Schedule:Day Name
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Default; !- CustomDay2 Schedule:Day Name
-
-Schedule:Week:Daily,
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Week Rule - Jan6-Dec31, !- Name
+  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Week Rule - Jan1-Dec31, !- Name
   OfficeSmall HTGSETP_SCH_NO_OPTIMUM Default, !- Sunday Schedule:Day Name
   OfficeSmall HTGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Monday Schedule:Day Name
   OfficeSmall HTGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Tuesday Schedule:Day Name
@@ -668,16 +653,11 @@ Schedule:Week:Daily,
 Schedule:Year,
   OfficeSmall HTGSETP_SCH_NO_OPTIMUM,     !- Name
   Temperature,                            !- Schedule Type Limits Name
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Week Rule - Jan1-Jan5, !- Schedule:Week Name 1
+  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
   1,                                      !- Start Month 1
   1,                                      !- Start Day 1
-  1,                                      !- End Month 1
-  5,                                      !- End Day 1
-  OfficeSmall HTGSETP_SCH_NO_OPTIMUM Week Rule - Jan6-Dec31, !- Schedule:Week Name 2
-  1,                                      !- Start Month 2
-  6,                                      !- Start Day 2
-  12,                                     !- End Month 2
-  31;                                     !- End Day 2
+  12,                                     !- End Month 1
+  31;                                     !- End Day 1
 
 Schedule:Day:Interval,
   OfficeSmall HTGSETP_SCH_NO_OPTIMUM Summer Design Day, !- Name
@@ -694,6 +674,13 @@ Schedule:Day:Interval,
   21.11;                                  !- Value Until Time 1
 
 Schedule:Day:Interval,
+  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Default, !- Name
+  Temperature,                            !- Schedule Type Limits Name
+  No,                                     !- Interpolate to Timestep
+  24:00,                                  !- Time 1 {hh:mm}
+  29.44;                                  !- Value Until Time 1
+
+Schedule:Day:Interval,
   OfficeSmall CLGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Name
   Temperature,                            !- Schedule Type Limits Name
   No,                                     !- Interpolate to Timestep
@@ -704,30 +691,8 @@ Schedule:Day:Interval,
   24:00,                                  !- Time 3 {hh:mm}
   29.44;                                  !- Value Until Time 3
 
-Schedule:Day:Interval,
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Default, !- Name
-  Temperature,                            !- Schedule Type Limits Name
-  No,                                     !- Interpolate to Timestep
-  24:00,                                  !- Time 1 {hh:mm}
-  29.44;                                  !- Value Until Time 1
-
 Schedule:Week:Daily,
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Week Rule - Jan1-Jan5, !- Name
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Sunday Schedule:Day Name
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Monday Schedule:Day Name
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Tuesday Schedule:Day Name
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Wednesday Schedule:Day Name
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Thursday Schedule:Day Name
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Friday Schedule:Day Name
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Default, !- Saturday Schedule:Day Name
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Default, !- Holiday Schedule:Day Name
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Summer Design Day, !- SummerDesignDay Schedule:Day Name
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Winter Design Day, !- WinterDesignDay Schedule:Day Name
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Default, !- CustomDay1 Schedule:Day Name
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Default; !- CustomDay2 Schedule:Day Name
-
-Schedule:Week:Daily,
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Week Rule - Jan6-Dec31, !- Name
+  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Week Rule - Jan1-Dec31, !- Name
   OfficeSmall CLGSETP_SCH_NO_OPTIMUM Default, !- Sunday Schedule:Day Name
   OfficeSmall CLGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Monday Schedule:Day Name
   OfficeSmall CLGSETP_SCH_NO_OPTIMUM Wkdy Day, !- Tuesday Schedule:Day Name
@@ -744,16 +709,11 @@ Schedule:Week:Daily,
 Schedule:Year,
   OfficeSmall CLGSETP_SCH_NO_OPTIMUM,     !- Name
   Temperature,                            !- Schedule Type Limits Name
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Week Rule - Jan1-Jan5, !- Schedule:Week Name 1
+  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
   1,                                      !- Start Month 1
   1,                                      !- Start Day 1
-  1,                                      !- End Month 1
-  5,                                      !- End Day 1
-  OfficeSmall CLGSETP_SCH_NO_OPTIMUM Week Rule - Jan6-Dec31, !- Schedule:Week Name 2
-  1,                                      !- Start Month 2
-  6,                                      !- Start Day 2
-  12,                                     !- End Month 2
-  31;                                     !- End Day 2
+  12,                                     !- End Month 1
+  31;                                     !- End Day 1
 
 Schedule:Day:Interval,
   OfficeSmall CLGSETP_SCH_NO_OPTIMUM Summer Design Day, !- Name
@@ -841,6 +801,13 @@ ScheduleTypeLimits,
   Continuous;                             !- Numeric Type
 
 Schedule:Day:Interval,
+  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- Name
+  Fractional,                             !- Schedule Type Limits Name
+  No,                                     !- Interpolate to Timestep
+  24:00,                                  !- Time 1 {hh:mm}
+  0;                                      !- Value Until Time 1
+
+Schedule:Day:Interval,
   OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Name
   Fractional,                             !- Schedule Type Limits Name
   No,                                     !- Interpolate to Timestep
@@ -851,30 +818,8 @@ Schedule:Day:Interval,
   24:00,                                  !- Time 3 {hh:mm}
   0;                                      !- Value Until Time 3
 
-Schedule:Day:Interval,
-  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- Name
-  Fractional,                             !- Schedule Type Limits Name
-  No,                                     !- Interpolate to Timestep
-  24:00,                                  !- Time 1 {hh:mm}
-  0;                                      !- Value Until Time 1
-
 Schedule:Week:Daily,
-  OfficeSmall MinOA_MotorizedDamper_Sched Week Rule - Jan1-Jan5, !- Name
-  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Sunday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Monday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Tuesday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Wednesday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Thursday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Friday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- Saturday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- Holiday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Summer Design Day, !- SummerDesignDay Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Winter Design Day, !- WinterDesignDay Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- CustomDay1 Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Default; !- CustomDay2 Schedule:Day Name
-
-Schedule:Week:Daily,
-  OfficeSmall MinOA_MotorizedDamper_Sched Week Rule - Jan6-Dec31, !- Name
+  OfficeSmall MinOA_MotorizedDamper_Sched Week Rule - Jan1-Dec31, !- Name
   OfficeSmall MinOA_MotorizedDamper_Sched Default, !- Sunday Schedule:Day Name
   OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Monday Schedule:Day Name
   OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Tuesday Schedule:Day Name
@@ -891,16 +836,11 @@ Schedule:Week:Daily,
 Schedule:Year,
   OfficeSmall MinOA_MotorizedDamper_Sched, !- Name
   Fractional,                             !- Schedule Type Limits Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Week Rule - Jan1-Jan5, !- Schedule:Week Name 1
+  OfficeSmall MinOA_MotorizedDamper_Sched Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
   1,                                      !- Start Month 1
   1,                                      !- Start Day 1
-  1,                                      !- End Month 1
-  5,                                      !- End Day 1
-  OfficeSmall MinOA_MotorizedDamper_Sched Week Rule - Jan6-Dec31, !- Schedule:Week Name 2
-  1,                                      !- Start Month 2
-  6,                                      !- Start Day 2
-  12,                                     !- End Month 2
-  31;                                     !- End Day 2
+  12,                                     !- End Month 1
+  31;                                     !- End Day 1
 
 Schedule:Day:Interval,
   OfficeSmall MinOA_MotorizedDamper_Sched Summer Design Day, !- Name
@@ -2414,11 +2354,11 @@ RunPeriod,
   Run Period 1,                           !- Name
   5,                                      !- Begin Month
   1,                                      !- Begin Day of Month
-  2019,                                   !- Begin Year
+  2006,                                   !- Begin Year
   5,                                     !- End Month
-  8,                                     !- End Day of Month
-  2019,                                   !- End Year
-  Tuesday,                                !- Day of Week for Start Day
+  31,                                     !- End Day of Month
+  2006,                                   !- End Year
+  Sunday,                                 !- Day of Week for Start Day
   No,                                     !- Use Weather File Holidays and Special Days
   No,                                     !- Use Weather File Daylight Saving Period
   No,                                     !- Apply Weekend Holiday Rule
@@ -3816,22 +3756,7 @@ Schedule:Year,
   31;                                     !- End Day 1
 
 Schedule:Week:Daily,
-  OfficeLarge INFIL_SCH_PNNL Week Rule - Jan1-Jan5, !- Name
-  OfficeLarge INFIL_SCH_PNNL SmrDsn|Wkdy Day, !- Sunday Schedule:Day Name
-  OfficeLarge INFIL_SCH_PNNL SmrDsn|Wkdy Day, !- Monday Schedule:Day Name
-  OfficeLarge INFIL_SCH_PNNL SmrDsn|Wkdy Day, !- Tuesday Schedule:Day Name
-  OfficeLarge INFIL_SCH_PNNL SmrDsn|Wkdy Day, !- Wednesday Schedule:Day Name
-  OfficeLarge INFIL_SCH_PNNL SmrDsn|Wkdy Day, !- Thursday Schedule:Day Name
-  OfficeLarge INFIL_SCH_PNNL SmrDsn|Wkdy Day, !- Friday Schedule:Day Name
-  OfficeLarge INFIL_SCH_PNNL WntrDsn|Sat Day, !- Saturday Schedule:Day Name
-  OfficeLarge INFIL_SCH_PNNL Default,     !- Holiday Schedule:Day Name
-  OfficeLarge INFIL_SCH_PNNL Summer Design Day, !- SummerDesignDay Schedule:Day Name
-  OfficeLarge INFIL_SCH_PNNL Winter Design Day, !- WinterDesignDay Schedule:Day Name
-  OfficeLarge INFIL_SCH_PNNL Default,     !- CustomDay1 Schedule:Day Name
-  OfficeLarge INFIL_SCH_PNNL Default;     !- CustomDay2 Schedule:Day Name
-
-Schedule:Week:Daily,
-  OfficeLarge INFIL_SCH_PNNL Week Rule - Jan6-Dec31, !- Name
+  OfficeLarge INFIL_SCH_PNNL Week Rule - Jan1-Dec31, !- Name
   OfficeLarge INFIL_SCH_PNNL Default,     !- Sunday Schedule:Day Name
   OfficeLarge INFIL_SCH_PNNL SmrDsn|Wkdy Day, !- Monday Schedule:Day Name
   OfficeLarge INFIL_SCH_PNNL SmrDsn|Wkdy Day, !- Tuesday Schedule:Day Name
@@ -3848,16 +3773,11 @@ Schedule:Week:Daily,
 Schedule:Year,
   OfficeLarge INFIL_SCH_PNNL,             !- Name
   Fractional,                             !- Schedule Type Limits Name
-  OfficeLarge INFIL_SCH_PNNL Week Rule - Jan1-Jan5, !- Schedule:Week Name 1
+  OfficeLarge INFIL_SCH_PNNL Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
   1,                                      !- Start Month 1
   1,                                      !- Start Day 1
-  1,                                      !- End Month 1
-  5,                                      !- End Day 1
-  OfficeLarge INFIL_SCH_PNNL Week Rule - Jan6-Dec31, !- Schedule:Week Name 2
-  1,                                      !- Start Month 2
-  6,                                      !- Start Day 2
-  12,                                     !- End Month 2
-  31;                                     !- End Day 2
+  12,                                     !- End Month 1
+  31;                                     !- End Day 1
 
 Schedule:Week:Daily,
   OfficeSmall ACTIVITY_SCH Week Rule - Jan1-Dec31, !- Name
@@ -3884,22 +3804,7 @@ Schedule:Year,
   31;                                     !- End Day 1
 
 Schedule:Week:Daily,
-  OfficeSmall BLDG_EQUIP_SCH_2013 Week Rule - Jan1-Jan5, !- Name
-  OfficeSmall BLDG_EQUIP_SCH_2013 Default|Wkdy Day, !- Sunday Schedule:Day Name
-  OfficeSmall BLDG_EQUIP_SCH_2013 Default|Wkdy Day, !- Monday Schedule:Day Name
-  OfficeSmall BLDG_EQUIP_SCH_2013 Default|Wkdy Day, !- Tuesday Schedule:Day Name
-  OfficeSmall BLDG_EQUIP_SCH_2013 Default|Wkdy Day, !- Wednesday Schedule:Day Name
-  OfficeSmall BLDG_EQUIP_SCH_2013 Default|Wkdy Day, !- Thursday Schedule:Day Name
-  OfficeSmall BLDG_EQUIP_SCH_2013 Default|Wkdy Day, !- Friday Schedule:Day Name
-  OfficeSmall BLDG_EQUIP_SCH_2013 Wknd Day, !- Saturday Schedule:Day Name
-  OfficeSmall BLDG_EQUIP_SCH_2013 Default, !- Holiday Schedule:Day Name
-  OfficeSmall BLDG_EQUIP_SCH_2013 Summer Design Day, !- SummerDesignDay Schedule:Day Name
-  OfficeSmall BLDG_EQUIP_SCH_2013 Winter Design Day, !- WinterDesignDay Schedule:Day Name
-  OfficeSmall BLDG_EQUIP_SCH_2013 Default, !- CustomDay1 Schedule:Day Name
-  OfficeSmall BLDG_EQUIP_SCH_2013 Default; !- CustomDay2 Schedule:Day Name
-
-Schedule:Week:Daily,
-  OfficeSmall BLDG_EQUIP_SCH_2013 Week Rule - Jan6-Dec31, !- Name
+  OfficeSmall BLDG_EQUIP_SCH_2013 Week Rule - Jan1-Dec31, !- Name
   OfficeSmall BLDG_EQUIP_SCH_2013 Wknd Day, !- Sunday Schedule:Day Name
   OfficeSmall BLDG_EQUIP_SCH_2013 Default|Wkdy Day, !- Monday Schedule:Day Name
   OfficeSmall BLDG_EQUIP_SCH_2013 Default|Wkdy Day, !- Tuesday Schedule:Day Name
@@ -3916,34 +3821,14 @@ Schedule:Week:Daily,
 Schedule:Year,
   OfficeSmall BLDG_EQUIP_SCH_2013,        !- Name
   Fractional,                             !- Schedule Type Limits Name
-  OfficeSmall BLDG_EQUIP_SCH_2013 Week Rule - Jan1-Jan5, !- Schedule:Week Name 1
+  OfficeSmall BLDG_EQUIP_SCH_2013 Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
   1,                                      !- Start Month 1
   1,                                      !- Start Day 1
-  1,                                      !- End Month 1
-  5,                                      !- End Day 1
-  OfficeSmall BLDG_EQUIP_SCH_2013 Week Rule - Jan6-Dec31, !- Schedule:Week Name 2
-  1,                                      !- Start Month 2
-  6,                                      !- Start Day 2
-  12,                                     !- End Month 2
-  31;                                     !- End Day 2
+  12,                                     !- End Month 1
+  31;                                     !- End Day 1
 
 Schedule:Week:Daily,
-  OfficeSmall BLDG_LIGHT_SCH_2013 Week Rule - Jan1-Jan5, !- Name
-  OfficeSmall BLDG_LIGHT_SCH_2013 Default|Wkdy Day, !- Sunday Schedule:Day Name
-  OfficeSmall BLDG_LIGHT_SCH_2013 Default|Wkdy Day, !- Monday Schedule:Day Name
-  OfficeSmall BLDG_LIGHT_SCH_2013 Default|Wkdy Day, !- Tuesday Schedule:Day Name
-  OfficeSmall BLDG_LIGHT_SCH_2013 Default|Wkdy Day, !- Wednesday Schedule:Day Name
-  OfficeSmall BLDG_LIGHT_SCH_2013 Default|Wkdy Day, !- Thursday Schedule:Day Name
-  OfficeSmall BLDG_LIGHT_SCH_2013 Default|Wkdy Day, !- Friday Schedule:Day Name
-  OfficeSmall BLDG_LIGHT_SCH_2013 Wknd Day, !- Saturday Schedule:Day Name
-  OfficeSmall BLDG_LIGHT_SCH_2013 Default, !- Holiday Schedule:Day Name
-  OfficeSmall BLDG_LIGHT_SCH_2013 Summer Design Day, !- SummerDesignDay Schedule:Day Name
-  OfficeSmall BLDG_LIGHT_SCH_2013 Winter Design Day, !- WinterDesignDay Schedule:Day Name
-  OfficeSmall BLDG_LIGHT_SCH_2013 Default, !- CustomDay1 Schedule:Day Name
-  OfficeSmall BLDG_LIGHT_SCH_2013 Default; !- CustomDay2 Schedule:Day Name
-
-Schedule:Week:Daily,
-  OfficeSmall BLDG_LIGHT_SCH_2013 Week Rule - Jan6-Dec31, !- Name
+  OfficeSmall BLDG_LIGHT_SCH_2013 Week Rule - Jan1-Dec31, !- Name
   OfficeSmall BLDG_LIGHT_SCH_2013 Wknd Day, !- Sunday Schedule:Day Name
   OfficeSmall BLDG_LIGHT_SCH_2013 Default|Wkdy Day, !- Monday Schedule:Day Name
   OfficeSmall BLDG_LIGHT_SCH_2013 Default|Wkdy Day, !- Tuesday Schedule:Day Name
@@ -3960,34 +3845,14 @@ Schedule:Week:Daily,
 Schedule:Year,
   OfficeSmall BLDG_LIGHT_SCH_2013,        !- Name
   Fractional,                             !- Schedule Type Limits Name
-  OfficeSmall BLDG_LIGHT_SCH_2013 Week Rule - Jan1-Jan5, !- Schedule:Week Name 1
+  OfficeSmall BLDG_LIGHT_SCH_2013 Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
   1,                                      !- Start Month 1
   1,                                      !- Start Day 1
-  1,                                      !- End Month 1
-  5,                                      !- End Day 1
-  OfficeSmall BLDG_LIGHT_SCH_2013 Week Rule - Jan6-Dec31, !- Schedule:Week Name 2
-  1,                                      !- Start Month 2
-  6,                                      !- Start Day 2
-  12,                                     !- End Month 2
-  31;                                     !- End Day 2
+  12,                                     !- End Month 1
+  31;                                     !- End Day 1
 
 Schedule:Week:Daily,
-  OfficeSmall BLDG_OCC_SCH Week Rule - Jan1-Jan5, !- Name
-  OfficeSmall BLDG_OCC_SCH Wkdy Day,      !- Sunday Schedule:Day Name
-  OfficeSmall BLDG_OCC_SCH Wkdy Day,      !- Monday Schedule:Day Name
-  OfficeSmall BLDG_OCC_SCH Wkdy Day,      !- Tuesday Schedule:Day Name
-  OfficeSmall BLDG_OCC_SCH Wkdy Day,      !- Wednesday Schedule:Day Name
-  OfficeSmall BLDG_OCC_SCH Wkdy Day,      !- Thursday Schedule:Day Name
-  OfficeSmall BLDG_OCC_SCH Wkdy Day,      !- Friday Schedule:Day Name
-  OfficeSmall BLDG_OCC_SCH Default,       !- Saturday Schedule:Day Name
-  OfficeSmall BLDG_OCC_SCH Default,       !- Holiday Schedule:Day Name
-  OfficeSmall BLDG_OCC_SCH Summer Design Day, !- SummerDesignDay Schedule:Day Name
-  OfficeSmall BLDG_OCC_SCH Winter Design Day, !- WinterDesignDay Schedule:Day Name
-  OfficeSmall BLDG_OCC_SCH Default,       !- CustomDay1 Schedule:Day Name
-  OfficeSmall BLDG_OCC_SCH Default;       !- CustomDay2 Schedule:Day Name
-
-Schedule:Week:Daily,
-  OfficeSmall BLDG_OCC_SCH Week Rule - Jan6-Dec31, !- Name
+  OfficeSmall BLDG_OCC_SCH Week Rule - Jan1-Dec31, !- Name
   OfficeSmall BLDG_OCC_SCH Default,       !- Sunday Schedule:Day Name
   OfficeSmall BLDG_OCC_SCH Wkdy Day,      !- Monday Schedule:Day Name
   OfficeSmall BLDG_OCC_SCH Wkdy Day,      !- Tuesday Schedule:Day Name
@@ -4004,34 +3869,14 @@ Schedule:Week:Daily,
 Schedule:Year,
   OfficeSmall BLDG_OCC_SCH,               !- Name
   Fractional,                             !- Schedule Type Limits Name
-  OfficeSmall BLDG_OCC_SCH Week Rule - Jan1-Jan5, !- Schedule:Week Name 1
+  OfficeSmall BLDG_OCC_SCH Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
   1,                                      !- Start Month 1
   1,                                      !- Start Day 1
-  1,                                      !- End Month 1
-  5,                                      !- End Day 1
-  OfficeSmall BLDG_OCC_SCH Week Rule - Jan6-Dec31, !- Schedule:Week Name 2
-  1,                                      !- Start Month 2
-  6,                                      !- Start Day 2
-  12,                                     !- End Month 2
-  31;                                     !- End Day 2
+  12,                                     !- End Month 1
+  31;                                     !- End Day 1
 
 Schedule:Week:Daily,
-  OfficeSmall BLDG_SWH_SCH Week Rule - Jan1-Jan5, !- Name
-  OfficeSmall BLDG_SWH_SCH WntrDsn|SmrDsn|Wkdy Day, !- Sunday Schedule:Day Name
-  OfficeSmall BLDG_SWH_SCH WntrDsn|SmrDsn|Wkdy Day, !- Monday Schedule:Day Name
-  OfficeSmall BLDG_SWH_SCH WntrDsn|SmrDsn|Wkdy Day, !- Tuesday Schedule:Day Name
-  OfficeSmall BLDG_SWH_SCH WntrDsn|SmrDsn|Wkdy Day, !- Wednesday Schedule:Day Name
-  OfficeSmall BLDG_SWH_SCH WntrDsn|SmrDsn|Wkdy Day, !- Thursday Schedule:Day Name
-  OfficeSmall BLDG_SWH_SCH WntrDsn|SmrDsn|Wkdy Day, !- Friday Schedule:Day Name
-  OfficeSmall BLDG_SWH_SCH Default,       !- Saturday Schedule:Day Name
-  OfficeSmall BLDG_SWH_SCH Default,       !- Holiday Schedule:Day Name
-  OfficeSmall BLDG_SWH_SCH Summer Design Day, !- SummerDesignDay Schedule:Day Name
-  OfficeSmall BLDG_SWH_SCH Winter Design Day, !- WinterDesignDay Schedule:Day Name
-  OfficeSmall BLDG_SWH_SCH Default,       !- CustomDay1 Schedule:Day Name
-  OfficeSmall BLDG_SWH_SCH Default;       !- CustomDay2 Schedule:Day Name
-
-Schedule:Week:Daily,
-  OfficeSmall BLDG_SWH_SCH Week Rule - Jan6-Dec31, !- Name
+  OfficeSmall BLDG_SWH_SCH Week Rule - Jan1-Dec31, !- Name
   OfficeSmall BLDG_SWH_SCH Default,       !- Sunday Schedule:Day Name
   OfficeSmall BLDG_SWH_SCH WntrDsn|SmrDsn|Wkdy Day, !- Monday Schedule:Day Name
   OfficeSmall BLDG_SWH_SCH WntrDsn|SmrDsn|Wkdy Day, !- Tuesday Schedule:Day Name
@@ -4048,16 +3893,11 @@ Schedule:Week:Daily,
 Schedule:Year,
   OfficeSmall BLDG_SWH_SCH,               !- Name
   Fractional,                             !- Schedule Type Limits Name
-  OfficeSmall BLDG_SWH_SCH Week Rule - Jan1-Jan5, !- Schedule:Week Name 1
+  OfficeSmall BLDG_SWH_SCH Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
   1,                                      !- Start Month 1
   1,                                      !- Start Day 1
-  1,                                      !- End Month 1
-  5,                                      !- End Day 1
-  OfficeSmall BLDG_SWH_SCH Week Rule - Jan6-Dec31, !- Schedule:Week Name 2
-  1,                                      !- Start Month 2
-  6,                                      !- Start Day 2
-  12,                                     !- End Month 2
-  31;                                     !- End Day 2
+  12,                                     !- End Month 1
+  31;                                     !- End Day 1
 
 Schedule:Week:Daily,
   OfficeSmall Exterior_lighting_schedule_a Week Rule - Jan1-Dec31, !- Name
@@ -4108,22 +3948,7 @@ Schedule:Year,
   31;                                     !- End Day 1
 
 Schedule:Week:Daily,
-  OfficeSmall HVACOperationSchd Week Rule - Jan1-Jan5, !- Name
-  OfficeSmall HVACOperationSchd SmrDsn|Wkdy Day, !- Sunday Schedule:Day Name
-  OfficeSmall HVACOperationSchd SmrDsn|Wkdy Day, !- Monday Schedule:Day Name
-  OfficeSmall HVACOperationSchd SmrDsn|Wkdy Day, !- Tuesday Schedule:Day Name
-  OfficeSmall HVACOperationSchd SmrDsn|Wkdy Day, !- Wednesday Schedule:Day Name
-  OfficeSmall HVACOperationSchd SmrDsn|Wkdy Day, !- Thursday Schedule:Day Name
-  OfficeSmall HVACOperationSchd SmrDsn|Wkdy Day, !- Friday Schedule:Day Name
-  OfficeSmall HVACOperationSchd Default,  !- Saturday Schedule:Day Name
-  OfficeSmall HVACOperationSchd Default,  !- Holiday Schedule:Day Name
-  OfficeSmall HVACOperationSchd Summer Design Day, !- SummerDesignDay Schedule:Day Name
-  OfficeSmall HVACOperationSchd Winter Design Day, !- WinterDesignDay Schedule:Day Name
-  OfficeSmall HVACOperationSchd Default,  !- CustomDay1 Schedule:Day Name
-  OfficeSmall HVACOperationSchd Default;  !- CustomDay2 Schedule:Day Name
-
-Schedule:Week:Daily,
-  OfficeSmall HVACOperationSchd Week Rule - Jan6-Dec31, !- Name
+  OfficeSmall HVACOperationSchd Week Rule - Jan1-Dec31, !- Name
   OfficeSmall HVACOperationSchd Default,  !- Sunday Schedule:Day Name
   OfficeSmall HVACOperationSchd SmrDsn|Wkdy Day, !- Monday Schedule:Day Name
   OfficeSmall HVACOperationSchd SmrDsn|Wkdy Day, !- Tuesday Schedule:Day Name
@@ -4140,34 +3965,14 @@ Schedule:Week:Daily,
 Schedule:Year,
   OfficeSmall HVACOperationSchd,          !- Name
   OnOff,                                  !- Schedule Type Limits Name
-  OfficeSmall HVACOperationSchd Week Rule - Jan1-Jan5, !- Schedule:Week Name 1
+  OfficeSmall HVACOperationSchd Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
   1,                                      !- Start Month 1
   1,                                      !- Start Day 1
-  1,                                      !- End Month 1
-  5,                                      !- End Day 1
-  OfficeSmall HVACOperationSchd Week Rule - Jan6-Dec31, !- Schedule:Week Name 2
-  1,                                      !- Start Month 2
-  6,                                      !- Start Day 2
-  12,                                     !- End Month 2
-  31;                                     !- End Day 2
+  12,                                     !- End Month 1
+  31;                                     !- End Day 1
 
 Schedule:Week:Daily,
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Week Rule - Jan1-Jan5, !- Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Wkdy Day, !- Sunday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Wkdy Day, !- Monday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Wkdy Day, !- Tuesday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Wkdy Day, !- Wednesday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Wkdy Day, !- Thursday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Wkdy Day, !- Friday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Default, !- Saturday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Default, !- Holiday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Summer Design Day, !- SummerDesignDay Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Winter Design Day, !- WinterDesignDay Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Default, !- CustomDay1 Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Default; !- CustomDay2 Schedule:Day Name
-
-Schedule:Week:Daily,
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Week Rule - Jan6-Dec31, !- Name
+  OfficeSmall INFIL_Door_Opening_SCH_2013 Week Rule - Jan1-Dec31, !- Name
   OfficeSmall INFIL_Door_Opening_SCH_2013 Default, !- Sunday Schedule:Day Name
   OfficeSmall INFIL_Door_Opening_SCH_2013 Wkdy Day, !- Monday Schedule:Day Name
   OfficeSmall INFIL_Door_Opening_SCH_2013 Wkdy Day, !- Tuesday Schedule:Day Name
@@ -4184,34 +3989,14 @@ Schedule:Week:Daily,
 Schedule:Year,
   OfficeSmall INFIL_Door_Opening_SCH_2013, !- Name
   Fractional,                             !- Schedule Type Limits Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Week Rule - Jan1-Jan5, !- Schedule:Week Name 1
+  OfficeSmall INFIL_Door_Opening_SCH_2013 Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
   1,                                      !- Start Month 1
   1,                                      !- Start Day 1
-  1,                                      !- End Month 1
-  5,                                      !- End Day 1
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Week Rule - Jan6-Dec31, !- Schedule:Week Name 2
-  1,                                      !- Start Month 2
-  6,                                      !- Start Day 2
-  12,                                     !- End Month 2
-  31;                                     !- End Day 2
+  12,                                     !- End Month 1
+  31;                                     !- End Day 1
 
 Schedule:Week:Daily,
-  OfficeSmall INFIL_QUARTER_ON_SCH Week Rule - Jan1-Jan5, !- Name
-  OfficeSmall INFIL_QUARTER_ON_SCH SmrDsn|Wkdy Day, !- Sunday Schedule:Day Name
-  OfficeSmall INFIL_QUARTER_ON_SCH SmrDsn|Wkdy Day, !- Monday Schedule:Day Name
-  OfficeSmall INFIL_QUARTER_ON_SCH SmrDsn|Wkdy Day, !- Tuesday Schedule:Day Name
-  OfficeSmall INFIL_QUARTER_ON_SCH SmrDsn|Wkdy Day, !- Wednesday Schedule:Day Name
-  OfficeSmall INFIL_QUARTER_ON_SCH SmrDsn|Wkdy Day, !- Thursday Schedule:Day Name
-  OfficeSmall INFIL_QUARTER_ON_SCH SmrDsn|Wkdy Day, !- Friday Schedule:Day Name
-  OfficeSmall INFIL_QUARTER_ON_SCH WntrDsn|Sat Day, !- Saturday Schedule:Day Name
-  OfficeSmall INFIL_QUARTER_ON_SCH Default, !- Holiday Schedule:Day Name
-  OfficeSmall INFIL_QUARTER_ON_SCH Summer Design Day, !- SummerDesignDay Schedule:Day Name
-  OfficeSmall INFIL_QUARTER_ON_SCH Winter Design Day, !- WinterDesignDay Schedule:Day Name
-  OfficeSmall INFIL_QUARTER_ON_SCH Default, !- CustomDay1 Schedule:Day Name
-  OfficeSmall INFIL_QUARTER_ON_SCH Default; !- CustomDay2 Schedule:Day Name
-
-Schedule:Week:Daily,
-  OfficeSmall INFIL_QUARTER_ON_SCH Week Rule - Jan6-Dec31, !- Name
+  OfficeSmall INFIL_QUARTER_ON_SCH Week Rule - Jan1-Dec31, !- Name
   OfficeSmall INFIL_QUARTER_ON_SCH Default, !- Sunday Schedule:Day Name
   OfficeSmall INFIL_QUARTER_ON_SCH SmrDsn|Wkdy Day, !- Monday Schedule:Day Name
   OfficeSmall INFIL_QUARTER_ON_SCH SmrDsn|Wkdy Day, !- Tuesday Schedule:Day Name
@@ -4228,16 +4013,11 @@ Schedule:Week:Daily,
 Schedule:Year,
   OfficeSmall INFIL_QUARTER_ON_SCH,       !- Name
   Fractional,                             !- Schedule Type Limits Name
-  OfficeSmall INFIL_QUARTER_ON_SCH Week Rule - Jan1-Jan5, !- Schedule:Week Name 1
+  OfficeSmall INFIL_QUARTER_ON_SCH Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
   1,                                      !- Start Month 1
   1,                                      !- Start Day 1
-  1,                                      !- End Month 1
-  5,                                      !- End Day 1
-  OfficeSmall INFIL_QUARTER_ON_SCH Week Rule - Jan6-Dec31, !- Schedule:Week Name 2
-  1,                                      !- Start Month 2
-  6,                                      !- Start Day 2
-  12,                                     !- End Month 2
-  31;                                     !- End Day 2
+  12,                                     !- End Month 1
+  31;                                     !- End Day 1
 
 Schedule:Week:Daily,
   Service Water Loop Temp - 140F Week Rule - Jan1-Dec31, !- Name
@@ -4303,7 +4083,7 @@ OutdoorAir:Node,
 AirLoopHVAC,
   Core_ZN ZN PSZ-AC-1,                    !- Name
   ,                                       !- Controller List Name
-  Core_ZN ZN PSZ-AC-1Availability Manager List, !- Availability Manager List Name
+  Air Loop HVAC 1 AvailabilityManagerAssignmentList 4, !- Availability Manager List Name
   AutoSize,                               !- Design Supply Air Flow Rate {m3/s}
   Core_ZN ZN PSZ-AC-1 Supply Branches,    !- Branch List Name
   ,                                       !- Connector List Name
@@ -4361,13 +4141,18 @@ Sizing:System,
   OnOff;                                  !- Central Cooling Capacity Control Method
 
 AvailabilityManagerAssignmentList,
-  Core_ZN ZN PSZ-AC-1Availability Manager List, !- Name
-  AvailabilityManager:Scheduled,          !- Availability Manager Object Type 1
-  Core_ZN ZN PSZ-AC-1 Availability Manager; !- Availability Manager Name 1
+  Air Loop HVAC 1 AvailabilityManagerAssignmentList 4, !- Name
+  AvailabilityManager:NightCycle,         !- Availability Manager Object Type 1
+  AVM Night Cycle 4;                      !- Availability Manager Name 1
 
-AvailabilityManager:Scheduled,
-  Core_ZN ZN PSZ-AC-1 Availability Manager, !- Name
-  CJE Always ON HVACOperationSchd;        !- Schedule Name
+AvailabilityManager:NightCycle,
+  AVM Night Cycle 4,                      !- Name
+  Always On Discrete hvac_library,        !- Applicability Schedule Name
+  CJE Always ON HVACOperationSchd,        !- Fan Schedule Name
+  StayOff,                                !- Control Type
+  1,                                      !- Thermostat Tolerance {deltaC}
+  FixedRunTime,                           !- Cycling Run Time Control Type
+  3600;                                   !- Cycling Run Time {s}
 
 BranchList,
   Core_ZN ZN PSZ-AC-1 Supply Branches,    !- Name
@@ -4747,7 +4532,7 @@ AirLoopHVAC:ZoneMixer,
 AirLoopHVAC,
   Perimeter_ZN_1 ZN PSZ-AC-2,             !- Name
   ,                                       !- Controller List Name
-  Perimeter_ZN_1 ZN PSZ-AC-2Availability Manager List, !- Availability Manager List Name
+  Air Loop HVAC 1 AvailabilityManagerAssignmentList, !- Availability Manager List Name
   AutoSize,                               !- Design Supply Air Flow Rate {m3/s}
   Perimeter_ZN_1 ZN PSZ-AC-2 Supply Branches, !- Branch List Name
   ,                                       !- Connector List Name
@@ -4805,13 +4590,18 @@ Sizing:System,
   OnOff;                                  !- Central Cooling Capacity Control Method
 
 AvailabilityManagerAssignmentList,
-  Perimeter_ZN_1 ZN PSZ-AC-2Availability Manager List, !- Name
-  AvailabilityManager:Scheduled,          !- Availability Manager Object Type 1
-  Perimeter_ZN_1 ZN PSZ-AC-2 Availability Manager; !- Availability Manager Name 1
+  Air Loop HVAC 1 AvailabilityManagerAssignmentList, !- Name
+  AvailabilityManager:NightCycle,         !- Availability Manager Object Type 1
+  AVM Night Cycle 5;                      !- Availability Manager Name 1
 
-AvailabilityManager:Scheduled,
-  Perimeter_ZN_1 ZN PSZ-AC-2 Availability Manager, !- Name
-  CJE Always ON HVACOperationSchd;        !- Schedule Name
+AvailabilityManager:NightCycle,
+  AVM Night Cycle 5,                      !- Name
+  Always On Discrete hvac_library,        !- Applicability Schedule Name
+  CJE Always ON HVACOperationSchd,        !- Fan Schedule Name
+  StayOff,                                !- Control Type
+  1,                                      !- Thermostat Tolerance {deltaC}
+  FixedRunTime,                           !- Cycling Run Time Control Type
+  3600;                                   !- Cycling Run Time {s}
 
 BranchList,
   Perimeter_ZN_1 ZN PSZ-AC-2 Supply Branches, !- Name
@@ -5098,7 +4888,7 @@ AirLoopHVAC:ZoneMixer,
 AirLoopHVAC,
   Perimeter_ZN_2 ZN PSZ-AC-3,             !- Name
   ,                                       !- Controller List Name
-  Perimeter_ZN_2 ZN PSZ-AC-3Availability Manager List, !- Availability Manager List Name
+  Air Loop HVAC 1 AvailabilityManagerAssignmentList 1, !- Availability Manager List Name
   AutoSize,                               !- Design Supply Air Flow Rate {m3/s}
   Perimeter_ZN_2 ZN PSZ-AC-3 Supply Branches, !- Branch List Name
   ,                                       !- Connector List Name
@@ -5156,13 +4946,18 @@ Sizing:System,
   OnOff;                                  !- Central Cooling Capacity Control Method
 
 AvailabilityManagerAssignmentList,
-  Perimeter_ZN_2 ZN PSZ-AC-3Availability Manager List, !- Name
-  AvailabilityManager:Scheduled,          !- Availability Manager Object Type 1
-  Perimeter_ZN_2 ZN PSZ-AC-3 Availability Manager; !- Availability Manager Name 1
+  Air Loop HVAC 1 AvailabilityManagerAssignmentList 1, !- Name
+  AvailabilityManager:NightCycle,         !- Availability Manager Object Type 1
+  AVM Night Cycle 6;                      !- Availability Manager Name 1
 
-AvailabilityManager:Scheduled,
-  Perimeter_ZN_2 ZN PSZ-AC-3 Availability Manager, !- Name
-  CJE Always ON HVACOperationSchd;        !- Schedule Name
+AvailabilityManager:NightCycle,
+  AVM Night Cycle 6,                      !- Name
+  Always On Discrete hvac_library,        !- Applicability Schedule Name
+  CJE Always ON HVACOperationSchd,        !- Fan Schedule Name
+  StayOff,                                !- Control Type
+  1,                                      !- Thermostat Tolerance {deltaC}
+  FixedRunTime,                           !- Cycling Run Time Control Type
+  3600;                                   !- Cycling Run Time {s}
 
 BranchList,
   Perimeter_ZN_2 ZN PSZ-AC-3 Supply Branches, !- Name
@@ -5449,7 +5244,7 @@ AirLoopHVAC:ZoneMixer,
 AirLoopHVAC,
   Perimeter_ZN_3 ZN PSZ-AC-4,             !- Name
   ,                                       !- Controller List Name
-  Perimeter_ZN_3 ZN PSZ-AC-4Availability Manager List, !- Availability Manager List Name
+  Air Loop HVAC 1 AvailabilityManagerAssignmentList 2, !- Availability Manager List Name
   AutoSize,                               !- Design Supply Air Flow Rate {m3/s}
   Perimeter_ZN_3 ZN PSZ-AC-4 Supply Branches, !- Branch List Name
   ,                                       !- Connector List Name
@@ -5507,13 +5302,18 @@ Sizing:System,
   OnOff;                                  !- Central Cooling Capacity Control Method
 
 AvailabilityManagerAssignmentList,
-  Perimeter_ZN_3 ZN PSZ-AC-4Availability Manager List, !- Name
-  AvailabilityManager:Scheduled,          !- Availability Manager Object Type 1
-  Perimeter_ZN_3 ZN PSZ-AC-4 Availability Manager; !- Availability Manager Name 1
+  Air Loop HVAC 1 AvailabilityManagerAssignmentList 2, !- Name
+  AvailabilityManager:NightCycle,         !- Availability Manager Object Type 1
+  AVM Night Cycle 7;                      !- Availability Manager Name 1
 
-AvailabilityManager:Scheduled,
-  Perimeter_ZN_3 ZN PSZ-AC-4 Availability Manager, !- Name
-  CJE Always ON HVACOperationSchd;        !- Schedule Name
+AvailabilityManager:NightCycle,
+  AVM Night Cycle 7,                      !- Name
+  Always On Discrete hvac_library,        !- Applicability Schedule Name
+  CJE Always ON HVACOperationSchd,        !- Fan Schedule Name
+  StayOff,                                !- Control Type
+  1,                                      !- Thermostat Tolerance {deltaC}
+  FixedRunTime,                           !- Cycling Run Time Control Type
+  3600;                                   !- Cycling Run Time {s}
 
 BranchList,
   Perimeter_ZN_3 ZN PSZ-AC-4 Supply Branches, !- Name
@@ -5865,7 +5665,7 @@ AvailabilityManagerAssignmentList,
 AvailabilityManager:NightCycle,
   Availability Manager Night Cycle 4,     !- Name
   Always On Discrete,                     !- Applicability Schedule Name
-  OfficeSmall HVACOperationSchd,          !- Fan Schedule Name
+  CJE Always ON HVACOperationSchd,        !- Fan Schedule Name
   CycleOnAny,                             !- Control Type
   1,                                      !- Thermostat Tolerance {deltaC}
   FixedRunTime,                           !- Cycling Run Time Control Type
@@ -5963,7 +5763,7 @@ AirLoopHVAC:UnitarySystem,
   Load,                                   !- Control Type
   Perimeter_ZN_4 ZN,                      !- Controlling Zone or Thermostat Location
   None,                                   !- Dehumidification Control Type
-  OfficeSmall HVACOperationSchd,          !- Availability Schedule Name
+  CJE Always ON HVACOperationSchd,        !- Availability Schedule Name
   Perimeter_ZN_4 ZN PSZ-AC-5 Mixed Air Node, !- Air Inlet Node Name
   Perimeter_ZN_4 ZN PSZ-AC-5 Supply Outlet Node, !- Air Outlet Node Name
   Fan:OnOff,                              !- Supply Fan Object Type
@@ -6887,32 +6687,16 @@ ElectricLoadCenter:Generators,
   ;                                       !- Generator Rated Thermal to Electrical Power Ratio 1
 
 Output:Meter:MeterFileOnly,
-  Cooling:Electricity,                    !- Key Name
-  timestep;                               !- Reporting Frequency
-
-Output:Meter:MeterFileOnly,
   Electricity:Facility,                   !- Key Name
   Hourly;                                 !- Reporting Frequency
-
-Output:Meter:MeterFileOnly,
-  Electricity:HVAC,                       !- Key Name
-  hourly;                                 !- Reporting Frequency
 
 Output:Meter:MeterFileOnly,
   ElectricityNet:Facility,                !- Key Name
   Hourly;                                 !- Reporting Frequency
 
 Output:Meter:MeterFileOnly,
-  Heating:Electricity,                    !- Key Name
-  timestep;                               !- Reporting Frequency
-
-Output:Meter:MeterFileOnly,
   NaturalGas:Facility,                    !- Key Name
   Hourly;                                 !- Reporting Frequency
-
-Output:Meter:MeterFileOnly,
-  NaturalGas:HVAC,                        !- Key Name
-  hourly;                                 !- Reporting Frequency
 
 Output:Variable,
   *,                                      !- Key Value
@@ -7094,525 +6878,4 @@ LifeCycleCost:NonrecurringCost,
   Construction,                           !- Category
   0,                                      !- Cost
   ServicePeriod;                          !- Start of Costs
-
-Output:Variable,
-  ,                                       !- Key Value
-  Site Outdoor Air Drybulb Temperature,   !- Variable Name
-  monthly;                                !- Reporting Frequency
-
-Output:Variable,
-  ,                                       !- Key Value
-  Zone Air Temperature,                   !- Variable Name
-  hourly;                                 !- Reporting Frequency
-
-Output:Variable,
-  ,                                       !- Key Value
-  Zone Air Relative Humidity,             !- Variable Name
-  hourly;                                 !- Reporting Frequency
-
-Output:Table:Monthly,
-  Building Energy Performance - FuelOilNo1, !- Name
-  2,                                      !- Digits After Decimal
-  Heating:FuelOilNo1,                     !- Variable or Meter Name 1
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
-  Cooling:FuelOilNo1,                     !- Variable or Meter Name 2
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
-  Interior Lighting:FuelOilNo1,           !- Variable or Meter Name 3
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
-  Exterior Lighting:FuelOilNo1,           !- Variable or Meter Name 4
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
-  Interior Equipment:FuelOilNo1,          !- Variable or Meter Name 5
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
-  Exterior Equipment:FuelOilNo1,          !- Variable or Meter Name 6
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
-  Fans:FuelOilNo1,                        !- Variable or Meter Name 7
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
-  Pumps:FuelOilNo1,                       !- Variable or Meter Name 8
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
-  Heat Rejection:FuelOilNo1,              !- Variable or Meter Name 9
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
-  Humidification:FuelOilNo1,              !- Variable or Meter Name 10
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
-  Heat Recovery:FuelOilNo1,               !- Variable or Meter Name 11
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
-  Water Systems:FuelOilNo1,               !- Variable or Meter Name 12
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
-  Refrigeration:FuelOilNo1,               !- Variable or Meter Name 13
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
-  Generators:FuelOilNo1,                  !- Variable or Meter Name 14
-  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
-
-Output:Table:Monthly,
-  Building Energy Performance - FuelOilNo2, !- Name
-  2,                                      !- Digits After Decimal
-  Heating:FuelOilNo2,                     !- Variable or Meter Name 1
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
-  Cooling:FuelOilNo2,                     !- Variable or Meter Name 2
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
-  Interior Lighting:FuelOilNo2,           !- Variable or Meter Name 3
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
-  Exterior Lighting:FuelOilNo2,           !- Variable or Meter Name 4
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
-  Interior Equipment:FuelOilNo2,          !- Variable or Meter Name 5
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
-  Exterior Equipment:FuelOilNo2,          !- Variable or Meter Name 6
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
-  Fans:FuelOilNo2,                        !- Variable or Meter Name 7
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
-  Pumps:FuelOilNo2,                       !- Variable or Meter Name 8
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
-  Heat Rejection:FuelOilNo2,              !- Variable or Meter Name 9
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
-  Humidification:FuelOilNo2,              !- Variable or Meter Name 10
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
-  Heat Recovery:FuelOilNo2,               !- Variable or Meter Name 11
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
-  Water Systems:FuelOilNo2,               !- Variable or Meter Name 12
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
-  Refrigeration:FuelOilNo2,               !- Variable or Meter Name 13
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
-  Generators:FuelOilNo2,                  !- Variable or Meter Name 14
-  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
-
-Output:Table:Monthly,
-  Building Energy Performance - PropaneGas, !- Name
-  2,                                      !- Digits After Decimal
-  Heating:PropaneGas,                     !- Variable or Meter Name 1
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
-  Cooling:PropaneGas,                     !- Variable or Meter Name 2
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
-  Interior Lighting:PropaneGas,           !- Variable or Meter Name 3
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
-  Exterior Lighting:PropaneGas,           !- Variable or Meter Name 4
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
-  Interior Equipment:PropaneGas,          !- Variable or Meter Name 5
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
-  Exterior Equipment:PropaneGas,          !- Variable or Meter Name 6
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
-  Fans:PropaneGas,                        !- Variable or Meter Name 7
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
-  Pumps:PropaneGas,                       !- Variable or Meter Name 8
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
-  Heat Rejection:PropaneGas,              !- Variable or Meter Name 9
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
-  Humidification:PropaneGas,              !- Variable or Meter Name 10
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
-  Heat Recovery:PropaneGas,               !- Variable or Meter Name 11
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
-  Water Systems:PropaneGas,               !- Variable or Meter Name 12
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
-  Refrigeration:PropaneGas,               !- Variable or Meter Name 13
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
-  Generators:PropaneGas,                  !- Variable or Meter Name 14
-  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
-
-Output:Table:Monthly,
-  Building Energy Performance - Coal,     !- Name
-  2,                                      !- Digits After Decimal
-  Heating:Coal,                           !- Variable or Meter Name 1
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
-  Cooling:Coal,                           !- Variable or Meter Name 2
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
-  Interior Lighting:Coal,                 !- Variable or Meter Name 3
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
-  Exterior Lighting:Coal,                 !- Variable or Meter Name 4
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
-  Interior Equipment:Coal,                !- Variable or Meter Name 5
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
-  Exterior Equipment:Coal,                !- Variable or Meter Name 6
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
-  Fans:Coal,                              !- Variable or Meter Name 7
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
-  Pumps:Coal,                             !- Variable or Meter Name 8
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
-  Heat Rejection:Coal,                    !- Variable or Meter Name 9
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
-  Humidification:Coal,                    !- Variable or Meter Name 10
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
-  Heat Recovery:Coal,                     !- Variable or Meter Name 11
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
-  Water Systems:Coal,                     !- Variable or Meter Name 12
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
-  Refrigeration:Coal,                     !- Variable or Meter Name 13
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
-  Generators:Coal,                        !- Variable or Meter Name 14
-  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
-
-Output:Table:Monthly,
-  Building Energy Performance - Diesel,   !- Name
-  2,                                      !- Digits After Decimal
-  Heating:Diesel,                         !- Variable or Meter Name 1
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
-  Cooling:Diesel,                         !- Variable or Meter Name 2
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
-  Interior Lighting:Diesel,               !- Variable or Meter Name 3
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
-  Exterior Lighting:Diesel,               !- Variable or Meter Name 4
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
-  Interior Equipment:Diesel,              !- Variable or Meter Name 5
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
-  Exterior Equipment:Diesel,              !- Variable or Meter Name 6
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
-  Fans:Diesel,                            !- Variable or Meter Name 7
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
-  Pumps:Diesel,                           !- Variable or Meter Name 8
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
-  Heat Rejection:Diesel,                  !- Variable or Meter Name 9
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
-  Humidification:Diesel,                  !- Variable or Meter Name 10
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
-  Heat Recovery:Diesel,                   !- Variable or Meter Name 11
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
-  Water Systems:Diesel,                   !- Variable or Meter Name 12
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
-  Refrigeration:Diesel,                   !- Variable or Meter Name 13
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
-  Generators:Diesel,                      !- Variable or Meter Name 14
-  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
-
-Output:Table:Monthly,
-  Building Energy Performance - Gasoline, !- Name
-  2,                                      !- Digits After Decimal
-  Heating:Gasoline,                       !- Variable or Meter Name 1
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
-  Cooling:Gasoline,                       !- Variable or Meter Name 2
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
-  Interior Lighting:Gasoline,             !- Variable or Meter Name 3
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
-  Exterior Lighting:Gasoline,             !- Variable or Meter Name 4
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
-  Interior Equipment:Gasoline,            !- Variable or Meter Name 5
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
-  Exterior Equipment:Gasoline,            !- Variable or Meter Name 6
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
-  Fans:Gasoline,                          !- Variable or Meter Name 7
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
-  Pumps:Gasoline,                         !- Variable or Meter Name 8
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
-  Heat Rejection:Gasoline,                !- Variable or Meter Name 9
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
-  Humidification:Gasoline,                !- Variable or Meter Name 10
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
-  Heat Recovery:Gasoline,                 !- Variable or Meter Name 11
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
-  Water Systems:Gasoline,                 !- Variable or Meter Name 12
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
-  Refrigeration:Gasoline,                 !- Variable or Meter Name 13
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
-  Generators:Gasoline,                    !- Variable or Meter Name 14
-  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
-
-Output:Table:Monthly,
-  Building Energy Performance - OtherFuel1, !- Name
-  2,                                      !- Digits After Decimal
-  Heating:OtherFuel1,                     !- Variable or Meter Name 1
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
-  Cooling:OtherFuel1,                     !- Variable or Meter Name 2
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
-  Interior Lighting:OtherFuel1,           !- Variable or Meter Name 3
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
-  Exterior Lighting:OtherFuel1,           !- Variable or Meter Name 4
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
-  Interior Equipment:OtherFuel1,          !- Variable or Meter Name 5
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
-  Exterior Equipment:OtherFuel1,          !- Variable or Meter Name 6
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
-  Fans:OtherFuel1,                        !- Variable or Meter Name 7
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
-  Pumps:OtherFuel1,                       !- Variable or Meter Name 8
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
-  Heat Rejection:OtherFuel1,              !- Variable or Meter Name 9
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
-  Humidification:OtherFuel1,              !- Variable or Meter Name 10
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
-  Heat Recovery:OtherFuel1,               !- Variable or Meter Name 11
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
-  Water Systems:OtherFuel1,               !- Variable or Meter Name 12
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
-  Refrigeration:OtherFuel1,               !- Variable or Meter Name 13
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
-  Generators:OtherFuel1,                  !- Variable or Meter Name 14
-  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
-
-Output:Table:Monthly,
-  Building Energy Performance - OtherFuel2, !- Name
-  2,                                      !- Digits After Decimal
-  Heating:OtherFuel2,                     !- Variable or Meter Name 1
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
-  Cooling:OtherFuel2,                     !- Variable or Meter Name 2
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
-  Interior Lighting:OtherFuel2,           !- Variable or Meter Name 3
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
-  Exterior Lighting:OtherFuel2,           !- Variable or Meter Name 4
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
-  Interior Equipment:OtherFuel2,          !- Variable or Meter Name 5
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
-  Exterior Equipment:OtherFuel2,          !- Variable or Meter Name 6
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
-  Fans:OtherFuel2,                        !- Variable or Meter Name 7
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
-  Pumps:OtherFuel2,                       !- Variable or Meter Name 8
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
-  Heat Rejection:OtherFuel2,              !- Variable or Meter Name 9
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
-  Humidification:OtherFuel2,              !- Variable or Meter Name 10
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
-  Heat Recovery:OtherFuel2,               !- Variable or Meter Name 11
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
-  Water Systems:OtherFuel2,               !- Variable or Meter Name 12
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
-  Refrigeration:OtherFuel2,               !- Variable or Meter Name 13
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
-  Generators:OtherFuel2,                  !- Variable or Meter Name 14
-  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
-
-Output:Table:Monthly,
-  Building Energy Performance - Electricity, !- Name
-  2,                                      !- Digits After Decimal
-  InteriorLights:Electricity,             !- Variable or Meter Name 1
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
-  ExteriorLights:Electricity,             !- Variable or Meter Name 2
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
-  InteriorEquipment:Electricity,          !- Variable or Meter Name 3
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
-  ExteriorEquipment:Electricity,          !- Variable or Meter Name 4
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
-  Fans:Electricity,                       !- Variable or Meter Name 5
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
-  Pumps:Electricity,                      !- Variable or Meter Name 6
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
-  Heating:Electricity,                    !- Variable or Meter Name 7
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
-  Cooling:Electricity,                    !- Variable or Meter Name 8
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
-  HeatRejection:Electricity,              !- Variable or Meter Name 9
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
-  Humidifier:Electricity,                 !- Variable or Meter Name 10
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
-  HeatRecovery:Electricity,               !- Variable or Meter Name 11
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
-  WaterSystems:Electricity,               !- Variable or Meter Name 12
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
-  Cogeneration:Electricity,               !- Variable or Meter Name 13
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
-  Refrigeration:Electricity,              !- Variable or Meter Name 14
-  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
-
-Output:Table:Monthly,
-  Building Energy Performance - Natural Gas, !- Name
-  2,                                      !- Digits After Decimal
-  InteriorEquipment:NaturalGas,           !- Variable or Meter Name 1
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
-  ExteriorEquipment:NaturalGas,           !- Variable or Meter Name 2
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
-  Heating:NaturalGas,                     !- Variable or Meter Name 3
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
-  Cooling:NaturalGas,                     !- Variable or Meter Name 4
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
-  WaterSystems:NaturalGas,                !- Variable or Meter Name 5
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
-  Cogeneration:NaturalGas,                !- Variable or Meter Name 6
-  SumOrAverage;                           !- Aggregation Type for Variable or Meter 6
-
-Output:Table:Monthly,
-  Building Energy Performance - District Heating, !- Name
-  2,                                      !- Digits After Decimal
-  InteriorLights:DistrictHeating,         !- Variable or Meter Name 1
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
-  ExteriorLights:DistrictHeating,         !- Variable or Meter Name 2
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
-  InteriorEquipment:DistrictHeating,      !- Variable or Meter Name 3
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
-  ExteriorEquipment:DistrictHeating,      !- Variable or Meter Name 4
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
-  Fans:DistrictHeating,                   !- Variable or Meter Name 5
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
-  Pumps:DistrictHeating,                  !- Variable or Meter Name 6
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
-  Heating:DistrictHeating,                !- Variable or Meter Name 7
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
-  Cooling:DistrictHeating,                !- Variable or Meter Name 8
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
-  HeatRejection:DistrictHeating,          !- Variable or Meter Name 9
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
-  Humidifier:DistrictHeating,             !- Variable or Meter Name 10
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
-  HeatRecovery:DistrictHeating,           !- Variable or Meter Name 11
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
-  WaterSystems:DistrictHeating,           !- Variable or Meter Name 12
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
-  Cogeneration:DistrictHeating,           !- Variable or Meter Name 13
-  SumOrAverage;                           !- Aggregation Type for Variable or Meter 13
-
-Output:Table:Monthly,
-  Building Energy Performance - District Cooling, !- Name
-  2,                                      !- Digits After Decimal
-  InteriorLights:DistrictCooling,         !- Variable or Meter Name 1
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
-  ExteriorLights:DistrictCooling,         !- Variable or Meter Name 2
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
-  InteriorEquipment:DistrictCooling,      !- Variable or Meter Name 3
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
-  ExteriorEquipment:DistrictCooling,      !- Variable or Meter Name 4
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
-  Fans:DistrictCooling,                   !- Variable or Meter Name 5
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
-  Pumps:DistrictCooling,                  !- Variable or Meter Name 6
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
-  Heating:DistrictCooling,                !- Variable or Meter Name 7
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
-  Cooling:DistrictCooling,                !- Variable or Meter Name 8
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
-  HeatRejection:DistrictCooling,          !- Variable or Meter Name 9
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
-  Humidifier:DistrictCooling,             !- Variable or Meter Name 10
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
-  HeatRecovery:DistrictCooling,           !- Variable or Meter Name 11
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
-  WaterSystems:DistrictCooling,           !- Variable or Meter Name 12
-  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
-  Cogeneration:DistrictCooling,           !- Variable or Meter Name 13
-  SumOrAverage;                           !- Aggregation Type for Variable or Meter 13
-
-Output:Table:Monthly,
-  Building Energy Performance - Electricity Peak Demand, !- Name
-  2,                                      !- Digits After Decimal
-  Electricity:Facility,                   !- Variable or Meter Name 1
-  Maximum,                                !- Aggregation Type for Variable or Meter 1
-  InteriorLights:Electricity,             !- Variable or Meter Name 2
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 2
-  ExteriorLights:Electricity,             !- Variable or Meter Name 3
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 3
-  InteriorEquipment:Electricity,          !- Variable or Meter Name 4
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 4
-  ExteriorEquipment:Electricity,          !- Variable or Meter Name 5
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 5
-  Fans:Electricity,                       !- Variable or Meter Name 6
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 6
-  Pumps:Electricity,                      !- Variable or Meter Name 7
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 7
-  Heating:Electricity,                    !- Variable or Meter Name 8
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 8
-  Cooling:Electricity,                    !- Variable or Meter Name 9
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 9
-  HeatRejection:Electricity,              !- Variable or Meter Name 10
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 10
-  Humidifier:Electricity,                 !- Variable or Meter Name 11
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 11
-  HeatRecovery:Electricity,               !- Variable or Meter Name 12
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 12
-  WaterSystems:Electricity,               !- Variable or Meter Name 13
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 13
-  Cogeneration:Electricity,               !- Variable or Meter Name 14
-  ValueWhenMaximumOrMinimum;              !- Aggregation Type for Variable or Meter 14
-
-Output:Table:Monthly,
-  Building Energy Performance - Natural Gas Peak Demand, !- Name
-  2,                                      !- Digits After Decimal
-  NaturalGas:Facility,                    !- Variable or Meter Name 1
-  Maximum,                                !- Aggregation Type for Variable or Meter 1
-  InteriorEquipment:NaturalGas,           !- Variable or Meter Name 2
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 2
-  ExteriorEquipment:NaturalGas,           !- Variable or Meter Name 3
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 3
-  Heating:NaturalGas,                     !- Variable or Meter Name 4
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 4
-  Cooling:NaturalGas,                     !- Variable or Meter Name 5
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 5
-  WaterSystems:NaturalGas,                !- Variable or Meter Name 6
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 6
-  Cogeneration:NaturalGas,                !- Variable or Meter Name 7
-  ValueWhenMaximumOrMinimum;              !- Aggregation Type for Variable or Meter 7
-
-Output:Table:Monthly,
-  Building Energy Performance - District Heating Peak Demand, !- Name
-  2,                                      !- Digits After Decimal
-  DistrictHeating:Facility,               !- Variable or Meter Name 1
-  Maximum,                                !- Aggregation Type for Variable or Meter 1
-  InteriorLights:DistrictHeating,         !- Variable or Meter Name 2
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 2
-  ExteriorLights:DistrictHeating,         !- Variable or Meter Name 3
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 3
-  InteriorEquipment:DistrictHeating,      !- Variable or Meter Name 4
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 4
-  ExteriorEquipment:DistrictHeating,      !- Variable or Meter Name 5
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 5
-  Fans:DistrictHeating,                   !- Variable or Meter Name 6
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 6
-  Pumps:DistrictHeating,                  !- Variable or Meter Name 7
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 7
-  Heating:DistrictHeating,                !- Variable or Meter Name 8
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 8
-  Cooling:DistrictHeating,                !- Variable or Meter Name 9
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 9
-  HeatRejection:DistrictHeating,          !- Variable or Meter Name 10
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 10
-  Humidifier:DistrictHeating,             !- Variable or Meter Name 11
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 11
-  HeatRecovery:DistrictHeating,           !- Variable or Meter Name 12
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 12
-  WaterSystems:DistrictHeating,           !- Variable or Meter Name 13
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 13
-  Cogeneration:DistrictHeating,           !- Variable or Meter Name 14
-  ValueWhenMaximumOrMinimum;              !- Aggregation Type for Variable or Meter 14
-
-Output:Table:Monthly,
-  Building Energy Performance - District Cooling Peak Demand, !- Name
-  2,                                      !- Digits After Decimal
-  DistrictCooling:Facility,               !- Variable or Meter Name 1
-  Maximum,                                !- Aggregation Type for Variable or Meter 1
-  InteriorLights:DistrictCooling,         !- Variable or Meter Name 2
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 2
-  ExteriorLights:DistrictCooling,         !- Variable or Meter Name 3
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 3
-  InteriorEquipment:DistrictCooling,      !- Variable or Meter Name 4
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 4
-  ExteriorEquipment:DistrictCooling,      !- Variable or Meter Name 5
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 5
-  Fans:DistrictCooling,                   !- Variable or Meter Name 6
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 6
-  Pumps:DistrictCooling,                  !- Variable or Meter Name 7
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 7
-  Heating:DistrictCooling,                !- Variable or Meter Name 8
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 8
-  Cooling:DistrictCooling,                !- Variable or Meter Name 9
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 9
-  HeatRejection:DistrictCooling,          !- Variable or Meter Name 10
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 10
-  Humidifier:DistrictCooling,             !- Variable or Meter Name 11
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 11
-  HeatRecovery:DistrictCooling,           !- Variable or Meter Name 12
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 12
-  WaterSystems:DistrictCooling,           !- Variable or Meter Name 13
-  ValueWhenMaximumOrMinimum,              !- Aggregation Type for Variable or Meter 13
-  Cogeneration:DistrictCooling,           !- Variable or Meter Name 14
-  ValueWhenMaximumOrMinimum;              !- Aggregation Type for Variable or Meter 14
-
-Output:Meter:MeterFileOnly,
-  NaturalGas:Facility,                    !- Key Name
-  Daily;                                  !- Reporting Frequency
-
-Output:Meter:MeterFileOnly,
-  Electricity:Facility,                   !- Key Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Meter:MeterFileOnly,
-  Electricity:Facility,                   !- Key Name
-  Daily;                                  !- Reporting Frequency
-
-Output:Meter,
-  Electricity:Facility,                   !- Key Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Meter,
-  NaturalGas:Facility,                    !- Key Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Meter,
-  DistrictCooling:Facility,               !- Key Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Meter,
-  DistrictHeating:Facility,               !- Key Name
-  Timestep;                               !- Reporting Frequency
 

@@ -1,22 +1,50 @@
 import time
-import numpy as np
+from typing import Union
 
+import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from .bdq import BranchingDQN, EpsilonGreedyStrategy, ReplayMemory
+from .bdq_rnn import BranchingDQN_RNN, SequenceReplayMemory
 
 from emspy import BcaEnv, MdpManager
+from bca import mdp_manager
+
+# -- Normalization Params --
+hvac_electricity_energy = {
+    # Zn0
+    'zn0_heating_electricity_max': 688000,  # [J]
+    'zn0_cooling_electricity_max': 120000,  # [J]
+    'zn0_fan_electricity_max': 121000,  # [J]
+    # Zn1
+    'zn1_heating_electricity_max': 22000,  # [J]
+    'zn1_cooling_electricity_max': 159000,  # [J]
+    'zn1_fan_electricity_max': 131000,  # [J]
+    # Zn2
+    'zn2_heating_electricity_max': 128000,  # [J]
+    'zn2_cooling_electricity_max': 93000,  # [J]
+    'zn2_fan_electricity_max': 18000,  # [J]
+    # Zn3
+    'zn3_heating_electricity_max': 149000,  # [J]
+    'zn3_cooling_electricity_max': 118000,  # [J]
+    'zn3_fan_electricity_max': 21000,  # [J]
+    # Zn4
+    'zn4_heating_electricity_max': None,
+    'zn4_cooling_electricity_max': None,
+    'zn4_fan_electricity_max': None
+}
 
 
 class Agent:
     def __init__(self,
                  emspy_sim: BcaEnv,
                  mdp: MdpManager,
-                 dqn_model: BranchingDQN,
+                 dqn_model: Union[BranchingDQN, BranchingDQN_RNN],
                  policy: EpsilonGreedyStrategy,
-                 replay_memory: ReplayMemory,
+                 replay_memory: Union[ReplayMemory, SequenceReplayMemory],
                  interaction_frequency: int,
+                 rnn: bool = False,
                  learning_loop: int = 1,
                  summary_writer: torch.utils.tensorboard.SummaryWriter = None
                  ):
@@ -54,9 +82,11 @@ class Agent:
         self.epsilon = policy.start
         self.fixed_epsilon = None  # optional fixed exploration rate
         self.greedy_epsilon = policy
-        # misc
+
+        # -- ACTION ENCODING --
         self.temp_deadband = 5  # distance between heating and cooling setpoints
         self.temp_buffer = 3  # new setpoint distance from current temps
+        self.current_setpoint_windows = [2, 2, 2, 2]
 
         # -- REWARD --
         self.reward_dict = None
@@ -76,15 +106,16 @@ class Agent:
         self.current_step = 0
 
         # -- INTERACTION FREQUENCIES --
-        self.observation_ts = 15  # how often agent will observe state & keep fixed action - off-policy
-        self.action_ts = 15  # how often agent will observe state & act - on-policy
-        self.action_delay = 15  # how many ts will agent be fixed at beginning of simulation
+        self.observation_ts = interaction_frequency  # how often agent will observe state & keep fixed action - off-policy
+        self.action_ts = interaction_frequency  # how often agent will observe state & act - on-policy
+        self.action_delay = interaction_frequency  # how many ts will agent be fixed at beginning of simulation
 
         # -- REPLAY MEMORY --
         self.memory = replay_memory
 
         # -- BDQ --
         self.bdq = dqn_model
+        self.rnn = rnn
 
         # -- PERFORMANCE RESULTS --
         self.comfort_dissatisfaction = 0
@@ -93,12 +124,12 @@ class Agent:
         self.hvac_rtp_costs_total = 0
 
         # -- RESULTS TRACKING --
+        self.discomfort_histogram_data = []
         self.rtp_histogram_data = []
         self.wind_energy_hvac_data = []
         self.total_energy_hvac_data = []
         # TensorBoard
-        self.tb = summary_writer
-        # self.tb.add_graph(dqn_model.policy_network, torch.rand(dqn_model.observation_space).unsqueeze(0))
+        self.TB = summary_writer
 
         # -- LEARNING --
         self.learning = True
@@ -123,8 +154,8 @@ class Agent:
         self.termination = self._is_terminal()
 
         # -- REWARD --
-        self.reward_dict = self._reward()
-        self.reward = max(self._get_total_reward('sum'), -100)  # aggregate 'mean' or 'sum'
+        self.reward_dict = self._reward2()
+        self.reward = max(self._get_total_reward('mean'), -1)  # aggregate 'mean' or 'sum'
         # Get total reward per component
         reward_component_sums = np.array(list(self.reward_dict.values())).sum(axis=0)
         self.reward_component_sum = np.array(list(zip(self.reward_component_sum, reward_component_sums))).sum(axis=1)
@@ -142,6 +173,10 @@ class Agent:
                     self.loss = float(self.bdq.update_policy(batch))  # batch learning
                     self.loss_total += self.loss
 
+        # -- DYNAMIC UPDATES --
+        # Adaptive Learning Rate
+        self.bdq.update_learning_rate()
+
         # -- PERFORMANCE RESULTS --
         self.comfort_dissatisfaction = self._get_comfort_results()
         self.hvac_rtp_costs = self._get_rtp_hvac_cost_and_wind_results()
@@ -150,17 +185,17 @@ class Agent:
         self.hvac_rtp_costs_total += self.hvac_rtp_costs
 
         # -- TensorBoard
-        self.tb.add_scalar('Loss', self.loss, self.current_step)
-        self.tb.add_scalar('Reward/All Reward', self.reward, self.current_step)
-        self.tb.add_scalar('Reward/Reward Cumulative', self.reward_sum, self.current_step)
-        self.tb.add_scalar('Reward/Comfort Reward', self.reward_component_sum[0], self.current_step)
-        self.tb.add_scalar('Reward/RTP-HVAC Reward', self.reward_component_sum[1], self.current_step)
-        self.tb.add_scalar('Reward/Wind-HVAC Reward', self.reward_component_sum[2], self.current_step)
+        self.TB.add_scalar('Loss', self.loss, self.current_step)
+        self.TB.add_scalar('Reward/All Reward', self.reward, self.current_step)
+        self.TB.add_scalar('Reward/Reward Cumulative', self.reward_sum, self.current_step)
+        self.TB.add_scalar('Reward/Comfort Reward', self.reward_component_sum[0], self.current_step)
+        self.TB.add_scalar('Reward/RTP-HVAC Reward', self.reward_component_sum[1], self.current_step)
+        self.TB.add_scalar('Reward/Wind-HVAC Reward', self.reward_component_sum[2], self.current_step)
         # Sim Data
-        self.tb.add_scalar('_SimData/RTP', self.mdp.get_mdp_element('rtp').value, self.current_step)
+        self.TB.add_scalar('_SimData/RTP', self.mdp.get_mdp_element('rtp').value, self.current_step)
         # Sim Results
-        self.tb.add_scalar('_Results/Comfort Dissatisfied Total', self.comfort_dissatisfaction_total, self.current_step)
-        self.tb.add_scalar('_Results/HVAC RTP Cost Total', self.hvac_rtp_costs_total, self.current_step)
+        self.TB.add_scalar('_Results/Comfort Dissatisfied Total', self.comfort_dissatisfaction_total, self.current_step)
+        self.TB.add_scalar('_Results/HVAC RTP Cost Total', self.hvac_rtp_costs_total, self.current_step)
 
         # -- UPDATE DATA --
         self.state_normalized = self.next_state_normalized
@@ -203,13 +238,32 @@ class Agent:
 
         # RTP High-Price Signal
         rtp = self.var_vals['rtp']
-        # add extra RTP pricing state
+        # Add extra RTP pricing state signal
         if rtp > 100:
             rtp_alert = [1]
         elif rtp < 15:
             rtp_alert = [-1]
         else:
             rtp_alert = [0]
+
+        # Weather Forecast
+        weather_forecast_list = []
+        hours_ahead = 12
+        for hour in range(1, hours_ahead + 1, 1):
+            current_hour = self.time.hour
+            forecast_day = 'today' if current_hour + hour < 24 else 'tomorrow'
+            forecast_hour = (current_hour + hour) % 24  # E+ clock is 0-23 hrs
+
+            weather_forecast_list.append(
+                mdp_manager.normalize_min_max_saturate(
+                    self.sim.get_weather_forecast(['oa_db'], forecast_day, forecast_hour, zone_ts=1),
+                    mdp_manager.outdoor_temp_min,
+                    mdp_manager.outdoor_temp_max)
+            )
+            weather_forecast_list.append(
+                mdp_manager.digitize_bool(
+                    self.sim.get_weather_forecast(['sun_up'], forecast_day, forecast_hour, zone_ts=1))
+            )
 
         # Timing
         month = self.time.month / 12
@@ -227,6 +281,7 @@ class Agent:
         return np.array(
             rtp_alert +
             time_list +
+            weather_forecast_list +
             list(self.var_encoded_vals.values()) +
             list(self.weather_encoded_vals.values()) +
             list(self.meter_encoded_vals.values()),
@@ -255,20 +310,30 @@ class Agent:
             'loss': self.loss
         }
 
-    def act_heat_cool_off(self):
+    def _exploit_action(self):
+        """Function to handle nuances of exploiting actions. Handles special case for RNN BDQ."""
+
+        if self.rnn:
+            # Need to have full sequence
+            # TODO make more robust, need offline learning in the beginning, or ignore early days results
+            if self.memory.interaction_count >= self.memory.sequence_span:
+                self.action = self.bdq.get_greedy_action(self.memory.get_single_sequence())
+            else:
+                self.action = np.random.randint(0, self.bdq.action_dim, self.bdq.action_branches)
+                return 'Explore'
+        else:
+            self.action = self.bdq.get_greedy_action(torch.Tensor(self.state_normalized).unsqueeze(1))
+            return 'Exploit'
+
+    def act_step_fixed_setpoints(self, actuate=True):
         """
         Action callback function:
-        Takes action from network or exploration, then encodes into HVAC commands and passed into running simulation.
+        Step up/down/nothing between fixed set of setpoint bounds
 
         :return: actuation dictionary - EMS variable name (key): actuation value (value)
         """
-
-        if False:  # mdp.ems_master_list['hvac_operation_sched'].value == 0:
-            self.action = [None] * self.bdq.action_branches  # return actuation to E+
-            action_type = 'Availability OFF'
-
-        # -- EXPLOITATION vs EXPLORATION --
-        else:
+        if actuate:
+            # -- EXPLOITATION vs EXPLORATION --
             self.epsilon = self.greedy_epsilon.get_exploration_rate(self.current_step, self.fixed_epsilon)
             if np.random.random() < self.epsilon:
                 # Explore
@@ -276,47 +341,117 @@ class Agent:
                 action_type = 'Explore'
             else:
                 # Exploit
-                self.action = self.bdq.get_greedy_action(torch.Tensor(self.state_normalized).unsqueeze(1))
-                action_type = 'Exploit'
-
-        if self.print:
-            print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
-
-        # -- ENCODE ACTIONS TO HVAC COMMAND --
-        action_cmd_print = {0: 'OFF', 1: 'HEAT', 2: 'COOL', None: 'Availability OFF'}
-        for zone, action in enumerate(self.action):
-            zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
-
-            if all((self.indoor_temp_limits - zone_temp) < 0) or all((self.indoor_temp_ideal_range - zone_temp) > 0):
-                # outside safe comfortable bounds
-                # print('unsafe temps')
-                pass
-
-            # adjust thermostat setpoints accordingly
-            if action == 0:
-                # OFF
-                heating_sp = zone_temp - self.temp_deadband / 2
-                cooling_sp = zone_temp + self.temp_deadband / 2
-            elif action == 1:
-                # HEAT
-                heating_sp = zone_temp + self.temp_buffer
-                cooling_sp = zone_temp + self.temp_buffer + self.temp_deadband
-            elif action == 2:
-                # COOL
-                heating_sp = zone_temp - self.temp_buffer - self.temp_deadband
-                cooling_sp = zone_temp - self.temp_buffer
-            else:
-                # HVAC Availability OFF
-                heating_sp = action  # None
-                cooling_sp = action  # None
-
-            self.actuation_dict[f'zn{zone}_heating_sp'] = heating_sp
-            self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
+                action_type = self._exploit_action()
 
             if self.print:
-                print(f'\t\tZone{zone} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
-                      f' Heating Sp = {round(heating_sp, 2)},'
-                      f' Cooling Sp = {round(cooling_sp, 2)}')
+                print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
+
+            # -- ENCODE ACTIONS TO HVAC COMMAND --
+            action_cmd_print = {0: 'STAY', 1: 'UP', 2: 'DOWN', None: 'Availability OFF'}
+
+            setpoint_windows = {
+                0: [14, 17],
+                1: [17, 21],
+                2: [21, 24],  # comfort
+                3: [24, 27],
+                4: [27, 30],
+                5: [30, 33]
+            }
+
+            current_setpoints = self.current_setpoint_windows
+            for zone_i, action in enumerate(self.action):
+
+                if action == 1 and list(setpoint_windows.keys())[-1] != current_setpoints[zone_i]:
+                    # UP SETPOINT
+                    current_setpoints[zone_i] += 1
+                elif action == 2 and 0 != current_setpoints[zone_i]:
+                    # DOWN SETPOINT
+                    current_setpoints[zone_i] -= 1
+                else:
+                    # STAY, or @ Boudaries
+                    current_setpoints[zone_i] += 0
+
+                # Set heating/cooling setpoints from fixed windows
+                heating_sp = setpoint_windows[current_setpoints[zone_i]][0]
+                cooling_sp = setpoint_windows[current_setpoints[zone_i]][1]
+                self.actuation_dict[f'zn{zone_i}_heating_sp'] = heating_sp
+                self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_sp
+
+                if self.print:
+                    zone_temp = self.mdp.ems_master_list[f'zn{zone_i}_temp'].value
+                    print(f'\t\tZone{zone_i} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
+                          f' Heating Sp = {round(heating_sp, 2)},'
+                          f' Cooling Sp = {round(cooling_sp, 2)}')
+
+        # Offline Learning
+        else:
+            pass
+
+        aux_actuation = self._get_aux_actuation()
+        self.actuation_dict.update(aux_actuation)  # combine
+
+        return self.actuation_dict
+
+    def act_heat_cool_off(self, actuate=True):
+        """
+        Action callback function:
+        Takes action from network or exploration, then encodes into HVAC commands and passed into running simulation.
+
+        :return: actuation dictionary - EMS variable name (key): actuation value (value)
+        """
+        if actuate:
+            # -- EXPLOITATION vs EXPLORATION --
+            self.epsilon = self.greedy_epsilon.get_exploration_rate(self.current_step, self.fixed_epsilon)
+            if np.random.random() < self.epsilon:
+                # Explore
+                self.action = np.random.randint(0, 3, self.bdq.action_branches)
+                action_type = 'Explore'
+            else:
+                # Exploit
+                self._exploit_action()
+
+            if self.print:
+                print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
+
+            # -- ENCODE ACTIONS TO HVAC COMMAND --
+            action_cmd_print = {0: 'OFF', 1: 'HEAT', 2: 'COOL', None: 'Availability OFF'}
+            for zone, action in enumerate(self.action):
+                zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
+
+                if all((self.indoor_temp_limits - zone_temp) < 0) or all((self.indoor_temp_ideal_range - zone_temp) > 0):
+                    # outside safe comfortable bounds
+                    # print('unsafe temps')
+                    pass
+
+                # adjust thermostat setpoints accordingly
+                if action == 0:
+                    # OFF
+                    heating_sp = zone_temp - self.temp_deadband / 2
+                    cooling_sp = zone_temp + self.temp_deadband / 2
+                elif action == 1:
+                    # HEAT
+                    heating_sp = zone_temp + self.temp_buffer
+                    cooling_sp = zone_temp + self.temp_buffer + self.temp_deadband
+                elif action == 2:
+                    # COOL
+                    heating_sp = zone_temp - self.temp_buffer - self.temp_deadband
+                    cooling_sp = zone_temp - self.temp_buffer
+                else:
+                    # HVAC Availability OFF
+                    heating_sp = action  # None
+                    cooling_sp = action  # None
+
+                self.actuation_dict[f'zn{zone}_heating_sp'] = heating_sp
+                self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
+
+                if self.print:
+                    print(f'\t\tZone{zone} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
+                          f' Heating Sp = {round(heating_sp, 2)},'
+                          f' Cooling Sp = {round(cooling_sp, 2)}')
+
+        # Offline Learning
+        else:
+            pass
 
         aux_actuation = self._get_aux_actuation()
         self.actuation_dict.update(aux_actuation)  # combine
@@ -334,8 +469,7 @@ class Agent:
                 action_type = 'Explore'
             else:
                 # Exploit
-                self.action = self.bdq.get_greedy_action(torch.Tensor(self.state_normalized).unsqueeze(1))
-                action_type = 'Exploit'
+                action_type = self._exploit_action()
 
             if self.print:
                 print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
@@ -373,6 +507,9 @@ class Agent:
                     print(f'\t\tZone{zone_i} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
                           f' Heating Sp = {round(heating_sp, 2)},'
                           f' Cooling Sp = {round(cooling_sp, 2)}')
+        else:
+            # Offline Learning
+            pass
 
         aux_actuation = self._get_aux_actuation()
         self.actuation_dict.update(aux_actuation)  # combine/replace aux and control actuations
@@ -380,13 +517,138 @@ class Agent:
         return self.actuation_dict
 
     # IN USE
-    def _reward(self):
+    def _reward2(self):
+        """Reward function - per component, per zone."""
+
+        # TODO add some sort of normalization
+        lambda_comfort = 2
+        lambda_rtp = 0.003
+        lambda_intermittent = 700000000
+
+        n_zones = self.bdq.action_branches
+        reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
+
+        # -- GET DATA SINCE LAST INTERACTION --
+        interaction_span = range(self.interaction_frequency)
+        # ALL
+        building_hours = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
+        # COMFORT
+        # get comfortable temp bounds based on building hours - occupied vs. unoccupied
+        temp_bounds = [self.indoor_temp_ideal_range if building_hours[i] == 1 else self.indoor_temp_unoccupied_range
+                       for i in interaction_span]
+        temp_bounds = np.asarray(temp_bounds)
+        # $RTP
+        rtp_since_last_interaction = np.asarray(self.sim.get_ems_data(['rtp'], interaction_span))
+        # WIND
+        wind_gen_since_last_interaction = np.asarray(self.sim.get_ems_data(['wind_gen'], interaction_span))
+        total_gen_since_last_interaction = np.asarray(self.sim.get_ems_data(['total_gen'], interaction_span))
+
+        # Per Controlled Zone
+        for zone_i, reward_list in reward_components_per_zone_dict.items():
+            reward_per_component = np.array([])
+
+            """
+             -- COMFORTABLE TEMPS --
+            For each zone, and array of minute interactions, each temperature is compared with the comfortable
+            temperature bounds for the given timestep. If temperatures are out of bounds, the (-) MSE of that
+            temperature from the nearest comfortable bound will be accounted for the reward.
+            """
+            zone_temps_since_last_interaction = np.asarray(
+                self.sim.get_ems_data([f'{zone_i}_temp'], interaction_span))
+            # Get Temps Below
+            too_cold_temps = np.multiply(zone_temps_since_last_interaction < temp_bounds[:, 0],
+                                         zone_temps_since_last_interaction)
+            temp_bounds_cold = temp_bounds[too_cold_temps != 0]
+            too_cold_temps = too_cold_temps[too_cold_temps != 0]  # only cold temps left
+            # Get Temps Above
+            too_warm_temps = np.multiply(zone_temps_since_last_interaction > temp_bounds[:, 1],
+                                         zone_temps_since_last_interaction)
+            temp_bounds_warm = temp_bounds[too_warm_temps != 0]
+            too_warm_temps = too_warm_temps[too_warm_temps != 0]  # only warm temps left
+
+            # MSE penalty for temps above and below comfortable bounds
+            reward = - ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() \
+                     - ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
+            reward *= lambda_comfort
+
+            reward_per_component = np.append(reward_per_component, reward)
+
+            """
+             -- DR, RTP $ --
+            For each zone, and array of minute interactions, heating and cooling energy will be compared to see if HVAC
+            heating, cooling, or Off actions occurred per each timestep. If heating or cooling occurs, the -$RTP for the
+            timestep will be accounted for * the normalized HVAC energy usage
+            """
+            # Heating
+            heating_electricity_since_last_interaction = np.asarray(
+                self.sim.get_ems_data([f'{zone_i}_heating_electricity'], interaction_span)
+            ) / hvac_electricity_energy[f'{zone_i}_heating_electricity_max']
+            # heating_gas_since_last_interaction = np.asarray(
+            #     self.sim.get_ems_data([f'{zone_i}_heating_gas'], interaction_span))
+            # Cooling
+            cooling_energy_since_last_interaction = np.asarray(
+                self.sim.get_ems_data([f'{zone_i}_cooling_electricity'], interaction_span)
+            ) / hvac_electricity_energy[f'{zone_i}_cooling_electricity_max']
+
+            fan_electricity_since_last_interaction = np.asarray(
+                self.sim.get_ems_data([f'{zone_i}_fan_electricity'], interaction_span)
+            ) / hvac_electricity_energy[f'{zone_i}_fan_electricity_max']
+
+            # Don't penalize for fan usage during day when it is REQUIRED for occupant ventilation, only Off-hours
+            fan_electricity_off_hours = np.multiply(building_hours == 0, fan_electricity_since_last_interaction)
+
+            heating_energy = fan_electricity_off_hours + heating_electricity_since_last_interaction  # + heating_gas_since_last_interaction
+            cooling_energy = fan_electricity_off_hours + cooling_energy_since_last_interaction
+
+            # Timestep-wise RTP cost, not accounting for energy-usage, only that energy was used
+            cooling_factor = 1
+            heating_factor = 1
+
+            # Account for Cooling & Heating Costs
+            cooling_timesteps_cost = - cooling_factor * np.multiply(cooling_energy, rtp_since_last_interaction)
+            heating_timesteps_cost = - heating_factor * np.multiply(heating_energy, rtp_since_last_interaction)
+
+            reward = (cooling_timesteps_cost + heating_timesteps_cost).sum()
+            reward *= lambda_rtp
+
+            reward_per_component = np.append(reward_per_component, reward)
+
+            """
+            -- INTERMITTENT RENEWABLE ENERGY USAGE --
+            Quantify how much HVAC electricity consumed came from wind and total.
+            """
+            total_hvac_electricity = heating_electricity_since_last_interaction \
+                                     + cooling_energy_since_last_interaction \
+                                     + fan_electricity_off_hours
+
+            joules_to_MWh = 2.77778e-10
+            total_hvac_electricity = joules_to_MWh * total_hvac_electricity
+            intermittent_gen_mix = np.divide(wind_gen_since_last_interaction, total_gen_since_last_interaction)
+            # Normalize, stretch to cover 0-1 better, range for 2019 is 0-~0.6
+            intermittent_gen_mix = ((intermittent_gen_mix - 0) / (0.7 - 0)) * (1-0.0) + 0  # min/max
+
+            reward = np.multiply(total_hvac_electricity, intermittent_gen_mix - 1).sum()
+            reward *= lambda_intermittent
+
+            reward_per_component = np.append(reward_per_component, reward)
+
+            """
+            All Reward Components / Zone
+            """
+            reward_components_per_zone_dict[zone_i] = reward_per_component
+
+            if self.print:
+                print(f'\tReward - {zone_i}: {reward_per_component}')
+
+        return reward_components_per_zone_dict
+
+    def _reward1(self):
         """Reward function - per component, per zone."""
 
         # TODO add some sort of normalization
         lambda_comfort = 0.2
-        lambda_rtp = 0.01
-        lambda_intermittent = 10000
+        lambda_rtp = 0.005
+        lambda_intermittent = 1000
 
         n_zones = self.bdq.action_branches
         reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
@@ -461,8 +723,8 @@ class Agent:
             # Don't penalize for fan usage during day when it is REQUIRED for occupant ventilation, only Off-hours
             fan_electricity_off_hours = np.multiply(building_hours == 0, fan_electricity_since_last_interaction)
 
-            heating_energy = fan_electricity_since_last_interaction + heating_electricity_since_last_interaction  # + heating_gas_since_last_interaction
-            cooling_energy = fan_electricity_since_last_interaction + cooling_energy_since_last_interaction
+            heating_energy = fan_electricity_off_hours + heating_electricity_since_last_interaction  # + heating_gas_since_last_interaction
+            cooling_energy = fan_electricity_off_hours + cooling_energy_since_last_interaction
 
             # Timestep-wise RTP cost, not accounting for energy-usage, only that energy was used
             cooling_factor = 1
@@ -484,8 +746,9 @@ class Agent:
             Quantify how much HVAC electricity consumed came from wind and total.
             """
             # TODO need to find a way to normalize energy usage between different sized zones
-            total_hvac_electricity = heating_electricity_since_last_interaction + cooling_energy_since_last_interaction \
-                                     + fan_electricity_since_last_interaction
+            total_hvac_electricity = heating_electricity_since_last_interaction \
+                                     + cooling_energy_since_last_interaction \
+                                     + fan_electricity_off_hours
 
             joules_to_MWh = 2.77778e-10
             total_hvac_electricity = joules_to_MWh * total_hvac_electricity

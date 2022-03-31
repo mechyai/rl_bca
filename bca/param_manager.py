@@ -6,7 +6,7 @@ from itertools import product
 import torch.utils.tensorboard as tb
 
 from emspy import BcaEnv, MdpManager
-from bca import BranchingDQN, ReplayMemory, EpsilonGreedyStrategy, Agent_TB
+from bca import BranchingDQN, BranchingDQN_RNN, ReplayMemory, SequenceReplayMemory, EpsilonGreedyStrategy, Agent_TB
 
 
 class RunManager:
@@ -15,9 +15,74 @@ class RunManager:
     # Misc. Params
     action_branches = 4
 
+    selected_params = {
+        # -- Agent Params --
+        'interaction_ts_frequency': 5,  # * [5, 10, 15],
+        'learning_loops': 10,
+
+        # --- Behavioral Policy ---
+        'eps_start': 0.15,
+        'eps_end': 0.05,
+        'eps_decay': 1e-5,
+
+        # --- Experience Replay ---
+        'replay_capacity': 5000,
+        'batch_size': 32,
+
+        # -- BDQ --
+        # Fixed
+        'observation_dim': 60,
+        'action_branches': action_branches,  # n building zones
+        'action_dim': 3,
+
+        # Architecture
+        'shared_network_size_l1': 96,
+        'shared_network_size_l2': 0,
+        'value_stream_size': 48,
+        'advantage_streams_size': 48,
+
+        # TD Update
+        'learning_rate': 1e-4,
+        'gamma': 0.7,
+
+        # Network mods
+        'td_target': 1,  # (0) mean or (1) max
+        'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
+        'rescale_shared_grad_factor': 1 / (action_branches),
+        'target_update_freq': 1e3,  # [50, 150, 500, 1e3, 1e4],
+
+        # RNN
+        # -- Agent / Model --
+        'rnn': True,
+
+        # -- Replay Memory --
+        'sequence_ts_spacing': 3,
+        'sequence_length': 5,
+
+        # -- BDQ Architecture --
+        'rnn_hidden_size': 64,
+        'rnn_num_layers': 2,
+    }
+    Run = namedtuple('Run', selected_params.keys())
+    selected_params = Run(*selected_params.values())
+
+    rnn_params = {
+        # -- Agent / Model --
+
+        'rnn': [True],
+
+        # -- Replay Memory --
+        'sequence_ts_spacing': [1, 3],
+        'sequence_length': [5, 10],
+
+        # -- BDQ Architecture --
+        'rnn_hidden_size': [64],
+        'rnn_num_layers': [1, 2],
+    }
+
     agent_params = {
         'interaction_ts_frequency': [5],  # * [5, 10, 15],
-        'learning_loops': [5, 15],
+        'learning_loops': [10],
 
         # --- Behavioral Policy ---
         'eps_start': [0.15],
@@ -30,18 +95,18 @@ class RunManager:
     }
 
     bdq_fixed_params = {
-        'observation_dim': [36],
+        'observation_dim': [64],
         'action_branches': [action_branches],  # n building zones
-        'action_dim': [6],
+        'action_dim': [5],
     }
 
     bdq_params = {
         # --- BDQ ---
         # Architecture
         'shared_network_size_l1': [96],
-        'shared_network_size_l2': [64],
-        'value_stream_size': [56],
-        'advantage_streams_size': [56],
+        'shared_network_size_l2': [],
+        'value_stream_size': [48],
+        'advantage_streams_size': [48],
 
         # TD Update
         'learning_rate': [1e-3, 1e-4, 1e-5],
@@ -54,7 +119,8 @@ class RunManager:
         'target_update_freq': [500.0, 1e3, 2e3]  # [50, 150, 500, 1e3, 1e4],
     }
 
-    hyperparameter_dict = {**agent_params, **bdq_fixed_params, **bdq_params}
+    # hyperparameter_dict = {**agent_params, **bdq_fixed_params, **bdq_params}
+    hyperparameter_dict = {**agent_params, **bdq_fixed_params, **bdq_params, **rnn_params}
 
     # The hyperparameters that vary throughout a study
     hyperparameter_study = {}
@@ -74,6 +140,7 @@ class RunManager:
 
     def get_runs(self, params: dict):
         """Get all permutations of hyperparameters passed."""
+
         Run = namedtuple('Run', params.keys())
 
         runs = []
@@ -104,6 +171,7 @@ class RunManager:
             dqn_model=self.dqn,
             policy=self.policy,
             replay_memory=self.experience_replay,
+            rnn=run.rnn,
             interaction_frequency=run.interaction_ts_frequency,
             learning_loop=run.learning_loops,
             summary_writer=summary_writer
@@ -122,32 +190,59 @@ class RunManager:
 
         return self.policy
 
-    def create_exp_replay(self, run: namedtuple):
+    def create_exp_replay(self, run: namedtuple, rnn: False):
         """Creates and returns new Experience Replay from defined parameters."""
 
-        self.experience_replay = ReplayMemory(
-            capacity=run.replay_capacity,
-            batch_size=run.batch_size
-        )
+        if rnn:
+            self.experience_replay = SequenceReplayMemory(
+                capacity=run.replay_capacity,
+                batch_size=run.batch_size,
+                sequence_length=run.sequence_length,
+                sequence_ts_spacing=run.sequence_ts_spacing
+            )
+        else:
+            self.experience_replay = ReplayMemory(
+                capacity=run.replay_capacity,
+                batch_size=run.batch_size
+            )
 
         return self.experience_replay
 
-    def create_bdq(self, run: namedtuple):
+    def create_bdq(self, run: namedtuple, rnn: False):
         """Creates and returns new BDQ model from defined parameters."""
 
-        self.dqn = BranchingDQN(
-            observation_dim=run.observation_dim,
-            action_branches=run.action_branches,
-            action_dim=run.action_dim,
-            shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
-            value_stream_size=[run.value_stream_size],
-            advantage_streams_size=[run.advantage_streams_size],
-            target_update_freq=run.target_update_freq,
-            learning_rate=run.learning_rate,
-            gamma=run.gamma,
-            td_target=run.td_target,
-            gradient_clip_norm=run.gradient_clip_norm,
-            rescale_shared_grad_factor=run.rescale_shared_grad_factor
-        )
+        if rnn:
+            self.dqn = BranchingDQN_RNN(
+                observation_dim=run.observation_dim,
+                rnn_hidden_size=run.rnn_hidden_size,
+                rnn_num_layers=run.rnn_num_layers,
+                action_branches=run.action_branches,
+                action_dim=run.action_dim,
+                shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
+                value_stream_size=[run.value_stream_size],
+                advantage_streams_size=[run.advantage_streams_size],
+                target_update_freq=run.target_update_freq,
+                learning_rate=run.learning_rate,
+                gamma=run.gamma,
+                td_target=run.td_target,
+                gradient_clip_norm=run.gradient_clip_norm,
+                rescale_shared_grad_factor=run.rescale_shared_grad_factor
+            )
+
+        else:
+            self.dqn = BranchingDQN(
+                observation_dim=run.observation_dim,
+                action_branches=run.action_branches,
+                action_dim=run.action_dim,
+                shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
+                value_stream_size=[run.value_stream_size],
+                advantage_streams_size=[run.advantage_streams_size],
+                target_update_freq=run.target_update_freq,
+                learning_rate=run.learning_rate,
+                gamma=run.gamma,
+                td_target=run.td_target,
+                gradient_clip_norm=run.gradient_clip_norm,
+                rescale_shared_grad_factor=run.rescale_shared_grad_factor
+            )
 
         return self.dqn
