@@ -248,20 +248,21 @@ class Agent:
         # Weather Forecast
         weather_forecast_list = []
         hours_ahead = 4
-        for hour in range(hours_ahead):
+        for hour in range(1, hours_ahead + 1, 1):
             current_hour = self.time.hour
-            forecast_day = 'today' if current_hour + hour + 1 > 24 else 'tomorrow'
-            forecast_hour = (current_hour + hour + 1) % 24
+            forecast_day = 'today' if current_hour + hour < 24 else 'tomorrow'
+            # TODO verify clock style of E+
+            forecast_hour = (current_hour + hour) % 24 + 1  # remember, E+ using 1-24 hr clock
 
             weather_forecast_list.append(
                 mdp_manager.normalize_min_max_saturate(
-                    self.sim.get_weather_forecast(['oa_db'], forecast_day, hour + 1, zone_ts=1),
+                    self.sim.get_weather_forecast(['oa_db'], forecast_day, forecast_hour, zone_ts=1),
                     mdp_manager.outdoor_temp_min,
                     mdp_manager.outdoor_temp_max)
             )
             weather_forecast_list.append(
                 mdp_manager.digitize_bool(
-                    self.sim.get_weather_forecast(['sun_up'], forecast_day, hour + 1, zone_ts=1))
+                    self.sim.get_weather_forecast(['sun_up'], forecast_day, forecast_hour, zone_ts=1))
             )
 
         # Timing
