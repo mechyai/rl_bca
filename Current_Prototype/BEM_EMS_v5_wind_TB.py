@@ -25,8 +25,8 @@ cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 4,
-    'run_benchmark': False,
+    'epochs': 1,
+    'run_benchmark': True,
     'exploit_final_epoch': False,
     'save_model': True,
     'save_model_final_epoch': True,

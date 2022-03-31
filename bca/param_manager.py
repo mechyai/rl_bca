@@ -31,7 +31,7 @@ class RunManager:
 
         # -- BDQ --
         # Fixed
-        'observation_dim': 44,
+        'observation_dim': 60,
         'action_branches': action_branches,  # n building zones
         'action_dim': 3,
 
@@ -57,7 +57,7 @@ class RunManager:
 
         # -- Replay Memory --
         'sequence_ts_spacing': 3,
-        'sequence_length': 10,
+        'sequence_length': 5,
 
         # -- BDQ Architecture --
         'rnn_hidden_size': 64,
@@ -95,7 +95,7 @@ class RunManager:
     }
 
     bdq_fixed_params = {
-        'observation_dim': [36],
+        'observation_dim': [64],
         'action_branches': [action_branches],  # n building zones
         'action_dim': [6],
     }

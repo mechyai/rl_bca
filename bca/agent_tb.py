@@ -248,12 +248,11 @@ class Agent:
 
         # Weather Forecast
         weather_forecast_list = []
-        hours_ahead = 4
+        hours_ahead = 12
         for hour in range(1, hours_ahead + 1, 1):
             current_hour = self.time.hour
             forecast_day = 'today' if current_hour + hour < 24 else 'tomorrow'
-            # TODO verify clock style of E+
-            forecast_hour = (current_hour + hour) % 24 + 1  # remember, E+ using 1-24 hr clock
+            forecast_hour = (current_hour + hour) % 24  # E+ clock is 0-23 hrs
 
             weather_forecast_list.append(
                 mdp_manager.normalize_min_max_saturate(
