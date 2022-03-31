@@ -17,7 +17,7 @@ class RunManager:
 
     agent_params = {
         'interaction_ts_frequency': [5],  # * [5, 10, 15],
-        'learning_loops': [10],
+        'learning_loops': [5, 15],
 
         # --- Behavioral Policy ---
         'eps_start': [0.15],
@@ -32,7 +32,7 @@ class RunManager:
     bdq_fixed_params = {
         'observation_dim': [36],
         'action_branches': [action_branches],  # n building zones
-        'action_dim': [5],
+        'action_dim': [6],
     }
 
     bdq_params = {
@@ -40,8 +40,8 @@ class RunManager:
         # Architecture
         'shared_network_size_l1': [96],
         'shared_network_size_l2': [64],
-        'value_stream_size': [48],
-        'advantage_streams_size': [48],
+        'value_stream_size': [56],
+        'advantage_streams_size': [56],
 
         # TD Update
         'learning_rate': [1e-3, 1e-4, 1e-5],
@@ -51,7 +51,7 @@ class RunManager:
         'td_target': [1],  # (0) mean or (1) max
         'gradient_clip_norm': [1],  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': [1 / (1 + action_branches)],
-        'target_update_freq': [500, 1e3, 2e3]  # [50, 150, 500, 1e3, 1e4],
+        'target_update_freq': [500.0, 1e3, 2e3]  # [50, 150, 500, 1e3, 1e4],
     }
 
     hyperparameter_dict = {**agent_params, **bdq_fixed_params, **bdq_params}

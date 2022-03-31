@@ -162,8 +162,7 @@ def fuel_mix_file_dst():
 
 
 if __name__ == "__main__":
-    # rtm_df = rtm_schedule_file()
-    # dam_df = dam_schedule_file()
-    # dam_forecast_df = dam_forecast_schedule_file()
-    # fmix_df = fuel_mix_file()  # dont use
+    rtm_df = rtm_schedule_file()
+    dam_df = dam_schedule_file()
+    dam_forecast_df = dam_forecast_schedule_file()
     fmix_df = fuel_mix_file_dst()  # handles the DST data

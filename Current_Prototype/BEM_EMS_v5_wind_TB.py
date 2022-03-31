@@ -9,23 +9,23 @@ import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 
 from emspy import EmsPy
-from bca import ModelManager, RunManager, mdp_manager
+from bca import ModelManager, RunManager, mdp_manager, paths_config
 
 # -- FILE PATHS --
 # IDF File / Modification Paths
-os_folder = 'A:/Files/PycharmProjects/rl_bca/Current_Prototype/BEM'
-idf_file_base = os.path.join(os_folder, 'IdfFiles/BEM_5z_V1_May.idf')  # !--------------------------------------------
-idf_final_file = os.path.join(os_folder, 'BEM_5z_V1.idf')
+bem_folder = os.path.join(paths_config.repo_root, 'Current_Prototype/BEM')
+idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_5z_V1_May.idf')  # !--------------------------------------------
+idf_final_file = os.path.join(bem_folder, 'BEM_5z_V1.idf')
 # Weather Path
-epw_file = os.path.join(os_folder, 'WeatherFiles/EPW/DallasTexas_2019CST.epw')
+epw_file = os.path.join(bem_folder, 'WeatherFiles/EPW/DallasTexas_2019CST.epw')
 
 # -- Simulation Params --
 cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 1,
-    'run_benchmark': True,
+    'epochs': 3,
+    'run_benchmark': False,
     'exploit_final_epoch': False,
     'save_model': False,
     'save_model_final_epoch': True,
@@ -48,12 +48,12 @@ my_model.create_custom_idf()
 
 # --- Study Parameters ---
 run_manager = RunManager()
-runs = run_manager.shuffle_runs()
+# runs = run_manager.shuffle_runs()
+runs = run_manager.runs[50:]
 
 # ------------------------------------------------ Run Study ------------------------------------------------
-runs_limit = 1
+runs_limit = 250
 for i, run in enumerate(runs):
-
     # -- Create New Model Components --
     my_bdq = run_manager.create_bdq(run)
 
@@ -73,7 +73,7 @@ for i, run in enumerate(runs):
     for epoch in range(experiment_params_dict['epochs']):  # train under same condition
 
         # ---- Tensor Board ----
-        TB = SummaryWriter(comment=f'_run{i}_epoch{epoch}')
+        TB = SummaryWriter(comment=f'_run{i}_epoch_{epoch}-{experiment_params_dict["epochs"]}')
 
         if 'my_mdp' in locals():
             del my_mdp, my_sim, my_policy, my_memory, my_agent
@@ -105,7 +105,7 @@ for i, run in enumerate(runs):
         my_sim.reset_state()
 
         # -- RECORD RESULTS --
-        print(run)
+        print(f'Run: {i}\nParams:\n\t{run}')
         TB.add_scalar('__Epoch/Total Loss', my_agent.loss_total, epoch)
         TB.add_scalar('__Epoch/Reward/All Reward', my_agent.reward_sum, epoch)
         TB.add_scalar('__Epoch/Reward/Comfort Reward', my_agent.reward_component_sum[0], epoch)
@@ -147,11 +147,10 @@ for i, run in enumerate(runs):
         if not act:
             break
 
-
     # # -- Save Model (don't save benchmark model if only 1 epoch)
     # if experiment_params_dict['save_model'] and not (epoch == 1 and experiment_params_dict['run_benchmark']):
     #     torch.save(bdq_model.policy_network.state_dict(), os.path.join(folder, model_name))  # save model
 
-    if i >= runs_limit - 1 * experiment_params_dict['run_benchmark']:
+    if i >= runs_limit - 1:
         "Breaking from loop"
         break
