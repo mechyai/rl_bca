@@ -86,6 +86,7 @@ class Agent:
         # -- ACTION ENCODING --
         self.temp_deadband = 5  # distance between heating and cooling setpoints
         self.temp_buffer = 3  # new setpoint distance from current temps
+        self.current_setpoint_windows = [2, 2, 2, 2]
 
         # -- REWARD --
         self.reward_dict = None
@@ -312,6 +313,7 @@ class Agent:
 
     def _exploit_action(self):
         """Function to handle nuances of exploiting actions. Handles special case for RNN BDQ."""
+
         if self.rnn:
             # Need to have full sequence
             # TODO make more robust, need offline learning in the beginning, or ignore early days results
@@ -340,52 +342,52 @@ class Agent:
                 action_type = 'Explore'
             else:
                 # Exploit
-                self._exploit_action()
+                action_type = self._exploit_action()
 
             if self.print:
                 print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
 
             # -- ENCODE ACTIONS TO HVAC COMMAND --
-            action_cmd_print = {0: 'OFF', 1: 'HEAT', 2: 'COOL', None: 'Availability OFF'}
-            for zone, action in enumerate(self.action):
-                zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
+            action_cmd_print = {0: 'STAY', 1: 'UP', 2: 'DOWN', None: 'Availability OFF'}
 
-                if all((self.indoor_temp_limits - zone_temp) < 0) or all((self.indoor_temp_ideal_range - zone_temp) > 0):
-                    # outside safe comfortable bounds
-                    # print('unsafe temps')
-                    pass
+            setpoint_windows = {
+                0: [14, 17],
+                1: [17, 21],
+                2: [21, 24],  # comfort
+                3: [24, 27],
+                4: [27, 30],
+                5: [30, 33]
+            }
 
-                # adjust thermostat setpoints accordingly
-                if action == 0:
-                    # OFF
-                    heating_sp = zone_temp - self.temp_deadband / 2
-                    cooling_sp = zone_temp + self.temp_deadband / 2
-                elif action == 1:
-                    # HEAT
-                    heating_sp = zone_temp + self.temp_buffer
-                    cooling_sp = zone_temp + self.temp_buffer + self.temp_deadband
-                elif action == 2:
-                    # COOL
-                    heating_sp = zone_temp - self.temp_buffer - self.temp_deadband
-                    cooling_sp = zone_temp - self.temp_buffer
+            for zone_i, action in enumerate(self.action):
+
+                current_setpoints = self.current_setpoint_windows
+
+                if action == 1 and list(setpoint_windows.keys())[0] != len(setpoint_windows) - 1:
+                    # UP SETPOINT
+                    current_setpoints[zone_i] += 1
+                elif action == -1 and list(setpoint_windows.keys())[0] != 0:
+                    # DOWN SETPOINT
+                    current_setpoints[zone_i] -= 1
                 else:
-                    # HVAC Availability OFF
-                    heating_sp = action  # None
-                    cooling_sp = action  # None
+                    # STAY
+                    current_setpoints[zone_i] += 0
 
-                self.actuation_dict[f'zn{zone}_heating_sp'] = heating_sp
-                self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
+                heating_sp = setpoint_windows[current_setpoints[zone_i]][0]
+                cooling_sp = setpoint_windows[current_setpoints[zone_i]][1]
+
+                self.actuation_dict[f'zn{zone_i}_heating_sp'] = setpoint_windows[current_setpoints[zone_i]][0]
+                self.actuation_dict[f'zn{zone_i}_cooling_sp'] = setpoint_windows[current_setpoints[zone_i]][1]
 
                 if self.print:
-                    print(f'\t\tZone{zone} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
+                    zone_temp = self.mdp.ems_master_list[f'zn{zone_i}_temp'].value
+                    print(f'\t\tZone{zone_i} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
                           f' Heating Sp = {round(heating_sp, 2)},'
                           f' Cooling Sp = {round(cooling_sp, 2)}')
 
         # Offline Learning
         else:
-            for zone, _ in enumerate(self.action):
-                self.actuation_dict[f'zn{zone}_heating_sp'] = None
-                self.actuation_dict[f'zn{zone}_cooling_sp'] = None
+            pass
 
         aux_actuation = self._get_aux_actuation()
         self.actuation_dict.update(aux_actuation)  # combine
