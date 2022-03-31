@@ -25,8 +25,8 @@ cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 15,
-    'run_benchmark': False,
+    'epochs': 4,
+    'run_benchmark': True,
     'exploit_final_epoch': False,
     'save_model': True,
     'save_model_final_epoch': True,
@@ -49,11 +49,11 @@ my_model.create_custom_idf()
 
 # --- Study Parameters ---
 run_manager = RunManager()
-runs = run_manager.shuffle_runs()
-# runs = run_manager.get_runs(run_manager.selected_params)
+# runs = run_manager.shuffle_runs()
+runs = [run_manager.selected_params]
 
 # ------------------------------------------------ Run Study ------------------------------------------------
-runs_limit = 30
+runs_limit = 1
 for i, run in enumerate(runs):
 
     # -- Create New Model Components --
@@ -63,16 +63,16 @@ for i, run in enumerate(runs):
     if experiment_params_dict['load_model']:
         my_bdq.import_model(experiment_params_dict['load_model'])
 
-    # -- Benchmark -- (do once)
-    if experiment_params_dict['run_benchmark']:
-        learn = False
-        act = False
-        experiment_params_dict['run_benchmark'] = False
-    else:
-        learn = True
-        act = True
-
     for epoch in range(experiment_params_dict['epochs']):  # train under same condition
+
+        # -- Benchmark -- (do once)
+        if experiment_params_dict['run_benchmark']:
+            learn = False
+            act = False
+            experiment_params_dict['run_benchmark'] = False
+        else:
+            learn = True
+            act = True
 
         # ---- Tensor Board ----
         TB = SummaryWriter(comment=f'_run{i}_epoch{epoch + 1}-{experiment_params_dict["epochs"]}')
@@ -94,12 +94,12 @@ for i, run in enumerate(runs):
         my_sim.set_calling_point_and_callback_function(
             calling_point=cp,
             observation_function=my_agent.observe,
-            actuation_function=my_agent.act_strict_setpoints,
+            actuation_function=my_agent.act_heat_cool_off,  # Try different actuation functions
             update_state=True,
             update_observation_frequency=run.interaction_ts_frequency,
             update_actuation_frequency=run.interaction_ts_frequency,
-            observation_function_kwargs={'learn': learn},  # whether or not model learns
-            actuation_function_kwargs={'actuate': act}  # whether or not agent takes actions
+            observation_function_kwargs={'learn': learn},
+            actuation_function_kwargs={'actuate': act}
         )
 
         # --**-- Run Sim --**--
@@ -150,15 +150,15 @@ for i, run in enumerate(runs):
         #     TB_1.add_histogram(name, param, epoch)
         #     TB.add_histogram(f'{name}.grad', param.grad, epoch)
 
-        if epoch % 5 == 0:
-            torch.save(my_bdq.policy_network.state_dict(), os.path.join(f'lstm_50_epoch{epoch}_model'))  # save model
+        # if epoch % 5 == 0:
+        #     torch.save(my_bdq.policy_network.state_dict(), os.path.join(f'lstm_50_epoch{epoch}_model'))  # save model
 
         # Only need 1 baseline epoch
-        if not act:
-            continue
+        # if not act:
+        #     continue
 
     # -- Save Model (don't save benchmark model if only 1 epoch)
-    if experiment_params_dict['save_model'] and not (epoch == 1 and experiment_params_dict['run_benchmark']):
+    if experiment_params_dict['save_model'] and not (epoch == 0 and experiment_params_dict['run_benchmark']):
         torch.save(my_bdq.policy_network.state_dict(), os.path.join('lstm_50_epoch_model'))  # save model
 
     if i >= runs_limit - 1:

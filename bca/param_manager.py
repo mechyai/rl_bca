@@ -17,52 +17,54 @@ class RunManager:
 
     selected_params = {
         # -- Agent Params --
-        'interaction_ts_frequency': [5],  # * [5, 10, 15],
-        'learning_loops': [10],
+        'interaction_ts_frequency': 5,  # * [5, 10, 15],
+        'learning_loops': 10,
 
         # --- Behavioral Policy ---
-        'eps_start': [0.15],
-        'eps_end': [0.05],
-        'eps_decay': [1e-5],
+        'eps_start': 0.15,
+        'eps_end': 0.05,
+        'eps_decay': 1e-5,
 
         # --- Experience Replay ---
-        'replay_capacity': [5000],
-        'batch_size': [32],
+        'replay_capacity': 5000,
+        'batch_size': 32,
 
         # -- BDQ --
         # Fixed
-        'observation_dim': [36],
-        'action_branches': [action_branches],  # n building zones
-        'action_dim': [6],
+        'observation_dim': 44,
+        'action_branches': action_branches,  # n building zones
+        'action_dim': 3,
 
         # Architecture
-        'shared_network_size_l1': [96],
-        'shared_network_size_l2': [64],
-        'value_stream_size': [48],
-        'advantage_streams_size': [48],
+        'shared_network_size_l1': 96,
+        'shared_network_size_l2': 0,
+        'value_stream_size': 48,
+        'advantage_streams_size': 48,
 
         # TD Update
-        'learning_rate': [1e-4],
-        'gamma': [0.7],
+        'learning_rate': 1e-4,
+        'gamma': 0.7,
 
         # Network mods
-        'td_target': [1],  # (0) mean or (1) max
-        'gradient_clip_norm': [1],  # [0, 1, 5, 10],  # 0 is nothing
-        'rescale_shared_grad_factor': [1 / (action_branches)],
-        'target_update_freq': [1e3],  # [50, 150, 500, 1e3, 1e4],
+        'td_target': 1,  # (0) mean or (1) max
+        'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
+        'rescale_shared_grad_factor': 1 / (action_branches),
+        'target_update_freq': 1e3,  # [50, 150, 500, 1e3, 1e4],
 
         # RNN
         # -- Agent / Model --
-        'rnn': [True],
+        'rnn': True,
 
         # -- Replay Memory --
-        'sequence_ts_spacing': [3],
-        'sequence_length': [10],
+        'sequence_ts_spacing': 3,
+        'sequence_length': 10,
 
         # -- BDQ Architecture --
-        'rnn_hidden_size': [64],
-        'rnn_num_layers': [2],
+        'rnn_hidden_size': 64,
+        'rnn_num_layers': 2,
     }
+    Run = namedtuple('Run', selected_params.keys())
+    selected_params = Run(*selected_params.values())
 
     rnn_params = {
         # -- Agent / Model --
@@ -102,7 +104,7 @@ class RunManager:
         # --- BDQ ---
         # Architecture
         'shared_network_size_l1': [96],
-        'shared_network_size_l2': [64],
+        'shared_network_size_l2': [],
         'value_stream_size': [48],
         'advantage_streams_size': [48],
 
