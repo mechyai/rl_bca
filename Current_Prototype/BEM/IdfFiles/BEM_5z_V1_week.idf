@@ -2412,11 +2412,11 @@ HeatBalanceAlgorithm,
 
 RunPeriod,
   Run Period 1,                           !- Name
-  4,                                      !- Begin Month
+  5,                                      !- Begin Month
   1,                                      !- Begin Day of Month
   2019,                                   !- Begin Year
-  4,                                     !- End Month
-  7,                                     !- End Day of Month
+  5,                                     !- End Month
+  8,                                     !- End Day of Month
   2019,                                   !- End Year
   Tuesday,                                !- Day of Week for Start Day
   No,                                     !- Use Weather File Holidays and Special Days

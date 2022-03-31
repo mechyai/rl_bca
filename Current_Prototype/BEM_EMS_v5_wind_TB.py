@@ -15,7 +15,7 @@ from bca import ModelManager, RunManager, mdp_manager, paths_config
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(paths_config.repo_root, 'Current_Prototype/BEM')
-idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_5z_V1_May.idf')  # !--------------------------------------------
+idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_5z_V1_week.idf')  # !--------------------------------------------
 idf_final_file = os.path.join(bem_folder, 'BEM_5z_V1.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, 'WeatherFiles/EPW/DallasTexas_2019CST.epw')
@@ -26,7 +26,7 @@ cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 4,
-    'run_benchmark': True,
+    'run_benchmark': False,
     'exploit_final_epoch': False,
     'save_model': True,
     'save_model_final_epoch': True,
@@ -94,7 +94,7 @@ for i, run in enumerate(runs):
         my_sim.set_calling_point_and_callback_function(
             calling_point=cp,
             observation_function=my_agent.observe,
-            actuation_function=my_agent.act_heat_cool_off,  # Try different actuation functions
+            actuation_function=my_agent.act_step_fixed_setpoints,  # Try different actuation functions
             update_state=True,
             update_observation_frequency=run.interaction_ts_frequency,
             update_actuation_frequency=run.interaction_ts_frequency,

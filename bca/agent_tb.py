@@ -359,25 +359,24 @@ class Agent:
                 5: [30, 33]
             }
 
+            current_setpoints = self.current_setpoint_windows
             for zone_i, action in enumerate(self.action):
 
-                current_setpoints = self.current_setpoint_windows
-
-                if action == 1 and list(setpoint_windows.keys())[0] != len(setpoint_windows) - 1:
+                if action == 1 and list(setpoint_windows.keys())[-1] != current_setpoints[zone_i]:
                     # UP SETPOINT
                     current_setpoints[zone_i] += 1
-                elif action == -1 and list(setpoint_windows.keys())[0] != 0:
+                elif action == 2 and 0 != current_setpoints[zone_i]:
                     # DOWN SETPOINT
                     current_setpoints[zone_i] -= 1
                 else:
-                    # STAY
+                    # STAY, or @ Boudaries
                     current_setpoints[zone_i] += 0
 
+                # Set heating/cooling setpoints from fixed windows
                 heating_sp = setpoint_windows[current_setpoints[zone_i]][0]
                 cooling_sp = setpoint_windows[current_setpoints[zone_i]][1]
-
-                self.actuation_dict[f'zn{zone_i}_heating_sp'] = setpoint_windows[current_setpoints[zone_i]][0]
-                self.actuation_dict[f'zn{zone_i}_cooling_sp'] = setpoint_windows[current_setpoints[zone_i]][1]
+                self.actuation_dict[f'zn{zone_i}_heating_sp'] = heating_sp
+                self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_sp
 
                 if self.print:
                     zone_temp = self.mdp.ems_master_list[f'zn{zone_i}_temp'].value
