@@ -20,6 +20,13 @@ class ModelManager:
         # -- Reward --
         'reward': ('Schedule:Constant', 'Schedule Value', 'Reward Tracker', 'Dimensionless'),
         'reward_cumulative': ('Schedule:Constant', 'Schedule Value', 'Reward Cumulative', 'Dimensionless'),
+        # Reward Components
+        'reward_comfort': ('Schedule:Constant', 'Schedule Value', 'Reward Comfort Tracker', 'Dimensionless'),
+        'reward_cumulative_comfort': ('Schedule:Constant', 'Schedule Value', 'Reward Comfort Cumulative', 'Dimensionless'),
+        'reward_rtp': ('Schedule:Constant', 'Schedule Value', 'Reward RTP Tracker', 'Dimensionless'),
+        'reward_cumulative_rtp': ('Schedule:Constant', 'Schedule Value', 'Reward RTP Cumulative', 'Dimensionless'),
+        'reward_wind': ('Schedule:Constant', 'Schedule Value', 'Reward Wind Tracker', 'Dimensionless'),
+        'reward_cumulative_wind': ('Schedule:Constant', 'Schedule Value', 'Reward Wind Cumulative', 'Dimensionless'),
         # -- Results Metrics --
         # Comfort
         'comfort': ('Schedule:Constant', 'Schedule Value', 'Comfort Tracker', 'Dimensionless'),
