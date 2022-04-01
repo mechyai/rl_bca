@@ -86,7 +86,7 @@ class Agent:
         # -- ACTION ENCODING --
         self.temp_deadband = 5  # distance between heating and cooling setpoints
         self.temp_buffer = 3  # new setpoint distance from current temps
-        self.current_setpoint_windows = [2, 2, 2, 2]
+        self.current_setpoint_windows = [3, 3, 3, 3]
 
         # -- REWARD --
         self.reward_dict = None
@@ -154,16 +154,24 @@ class Agent:
         self.termination = self._is_terminal()
 
         # -- REWARD --
+        reward_scale = 1
         self.reward_dict = self._reward2()
-        self.reward = max(self._get_total_reward('mean'), -1)  # aggregate 'mean' or 'sum'
-        # Get total reward per component
-        reward_component_sums = np.array(list(self.reward_dict.values())).sum(axis=0)
+        self.reward = self._get_total_reward('mean') * reward_scale  # aggregate 'mean' or 'sum'
+        # Get total reward per component, not Zone
+        reward_component_sums = np.array(list(self.reward_dict.values())).sum(axis=0)  # sum reward per component
         self.reward_component_sum = np.array(list(zip(self.reward_component_sum, reward_component_sums))).sum(axis=1)
 
         # -- STORE INTERACTIONS --
-        if self.action is not None:  # after first action, enough data available
-            self.memory.push(self.state_normalized, self.action, self.next_state_normalized,
-                             self.reward, self.termination)  # <S, A, S', R, t> - push experience to Replay Memory
+        if learn and self.action is not None:  # after first action, enough data available
+            # <S, A, S', R, t> - push experience to Replay Memory
+            self.memory.push(
+                self.state_normalized,
+                self.action,
+                self.next_state_normalized,
+                # max(self.reward, -50),
+                self.reward,
+                self.termination
+            )
 
         # -- LEARN BATCH --
         if learn:
@@ -173,18 +181,22 @@ class Agent:
                     self.loss = float(self.bdq.update_policy(batch))  # batch learning
                     self.loss_total += self.loss
 
-        # -- DYNAMIC UPDATES --
-        # Adaptive Learning Rate
-        self.bdq.update_learning_rate()
+            # Adaptive Learning Rate
+            # self.bdq.update_learning_rate()
 
         # -- PERFORMANCE RESULTS --
         self.comfort_dissatisfaction = self._get_comfort_results()
         self.hvac_rtp_costs = self._get_rtp_hvac_cost_and_wind_results()
+
+        # -- UPDATE DATA --
+        self.state_normalized = self.next_state_normalized
+        self.current_step += 1
         # Update Sum
         self.comfort_dissatisfaction_total += self.comfort_dissatisfaction
         self.hvac_rtp_costs_total += self.hvac_rtp_costs
+        self.reward_sum += self.reward
 
-        # -- TensorBoard
+        # -- TensorBoard --
         self.TB.add_scalar('Loss', self.loss, self.current_step)
         self.TB.add_scalar('Reward/All Reward', self.reward, self.current_step)
         self.TB.add_scalar('Reward/Reward Cumulative', self.reward_sum, self.current_step)
@@ -196,11 +208,6 @@ class Agent:
         # Sim Results
         self.TB.add_scalar('_Results/Comfort Dissatisfied Total', self.comfort_dissatisfaction_total, self.current_step)
         self.TB.add_scalar('_Results/HVAC RTP Cost Total', self.hvac_rtp_costs_total, self.current_step)
-
-        # -- UPDATE DATA --
-        self.state_normalized = self.next_state_normalized
-        self.reward_sum += self.reward
-        self.current_step += 1
 
         # -- REPORTING --
         if self.print:
@@ -325,7 +332,7 @@ class Agent:
             self.action = self.bdq.get_greedy_action(torch.Tensor(self.state_normalized).unsqueeze(1))
             return 'Exploit'
 
-    def act_step_fixed_setpoints(self, actuate=True):
+    def act_step_fixed_setpoints(self, actuate=True, exploit=False):
         """
         Action callback function:
         Step up/down/nothing between fixed set of setpoint bounds
@@ -335,7 +342,7 @@ class Agent:
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
             self.epsilon = self.greedy_epsilon.get_exploration_rate(self.current_step, self.fixed_epsilon)
-            if np.random.random() < self.epsilon:
+            if not exploit and np.random.random() < self.epsilon:
                 # Explore
                 self.action = np.random.randint(0, 3, self.bdq.action_branches)
                 action_type = 'Explore'
@@ -343,19 +350,29 @@ class Agent:
                 # Exploit
                 action_type = self._exploit_action()
 
+            # if self.print:
             if self.print:
                 print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
 
             # -- ENCODE ACTIONS TO HVAC COMMAND --
             action_cmd_print = {0: 'STAY', 1: 'UP', 2: 'DOWN', None: 'Availability OFF'}
 
+            # setpoint_windows = {
+            #     0: [14, 17],
+            #     1: [17, 21],
+            #     2: [21, 24],  # comfort
+            #     3: [24, 27],
+            #     4: [27, 30],
+            #     5: [30, 33]
+            # }
             setpoint_windows = {
-                0: [14, 17],
-                1: [17, 21],
-                2: [21, 24],  # comfort
-                3: [24, 27],
-                4: [27, 30],
-                5: [30, 33]
+                0: [13, 15.56],
+                1: [15.56, 17],  # LB
+                2: [17, 21.1],
+                3: [21.1, 23.89],  # comfort
+                4: [23.89, 27],
+                5: [27, 29.4],  # UB
+                6: [29.4, 32]
             }
 
             current_setpoints = self.current_setpoint_windows
@@ -418,7 +435,8 @@ class Agent:
             for zone, action in enumerate(self.action):
                 zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
 
-                if all((self.indoor_temp_limits - zone_temp) < 0) or all((self.indoor_temp_ideal_range - zone_temp) > 0):
+                if all((self.indoor_temp_limits - zone_temp) < 0) or all(
+                        (self.indoor_temp_ideal_range - zone_temp) > 0):
                     # outside safe comfortable bounds
                     # print('unsafe temps')
                     pass
@@ -480,14 +498,6 @@ class Agent:
             for zone_i, action in enumerate(self.action):
                 zone_temp = self.mdp.ems_master_list[f'zn{zone_i}_temp'].value
 
-                # actuation_cmd_dict = {
-                #     0: [15.1, 18.1],  # LOWEST
-                #     1: [18.1, 21.1],  # LOWER
-                #     2: [21.1, 23.9],  # IDEAL*
-                #     3: [23.9, 26.9],  # HIGHER
-                #     4: [26.9, 29.9]  # HIGHEST
-                # }
-
                 actuation_cmd_dict = {
                     0: [15.1, 18.1],  # LOWEST
                     1: [18.1, 21.1],  # LOWER
@@ -520,10 +530,9 @@ class Agent:
     def _reward2(self):
         """Reward function - per component, per zone."""
 
-        # TODO add some sort of normalization
-        lambda_comfort = 2
-        lambda_rtp = 0.003
-        lambda_intermittent = 700000000
+        lambda_comfort = 40
+        lambda_rtp = 0.03
+        lambda_intermittent = 1
 
         n_zones = self.bdq.action_branches
         reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
@@ -533,10 +542,9 @@ class Agent:
         # ALL
         building_hours = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
         # COMFORT
-        # get comfortable temp bounds based on building hours - occupied vs. unoccupied
-        temp_bounds = [self.indoor_temp_ideal_range if building_hours[i] == 1 else self.indoor_temp_unoccupied_range
-                       for i in interaction_span]
-        temp_bounds = np.asarray(temp_bounds)
+        # Get comfortable temp bounds based on building hours - occupied vs. unoccupied
+        temp_bounds = np.asarray([self.indoor_temp_ideal_range if building_hours[i] == 1
+                                   else self.indoor_temp_unoccupied_range for i in interaction_span])
         # $RTP
         rtp_since_last_interaction = np.asarray(self.sim.get_ems_data(['rtp'], interaction_span))
         # WIND
@@ -558,17 +566,19 @@ class Agent:
             # Get Temps Below
             too_cold_temps = np.multiply(zone_temps_since_last_interaction < temp_bounds[:, 0],
                                          zone_temps_since_last_interaction)
-            temp_bounds_cold = temp_bounds[too_cold_temps != 0]
-            too_cold_temps = too_cold_temps[too_cold_temps != 0]  # only cold temps left
+            temp_bounds_cold = temp_bounds[too_cold_temps != 0]  # get only lower bound temps where too cold
+            too_cold_temps = too_cold_temps[too_cold_temps != 0]  # get only too cold zone temps
             # Get Temps Above
             too_warm_temps = np.multiply(zone_temps_since_last_interaction > temp_bounds[:, 1],
                                          zone_temps_since_last_interaction)
-            temp_bounds_warm = temp_bounds[too_warm_temps != 0]
-            too_warm_temps = too_warm_temps[too_warm_temps != 0]  # only warm temps left
+            temp_bounds_warm = temp_bounds[too_warm_temps != 0]  # get only lower bound temps where too cold
+            too_warm_temps = too_warm_temps[too_warm_temps != 0]  # get only too cold zone temps
 
             # MSE penalty for temps above and below comfortable bounds
-            reward = - ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() \
-                     - ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
+            # reward = - ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() \
+            #          - ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
+            reward = - (abs(too_cold_temps - temp_bounds_cold[:, 0])).sum() \
+                     - (abs(too_warm_temps - temp_bounds_warm[:, 1])).sum()
             reward *= lambda_comfort
 
             reward_per_component = np.append(reward_per_component, reward)
@@ -621,13 +631,13 @@ class Agent:
                                      + cooling_energy_since_last_interaction \
                                      + fan_electricity_off_hours
 
-            joules_to_MWh = 2.77778e-10
-            total_hvac_electricity = joules_to_MWh * total_hvac_electricity
+            # joules_to_MWh = 2.77778e-10
+            # total_hvac_electricity = joules_to_MWh * total_hvac_electricity
             intermittent_gen_mix = np.divide(wind_gen_since_last_interaction, total_gen_since_last_interaction)
             # Normalize, stretch to cover 0-1 better, range for 2019 is 0-~0.6
-            intermittent_gen_mix = ((intermittent_gen_mix - 0) / (0.7 - 0)) * (1-0.0) + 0  # min/max
+            intermittent_gen_mix = ((intermittent_gen_mix - 0) / (0.7 - 0)) * (1 - 0.0) + 0  # min/max
 
-            reward = np.multiply(total_hvac_electricity, intermittent_gen_mix - 1).sum()
+            reward = np.multiply(total_hvac_electricity, (intermittent_gen_mix - 1)).sum()
             reward *= lambda_intermittent
 
             reward_per_component = np.append(reward_per_component, reward)
@@ -762,121 +772,6 @@ class Agent:
             """
             All Reward Components / Zone
             """
-            reward_components_per_zone_dict[zone_i] = reward_per_component
-
-            if self.print:
-                print(f'\tReward - {zone_i}: {reward_per_component}')
-
-        return reward_components_per_zone_dict
-
-    def _reward_components_conditional(self, comfort=True, rtp=True, wind=True):
-        """Reward function - per component, per zone."""
-        # TODO
-
-        # TODO add some sort of normalization
-        lambda_comfort = 0.1
-        lambda_rtp = 0.01
-        lambda_intermittant = 1
-
-        n_zones = self.bdq.action_branches
-        reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
-
-        # -- GET DATA SINCE LAST INTERACTION --
-        interaction_span = range(self.interaction_frequency)
-        # ALL
-        building_hours = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
-        # COMFORT
-        if comfort:
-            # get comfortable temp bounds based on building hours - occupied vs. unoccupied
-            temp_bounds = [self.indoor_temp_ideal_range if building_hours[i] == 1 else self.indoor_temp_unoccupied_range
-                           for i in interaction_span]
-            temp_bounds = np.asarray(temp_bounds)
-        # $RTP
-        if rtp:
-            rtp_since_last_interaction = np.asarray(self.sim.get_ems_data(['rtp'], interaction_span))
-        # WIND
-        if wind:
-            pass
-
-            # Per Controlled Zone
-        for zone_i, reward_list in reward_components_per_zone_dict.items():
-            reward_per_component = np.array([])
-
-            """
-             -- COMFORTABLE TEMPS --
-            For each zone, and array of minute interactions, each temperature is compared with the comfortable
-            temperature bounds for the given timestep. If temperatures are out of bounds, the (-) MSE of that
-            temperature from the nearest comfortable bound will be accounted for the reward.
-            """
-            zone_temps_since_last_interaction = np.asarray(
-                self.sim.get_ems_data([f'{zone_i}_temp'], interaction_span))
-
-            too_cold_temps = np.multiply(zone_temps_since_last_interaction < temp_bounds[:, 0],
-                                         zone_temps_since_last_interaction)
-            temp_bounds_cold = temp_bounds[too_cold_temps != 0]
-            too_cold_temps = too_cold_temps[too_cold_temps != 0]  # only cold temps left
-
-            too_warm_temps = np.multiply(zone_temps_since_last_interaction > temp_bounds[:, 1],
-                                         zone_temps_since_last_interaction)
-            temp_bounds_warm = temp_bounds[too_warm_temps != 0]
-            too_warm_temps = too_warm_temps[too_warm_temps != 0]  # only warm temps left
-
-            # MSE penalty for temps above and below comfortable bounds
-            reward = - ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() \
-                     - ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
-            reward *= lambda_comfort
-
-            reward_per_component = np.append(reward_per_component, reward)
-
-            """
-             -- DR, RTP $ --
-            For each zone, and array of minute interactions, heating and cooling energy will be compared to see if HVAC
-            heating, cooling, or Off actions occurred per each timestep. If heating or cooling occurs, the -$RTP for the
-            timestep will be accounted for. Note, that this is not multiplied by the energy used, such that this reward
-            is agnostic to the zone size and incident load. 
-            """
-
-            heating_electricity_since_last_interaction = np.asarray(
-                self.sim.get_ems_data([f'{zone_i}_heating_electricity'], interaction_span)
-            )
-            # heating_gas_since_last_interaction = np.asarray(
-            #     self.sim.get_ems_data([f'{zone_i}_heating_gas'], interaction_span))
-
-            cooling_energy_since_last_interaction = np.asarray(
-                self.sim.get_ems_data([f'{zone_i}_cooling_electricity'], interaction_span)
-            )
-
-            fan_electricity_since_last_interaction = np.asarray(
-                self.sim.get_ems_data([f'{zone_i}_fan_electricity'], interaction_span)
-            )
-
-            # Don't penalize for fan usage during day when it is REQUIRED for occupant ventilation, only Off-hours
-            fan_electricity_off_hours = np.multiply(building_hours == 0, fan_electricity_since_last_interaction)
-
-            heating_energy = fan_electricity_since_last_interaction + heating_electricity_since_last_interaction  # + heating_gas_since_last_interaction
-            cooling_energy = fan_electricity_since_last_interaction + cooling_energy_since_last_interaction
-
-            # Timestep-wise RTP cost, not accounting for energy-usage, only that energy was used
-            cooling_factor = 1
-            heating_factor = 1
-
-            # Only account for heating or cooling actions, Fan energy usage is implied here
-            cooling_timesteps_cost = - cooling_factor * np.multiply(cooling_energy > heating_energy,
-                                                                    rtp_since_last_interaction)
-            heating_timesteps_cost = - heating_factor * np.multiply(heating_energy > cooling_energy,
-                                                                    rtp_since_last_interaction)
-
-            reward = (cooling_timesteps_cost + heating_timesteps_cost).sum()
-            reward *= lambda_rtp
-
-            reward_per_component = np.append(reward_per_component, reward)
-
-            """
-            # -- INTERMITTENT RENEWABLE ENERGY USAGE --
-            TODO
-            """
-
-            # Reward Components per Zone
             reward_components_per_zone_dict[zone_i] = reward_per_component
 
             if self.print:

@@ -21,13 +21,13 @@ class RunManager:
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
-        'eps_start': 0.15,
+        'eps_start': 0.2,
         'eps_end': 0.05,
-        'eps_decay': 1e-5,
+        'eps_decay': 1e-3,
 
         # --- Experience Replay ---
-        'replay_capacity': 5000,
-        'batch_size': 32,
+        'replay_capacity': 1000,
+        'batch_size': 64,
 
         # -- BDQ --
         # Fixed
@@ -37,12 +37,13 @@ class RunManager:
 
         # Architecture
         'shared_network_size_l1': 96,
-        'shared_network_size_l2': 0,
+        'shared_network_size_l2': 96,
         'value_stream_size': 48,
         'advantage_streams_size': 48,
 
         # TD Update
-        'learning_rate': 1e-4,
+        'optimizer': 'Adagrad',
+        'learning_rate': 1e-3,
         'gamma': 0.7,
 
         # Network mods
@@ -53,7 +54,7 @@ class RunManager:
 
         # RNN
         # -- Agent / Model --
-        'rnn': True,
+        'rnn': False,
 
         # -- Replay Memory --
         'sequence_ts_spacing': 3,
@@ -69,7 +70,7 @@ class RunManager:
     rnn_params = {
         # -- Agent / Model --
 
-        'rnn': [True],
+        'rnn': [True, False],
 
         # -- Replay Memory --
         'sequence_ts_spacing': [1, 3],
@@ -109,6 +110,7 @@ class RunManager:
         'advantage_streams_size': [48],
 
         # TD Update
+        'optimizer': ['Adam'],
         'learning_rate': [1e-3, 1e-4, 1e-5],
         'gamma': [0.3, 0.5, 0.7],
 
@@ -223,6 +225,7 @@ class RunManager:
                 advantage_streams_size=[run.advantage_streams_size],
                 target_update_freq=run.target_update_freq,
                 learning_rate=run.learning_rate,
+                optimizer=run.optimizer,
                 gamma=run.gamma,
                 td_target=run.td_target,
                 gradient_clip_norm=run.gradient_clip_norm,
@@ -239,6 +242,7 @@ class RunManager:
                 advantage_streams_size=[run.advantage_streams_size],
                 target_update_freq=run.target_update_freq,
                 learning_rate=run.learning_rate,
+                optimizer=run.optimizer,
                 gamma=run.gamma,
                 td_target=run.td_target,
                 gradient_clip_norm=run.gradient_clip_norm,

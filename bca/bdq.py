@@ -126,7 +126,7 @@ class BranchingQNetwork(nn.Module):
         for i, layer_size in enumerate(shared_network_size):
             if layer_size != 0:
                 layers.append(nn.Linear(prev_layer_size, layer_size))
-                # layers.append(nn.Relu)
+                layers.append(nn.ReLU())
                 prev_layer_size = layer_size
 
         shared_final_layer = prev_layer_size
@@ -138,6 +138,7 @@ class BranchingQNetwork(nn.Module):
         for i, layer_size in enumerate(value_stream_size):
             if layer_size != 0:
                 layers.append(nn.Linear(prev_layer_size, layer_size))
+                layers.append(nn.ReLU())
                 prev_layer_size = layer_size
 
         final_layer = nn.Linear(prev_layer_size, 1)  # output state-value
@@ -176,7 +177,8 @@ class BranchingDQN(nn.Module):
     def __init__(self, observation_dim: int, action_branches: int, action_dim: int,
                  shared_network_size: list, value_stream_size: list, advantage_streams_size: list,
                  target_update_freq: int, learning_rate: float, gamma: float, td_target: str,
-                 gradient_clip_norm: float, rescale_shared_grad_factor: float = None):
+                 gradient_clip_norm: float, rescale_shared_grad_factor: float = None,
+                 optimizer: str = 'Adam', **optimizer_kwargs):
 
         super().__init__()
 
@@ -197,11 +199,13 @@ class BranchingDQN(nn.Module):
                                                 value_stream_size, advantage_streams_size)
         self.target_network.load_state_dict(self.policy_network.state_dict())  # copy params
 
-        self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.learning_rate)  # learned policy
-
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.policy_network.to(self.device)
         self.target_network.to(self.device)
+
+        # self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.learning_rate)  # learned policy
+        self.optimizer = \
+            getattr(optim, optimizer)(self.policy_network.parameters(), lr=learning_rate, **optimizer_kwargs)
 
         self.target_update_freq = target_update_freq
         self.update_count = 0
@@ -272,7 +276,8 @@ class BranchingDQN(nn.Module):
         # Normalize gradients converging at shared network from action branches and value stream
         if self.rescale_shared_grad_factor is not None:
             for layer in self.policy_network.shared_model:
-                layer.weight.grad = layer.weight.grad * self.rescale_shared_grad_factor
+                if hasattr(layer, 'weight'):  # Ignore activation layers
+                    layer.weight.grad = layer.weight.grad * self.rescale_shared_grad_factor
 
         # -- Optimize --
         self.optimizer.step()
@@ -291,6 +296,14 @@ class BranchingDQN(nn.Module):
         self.policy_network.load_state_dict(torch.load(model_path))
         # self.policy_network.load_state_dict(torch.load(model_path).state_dict())  # used to save wrong
         self.target_network.load_state_dict(self.policy_network.state_dict())
+
+    def change_learning_rate_discrete(self, lr: float, **optimizer_kwargs):
+        """For predefined network, change the learning rate of the given optimizer."""
+
+        # Get optimizer in use
+        optimizer = self.optimizer.__class__.__name__
+        self.optimizer = \
+            getattr(optim, optimizer)(self.policy_network.parameters(), lr=lr, **optimizer_kwargs)
 
     def _extract_tensors(self, experiences_batch):
         """Format batch of experiences to proper tensor format."""
