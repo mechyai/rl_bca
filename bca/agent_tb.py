@@ -298,11 +298,16 @@ class Agent:
         """
         Used to manage auxiliary actuation (likely schedule writing) in one place.
         """
+        reward_component_sum = np.array(list(self.reward_dict.values())).sum(axis=0)
         return {
             # Data Tracking
             # -- Rewards --
             'reward': self.reward,
             'reward_cumulative': self.reward_sum,
+            # Reward Components
+            'reward_comfort': self.reward_component_sum[0],
+            'reward_rtp': self.reward_component_sum[1],
+            'reward_wind': self.reward_component_sum[2],
             # -- Results Metric --
             # Comfort
             'comfort': self.comfort_dissatisfaction,
