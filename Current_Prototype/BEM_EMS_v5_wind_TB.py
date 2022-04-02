@@ -9,13 +9,13 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from emspy import EmsPy
-from bca import ModelManager, RunManager, mdp_manager, paths_config
+from bca import ModelManager, RunManager, TensorboardManager, mdp_manager, paths_config
 
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(paths_config.repo_root, 'Current_Prototype/BEM')
-idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_5z_V1_May.idf')  # !--------------------------------------------
-idf_final_file = os.path.join(bem_folder, 'BEM_5z_V1.idf')
+idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_V1_2019_baseline_May.idf')  # !-----------------------------------
+idf_final_file = os.path.join(bem_folder, 'BEM_V1_2019_Year.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, 'WeatherFiles/EPW/DallasTexas_2019CST.epw')
 
@@ -24,7 +24,7 @@ cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 25,
+    'epochs': 1,
     'run_benchmark': True,
     'exploit_final_epoch': False,
     'save_model': True,
@@ -34,7 +34,7 @@ experiment_params_dict = {
     'reward_plot_title': '',
     'experiment_title': '',
     'experiment_notes': '',
-    'load_model': r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\nolin_epoch_3_lr_0.005'
+    'load_model': r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\MEAN_reward_epoch_33_lr_1e-06'
 }
 
 # -- INSTANTIATE MDP / CUSTOM IDF / CREATE SIM --
@@ -42,7 +42,7 @@ my_model = ModelManager(
     mdp_manager_file=mdp_manager,
     idf_file_input=idf_file_base,
     idf_file_output=idf_final_file,
-    year=2019
+    year=mdp_manager.year
 )
 my_model.create_custom_idf()
 
@@ -61,7 +61,7 @@ for i, run in enumerate(runs):
     # Load model, if desired
     if experiment_params_dict['load_model']:
         my_bdq.import_model(experiment_params_dict['load_model'])
-    j = 0
+    j = 4
 
     for epoch in range(experiment_params_dict['epochs']):  # train under same condition
 
@@ -72,7 +72,7 @@ for i, run in enumerate(runs):
             exploit = False
             experiment_params_dict['run_benchmark'] = False
         else:
-            if experiment_params_dict['exploit_final_epoch']:
+            if experiment_params_dict['exploit_final_epoch'] and epoch == (experiment_params_dict['epochs'] - 1):
                 exploit = True
                 learn = False
                 act = True
@@ -81,7 +81,7 @@ for i, run in enumerate(runs):
                 learn = True
                 act = True
 
-        if epoch % 3 == 0:
+        if epoch % 5 == 0:
             lr = [5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6, 1e-6][j]
             print(f'Learning rate: {lr}')
             j += 1
@@ -89,8 +89,9 @@ for i, run in enumerate(runs):
             my_bdq.change_learning_rate_discrete(lr)
 
         # ---- Tensor Board ----
-        TB = SummaryWriter(comment=f'__1_lr_{lr}_activation_epoch{epoch + 1}-{experiment_params_dict["epochs"]}')
-        # TB = SummaryWriter(comment='')
+        TB = TensorboardManager(run_manager, comment=f'__MEAN_cont_14_lr_{lr}_epoch{epoch + 1}-{experiment_params_dict["epochs"]}')
+        # TB = TensorboardManager(run_manager, comment=f'__May_epoch_35_EXPLOIT')
+        # TB = TensorboardManager(run_manager, comment=f'___May_BASELINE')
 
         if 'my_mdp' in locals():
             del my_mdp, my_sim, my_policy, my_memory, my_agent
@@ -123,50 +124,15 @@ for i, run in enumerate(runs):
 
         # -- RECORD RESULTS --
         print(run)
-        TB.add_scalar('__Epoch/Total Loss', my_agent.loss_total, epoch)
-        TB.add_scalar('__Epoch/Reward/All Reward', my_agent.reward_sum, epoch)
-        TB.add_scalar('__Epoch/Reward/Comfort Reward', my_agent.reward_component_sum[0], epoch)
-        TB.add_scalar('__Epoch/Reward/RTP-HVAC Reward', my_agent.reward_component_sum[1], epoch)
-        TB.add_scalar('__Epoch/Reward/Wind-HVAC Reward', my_agent.reward_component_sum[2], epoch)
-        # Sim Results
-        TB.add_scalar('__Epoch/_Results/Comfort Dissatisfied Total', my_agent.comfort_dissatisfaction_total, epoch)
-        TB.add_scalar('__Epoch/_Results/HVAC RTP Cost Total', my_agent.hvac_rtp_costs_total, epoch)
-        # Hyperparameter
-        TB.add_hparams(
-            hparam_dict=
-            {
-                **{
-                    'run': i,
-                    'epoch': epoch
-                   },
-                **run._asdict()
-            },
-            metric_dict=
-            {
-                'Total Reward': my_agent.reward_sum,
-                'Total Loss': my_agent.loss_total,
-                'Comfort Reward': my_agent.reward_component_sum[0],
-                'RTP-HVAC Reward': my_agent.reward_component_sum[1],
-                'Wind-HVAC Reward': my_agent.reward_component_sum[2],
-                'Comfort Dissatisfied Metric': my_agent.comfort_dissatisfaction_total,
-                'HVAC RTP Cost Metric': my_agent.hvac_rtp_costs_total
-            },
-            hparam_domain_discrete=
-            {
-                **{
-                    'run': list(range(runs_limit)),
-                    'epoch': list(range(experiment_params_dict['epochs']))
-                },
-                **RunManager.hyperparameter_dict
-            },
-        )
+        TB.record_epoch_results(my_agent, experiment_params_dict, run, i, runs_limit, epoch, 'train')
 
         # for name, param in my_bdq.policy_network.named_parameters():
         #     TB_1.add_histogram(name, param, epoch)
         #     TB.add_histogram(f'{name}.grad', param.grad, epoch)
 
-        if epoch % 3 == 0 and epoch != 0:
-            torch.save(my_bdq.policy_network.state_dict(), os.path.join(f'nolin_epoch_{epoch}_lr_{lr}'))  # save model
+        if (epoch) % 5 == 0 and epoch != 0:
+            torch.save(my_bdq.policy_network.state_dict(), os.path.join(f'MEAN_reward_epoch_{epoch+14}_lr_{lr}'))  # save model
+            print('********** saved model ************')
 
         # Only need 1 baseline epoch
         # if not act:

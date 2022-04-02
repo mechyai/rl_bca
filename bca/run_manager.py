@@ -3,10 +3,11 @@ import random
 from collections import namedtuple
 from itertools import product
 
-import torch.utils.tensorboard as tb
 
 from emspy import BcaEnv, MdpManager
-from bca import BranchingDQN, BranchingDQN_RNN, ReplayMemory, SequenceReplayMemory, EpsilonGreedyStrategy, Agent_TB
+from bca import BranchingDQN, BranchingDQN_RNN
+from bca import ReplayMemory, SequenceReplayMemory, EpsilonGreedyStrategy, Agent_TB
+from bca import TensorboardManager
 
 
 class RunManager:
@@ -42,12 +43,13 @@ class RunManager:
         'advantage_streams_size': 48,
 
         # TD Update
+        'reward_aggregation': 'mean',  # sum or mean
         'optimizer': 'Adagrad',
         'learning_rate': 1e-3,
         'gamma': 0.7,
 
         # Network mods
-        'td_target': 1,  # (0) mean or (1) max
+        'td_target': 'mean',  # (0) mean or (1) max
         'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': 1 / (action_branches),
         'target_update_freq': 1e3,  # [50, 150, 500, 1e3, 1e4],
@@ -110,12 +112,13 @@ class RunManager:
         'advantage_streams_size': [48],
 
         # TD Update
+        'reward_aggregation': ['mean'],  # sum or mean
         'optimizer': ['Adam'],
         'learning_rate': [1e-3, 1e-4, 1e-5],
         'gamma': [0.3, 0.5, 0.7],
 
         # Network mods
-        'td_target': [1],  # (0) mean or (1) max
+        'td_target': ['max'],  # mean or max
         'gradient_clip_norm': [1],  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': [1 / (1 + action_branches)],
         'target_update_freq': [500.0, 1e3, 2e3]  # [50, 150, 500, 1e3, 1e4],
@@ -156,15 +159,43 @@ class RunManager:
 
         return runs
 
-    def shuffle_runs(self):
+    def get_runs_modified(self, modified_params_dict: dict):
+        """Get all permutations of hyperparameters passed."""
+
+        selected_params = copy.copy(self.selected_params)
+        # Add custom changed values to param dict
+        for param_name, values in modified_params_dict.items():
+            selected_params[param_name] = values
+
+        # Make sure all values in dict are of type list
+        for param_name, values in selected_params.items():
+            if not isinstance(values, list):
+                selected_params[param_name] = [values]  # make list
+
+        Run = namedtuple('Run', selected_params.keys())
+        runs = []
+        for config in product(*selected_params.values()):
+            run_config = Run(*config)
+            if run_config.batch_size > run_config.replay_capacity:
+                # Incompatible hyperparam configuration
+                pass
+            else:
+                runs.append(run_config)
+
+        return runs
+
+    def shuffle_runs(self, runs: None):
         """Returns list of shuffled runs"""
 
-        runs = copy.copy(self.runs)
+        if runs is None:
+            runs = self.runs
+
+        runs = copy.copy(runs)
         random.shuffle(runs)
 
         return runs
 
-    def create_agent(self, run, mdp: MdpManager, sim: BcaEnv, summary_writer: tb.SummaryWriter):
+    def create_agent(self, run, mdp: MdpManager, sim: BcaEnv, tensorboard_manager: TensorboardManager):
         """Creates and returns new RL Agent from defined parameters."""
 
         self.agent = Agent_TB(
@@ -174,9 +205,10 @@ class RunManager:
             policy=self.policy,
             replay_memory=self.experience_replay,
             rnn=run.rnn,
+            reward_aggregation=run.reward_aggregation,
             interaction_frequency=run.interaction_ts_frequency,
             learning_loop=run.learning_loops,
-            summary_writer=summary_writer
+            tensorboard_manager=tensorboard_manager
         )
 
         return self.agent

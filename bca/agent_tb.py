@@ -3,13 +3,12 @@ from typing import Union
 
 import numpy as np
 import torch
-from torch.utils.tensorboard import SummaryWriter
-
-from .bdq import BranchingDQN, EpsilonGreedyStrategy, ReplayMemory
-from .bdq_rnn import BranchingDQN_RNN, SequenceReplayMemory
 
 from emspy import BcaEnv, MdpManager
-from bca import mdp_manager
+
+from bca import BranchingDQN, EpsilonGreedyStrategy, ReplayMemory
+from bca import BranchingDQN_RNN, SequenceReplayMemory
+from bca import TensorboardManager, mdp_manager
 
 # -- Normalization Params --
 hvac_electricity_energy = {
@@ -45,8 +44,9 @@ class Agent:
                  replay_memory: Union[ReplayMemory, SequenceReplayMemory],
                  interaction_frequency: int,
                  rnn: bool = False,
+                 reward_aggregation: str = 'mean',
                  learning_loop: int = 1,
-                 summary_writer: torch.utils.tensorboard.SummaryWriter = None
+                 tensorboard_manager: TensorboardManager = None
                  ):
 
         # -- SIMULATION STATES --
@@ -89,6 +89,7 @@ class Agent:
         self.current_setpoint_windows = [3, 3, 3, 3]
 
         # -- REWARD --
+        self.reward_aggregation = reward_aggregation
         self.reward_dict = None
         self.reward = 0
         self.reward_sum = 0
@@ -129,7 +130,7 @@ class Agent:
         self.wind_energy_hvac_data = []
         self.total_energy_hvac_data = []
         # TensorBoard
-        self.TB = summary_writer
+        self.TB = tensorboard_manager
 
         # -- LEARNING --
         self.learning = True
@@ -156,7 +157,7 @@ class Agent:
         # -- REWARD --
         reward_scale = 1
         self.reward_dict = self._reward2()
-        self.reward = self._get_total_reward('mean') * reward_scale  # aggregate 'mean' or 'sum'
+        self.reward = self._get_total_reward(self.reward_aggregation) * reward_scale  # aggregate 'mean' or 'sum'
         # Get total reward per component, not Zone
         reward_component_sums = np.array(list(self.reward_dict.values())).sum(axis=0)  # sum reward per component
         self.reward_component_sum = np.array(list(zip(self.reward_component_sum, reward_component_sums))).sum(axis=1)
@@ -197,17 +198,7 @@ class Agent:
         self.reward_sum += self.reward
 
         # -- TensorBoard --
-        self.TB.add_scalar('Loss', self.loss, self.current_step)
-        self.TB.add_scalar('Reward/All Reward', self.reward, self.current_step)
-        self.TB.add_scalar('Reward/Reward Cumulative', self.reward_sum, self.current_step)
-        self.TB.add_scalar('Reward/Comfort Reward', self.reward_component_sum[0], self.current_step)
-        self.TB.add_scalar('Reward/RTP-HVAC Reward', self.reward_component_sum[1], self.current_step)
-        self.TB.add_scalar('Reward/Wind-HVAC Reward', self.reward_component_sum[2], self.current_step)
-        # Sim Data
-        self.TB.add_scalar('_SimData/RTP', self.mdp.get_mdp_element('rtp').value, self.current_step)
-        # Sim Results
-        self.TB.add_scalar('_Results/Comfort Dissatisfied Total', self.comfort_dissatisfaction_total, self.current_step)
-        self.TB.add_scalar('_Results/HVAC RTP Cost Total', self.hvac_rtp_costs_total, self.current_step)
+        self.TB.record_timestep_results(self)
 
         # -- REPORTING --
         if self.print:
@@ -538,7 +529,7 @@ class Agent:
     def _reward2(self):
         """Reward function - per component, per zone."""
 
-        lambda_comfort = 40
+        lambda_comfort = 1
         lambda_rtp = 0.03
         lambda_intermittent = 1
 

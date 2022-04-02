@@ -8,8 +8,6 @@ This BDQN will consist of:
 """
 
 import math
-from collections import namedtuple, deque
-import random
 import numpy as np
 
 import torch
@@ -105,6 +103,7 @@ class SequenceReplayMemory(object):
 
     def get_single_sequence(self):
         """Returns most recent sequence from replay."""
+
         # TODO get dynamic sequence len at beginning when not enough samples available?
         start = (self.interaction_count - 1) % self.capacity
         prior_sequence_indices = range(start, start - self.sequence_span, -self.sequence_ts_spacing)
@@ -288,9 +287,9 @@ class BranchingDQN_RNN(nn.Module):
         # Get global target across branches, if desired
         if self.td_target:
             with torch.no_grad():
-                if self.td_target == 1:  # mean
+                if self.td_target == 'mean':  # mean
                     next_Q = next_Q.mean(1, keepdim=True)
-                elif self.td_target == 0:  # max
+                elif self.td_target == 'max':  # max
                     next_Q, _ = next_Q.max(1, keepdim=True)
                 else:
                     raise ValueError(f'Either "mean" or "max" must be entered to td_target keyword of BranchingDQN.'

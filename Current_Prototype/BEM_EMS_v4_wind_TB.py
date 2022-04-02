@@ -24,9 +24,9 @@ ep_path = 'A:/Programs/EnergyPlusV9-5-0/'
 # IDF File / Modification Paths
 repo_root = 'A:/Files/PycharmProjects/rl_bca'
 os_folder = os.path.join(repo_root, 'Current_Prototype/BEM')
-idf_file_name = 'IdfFiles/BEM_5z_V1_test.idf'  # ***********************************************************
+idf_file_name = 'IdfFiles/BEM_V1_2019_Test.idf'  # ***********************************************************
 idf_file_base = os.path.join(os_folder, idf_file_name)
-idf_final_file = os.path.join(os_folder, 'BEM_5z_V1.idf')
+idf_final_file = os.path.join(os_folder, 'BEM_V1_2019_Year.idf')
 # Weather Path
 ep_weather_path = os.path.join(os_folder, 'WeatherFiles/EPW/DallasTexas_2019CST.epw')
 # Output .csv Path
