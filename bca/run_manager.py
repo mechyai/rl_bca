@@ -36,7 +36,6 @@ class RunManager:
         'observation_dim': 60,
         'action_branches': action_branches,  # n building zones
         'actuation_function': 1,
-        'actuation_dim': 3,
 
         # Architecture
         'shared_network_size_l1': 96,
@@ -104,7 +103,6 @@ class RunManager:
         'observation_dim': [64],
         'action_branches': [action_branches],  # n building zones
         'actuation_function': [1],
-        'actuation_dim': [3],
     }
 
     bdq_params = {
@@ -153,9 +151,6 @@ class RunManager:
 
         Run = namedtuple('Run', params.keys())
 
-        actuation_functions = params['actuation_function']
-        actuation_dimensions = params['actuation_dim']
-
         runs = []
         for config in product(*params.values()):
             run_config = Run(*config)
@@ -163,12 +158,6 @@ class RunManager:
             if run_config.batch_size > run_config.replay_capacity:
                 pass
             else:
-                # TODO fix this, so bad
-                # Link actuation functions with their intended dimensions, no permutation here
-                func_index = actuation_functions.index(run_config.actuation_function)
-                # Now could end up with duplicate permutations
-                run_config = run_config._replace(actuation_dim=actuation_dimensions[func_index])
-
                 runs.append(run_config)
 
         return runs
@@ -211,7 +200,7 @@ class RunManager:
             rnn=run.rnn,
             observation_frequency=run.observation_ts_frequency,
             actuation_frequency=run.actuation_ts_frequency,
-            actuation_dimension=run.actuation_dim,
+            actuation_dimension=Agent_TB.actuation_function_dim(actuation_function_id=run.actuation_function),
             reward_aggregation=run.reward_aggregation,
             learning_loop=run.learning_loops,
             tensorboard_manager=tensorboard_manager
@@ -257,7 +246,7 @@ class RunManager:
                 rnn_hidden_size=run.rnn_hidden_size,
                 rnn_num_layers=run.rnn_num_layers,
                 action_branches=run.action_branches,
-                action_dim=run.run.actuation_dim,
+                action_dim=Agent_TB.actuation_function_dim(actuation_function_id=run.actuation_function),
                 shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
                 value_stream_size=[run.value_stream_size],
                 advantage_streams_size=[run.advantage_streams_size],
@@ -274,7 +263,7 @@ class RunManager:
             self.dqn = BranchingDQN(
                 observation_dim=run.observation_dim,
                 action_branches=run.action_branches,
-                action_dim=run.actuation_dim,
+                action_dim=Agent_TB.actuation_function_dim(actuation_function_id=run.actuation_function),
                 shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
                 value_stream_size=[run.value_stream_size],
                 advantage_streams_size=[run.advantage_streams_size],

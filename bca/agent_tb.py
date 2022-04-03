@@ -35,26 +35,20 @@ hvac_electricity_energy = {
 }
 
 
-# def _check_action_dimension(this_actuation_functions_dims=0):
-#     """Decorator to verify that action dimensions aligns with BDQ architecture. Raises error and exits if not."""
-#
-#     def func_wrapper(actuation_function):
-#
-#         def check_wrapper(*self, **kwargs):
-#
-#             # Check actuation dimension to align with BDQ branched output
-#             if not self[0]._checked_action_dims:
-#                 if self[0].actuation_dim != this_actuation_functions_dims:
-#                     raise ValueError('Check that your actuation function dims align with your BDQ.')
-#                 self[0]._checked_action_dims = True
-#
-#                 return actuation_function
-#
-#         return check_wrapper
-#
-#     return func_wrapper
 
 class Agent:
+    @staticmethod
+    def actuation_function_dim(actuation_function_id):
+        """Returns the number of action dimensions linked to the particular actuation function"""
+        action_dim_directory = {
+            1: 3,  # act_heat_cool_off_1,
+            2: 0,  # act_strict_setpoints_2,
+            3: 3,  # act_step_strict_setpoints_3,
+            4: 0,  # act_default_adjustments_4
+        }
+
+        return action_dim_directory[actuation_function_id]
+
     def __init__(self,
                  emspy_sim: BcaEnv,
                  mdp: MdpManager,
