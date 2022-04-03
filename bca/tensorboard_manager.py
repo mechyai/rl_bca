@@ -1,3 +1,4 @@
+import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 
 
@@ -48,6 +49,12 @@ class TensorboardManager:
         self.tb.add_scalar('__Epoch/Reward - RTP', agent.reward_component_sum[1], epoch)
         self.tb.add_scalar('__Epoch/Reward - Wind', agent.reward_component_sum[2], epoch)
 
+        # Histogram
+        discomfort_histogram = np.append(agent.cold_temps_histogram_data, agent.warm_temps_histogram_data)
+        self.tb.add_histogram('Temp Discomfort per Min', discomfort_histogram)
+        # self.tb.add_histogram('Cold Discomfort per Min', agent.cold_temps_histogram_data)
+        # self.tb.add_histogram('Warm Discomfort per Min', agent.warm_temps_histogram_data)
+
         # Hyperparameter
         self.tb.add_hparams(
             hparam_dict=
@@ -61,10 +68,10 @@ class TensorboardManager:
             },
             metric_dict=
             {
-                'Total Reward': agent.reward_sum,
-                'Comfort Reward': agent.reward_component_sum[0],
-                'RTP-HVAC Reward': agent.reward_component_sum[1],
-                'Wind-HVAC Reward': agent.reward_component_sum[2],
+                'Hparam/Reward - All': agent.reward_sum,
+                'Hparam/Reward - Comfort': agent.reward_component_sum[0],
+                'Hparam/Reward - RTP': agent.reward_component_sum[1],
+                'Hparam/Reward - Wind': agent.reward_component_sum[2],
             },
             hparam_domain_discrete=
             {

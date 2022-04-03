@@ -86,7 +86,7 @@ class Agent:
 
         # -- ACTION ENCODING --
         self.temp_deadband = 5  # distance between heating and cooling setpoints
-        self.temp_buffer = 3  # new setpoint distance from current temps
+        self.temp_buffer = 5  # new setpoint distance from current temps
         self.current_setpoint_windows = [3, 3, 3, 3]
 
         # -- REWARD --
@@ -124,8 +124,12 @@ class Agent:
         self.hvac_rtp_costs_total = 0
 
         # -- RESULTS TRACKING --
-        self.discomfort_histogram_data = []
+        # Comfort
+        self.cold_temps_histogram_data = np.array([])
+        self.warm_temps_histogram_data = np.array([])
+        # RTP $
         self.rtp_histogram_data = []
+        # Wind Energy
         self.wind_energy_hvac_data = []
         self.total_energy_hvac_data = []
         # TensorBoard
@@ -330,7 +334,7 @@ class Agent:
             self.action = self.bdq.get_greedy_action(torch.Tensor(self.state_normalized).unsqueeze(1))
             return 'Exploit'
 
-    def _explore_exploit(self, exploit: bool):
+    def _explore_exploit_process(self, exploit: bool):
         """Helper function to handle explore/exploit decision of actions."""
 
         self.epsilon = self.greedy_epsilon.get_exploration_rate(self.current_step, self.fixed_epsilon)
@@ -345,7 +349,7 @@ class Agent:
         if self.print:
             print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
 
-    def act_heat_cool_off(self, actuate=True, exploit=False):
+    def _action_framework_copy(self, actuate=True, exploit=False):
         """
         Action callback function:
         Takes action from network or exploration, then encodes into HVAC commands and passed into running simulation.
@@ -354,44 +358,12 @@ class Agent:
         """
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
-            self._explore_exploit(exploit)
+            self._explore_exploit_process(exploit)
 
             # -- ENCODE ACTIONS TO HVAC COMMAND --
-            action_cmd_print = {0: 'OFF', 1: 'HEAT', 2: 'COOL', None: 'Availability OFF'}
-            for zone, action in enumerate(self.action):
-                zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
-
-                if all((self.indoor_temp_limits - zone_temp) < 0) or \
-                        all((self.indoor_temp_ideal_range - zone_temp) > 0):
-                    # outside safe comfortable bounds
-                    # print('unsafe temps')
-                    pass
-
-                # adjust thermostat setpoints accordingly
-                if action == 0:
-                    # OFF
-                    heating_sp = zone_temp - self.temp_deadband / 2
-                    cooling_sp = zone_temp + self.temp_deadband / 2
-                elif action == 1:
-                    # HEAT
-                    heating_sp = zone_temp + self.temp_buffer
-                    cooling_sp = zone_temp + self.temp_buffer + self.temp_deadband
-                elif action == 2:
-                    # COOL
-                    heating_sp = zone_temp - self.temp_buffer - self.temp_deadband
-                    cooling_sp = zone_temp - self.temp_buffer
-                else:
-                    # HVAC Availability OFF
-                    heating_sp = action  # None
-                    cooling_sp = action  # None
-
-                self.actuation_dict[f'zn{zone}_heating_sp'] = heating_sp
-                self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
-
-                if self.print:
-                    print(f'\t\tZone{zone} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
-                          f' Heating Sp = {round(heating_sp, 2)},'
-                          f' Cooling Sp = {round(cooling_sp, 2)}')
+            """
+            Put actuation function here
+            """
 
         # Offline Learning
         else:
@@ -403,7 +375,58 @@ class Agent:
 
         return self.actuation_dict
 
-    def act_step_strict_setpoints(self, actuate=True, exploit=False):
+    def act_default_adjustments_4(self, actuate=True, exploit=False):
+        """
+        Action callback function:
+        Takes action from network or exploration, then encodes into HVAC commands and passed into running simulation.
+
+        :return: actuation dictionary - EMS variable name (key): actuation value (value)
+        """
+        if actuate:
+            # -- EXPLOITATION vs EXPLORATION --
+            self._explore_exploit_process(exploit)
+
+            # -- ENCODE ACTIONS TO HVAC COMMAND --
+            occupied_setpoints = {
+                0: [21.1, 23.89],  # IDEAL
+                1: [19.1, 21.1],  # LOWER
+                2: [21.1, 22.5],  # INNER LOWER
+                3: [22.5, 23.89],  # INNER UPPER
+                4: [23.89, 25.89],  # UPPER
+                5: [21.8, 23.19]  # INNER
+            }
+
+            unoccupied_setpoints = {
+                0: [15.56, 29.4],  # IDEAL
+                1: [13.56, 15.56],  # LOWER
+                2: [15.56, 22.5],  # INNER LOWER
+                3: [22.5, 29.4],  # INNER UPPER
+                4: [29.4, 32.4],  # UPPER
+                5: [21.1, 23.89]  # INNER
+            }
+
+            occupied = self.sim.get_ems_data(['hvac_operation_sched'])
+
+            for zone_i, action in enumerate(self.action):
+                if occupied:
+                    heating_sp, cooling_sp = occupied_setpoints[action]
+                else:
+                    heating_sp, cooling_sp = unoccupied_setpoints[action]
+
+                self.actuation_dict[f'zn{zone_i}_heating_sp'] = heating_sp
+                self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_sp
+
+        # Offline Learning
+        else:
+            pass
+
+        # Combine system actuations with aux actions
+        aux_actuation = self._get_aux_actuation()
+        self.actuation_dict.update(aux_actuation)
+
+        return self.actuation_dict
+
+    def act_step_strict_setpoints_3(self, actuate=True, exploit=False):
         """
         Action callback function:
         Step up/down/nothing between fixed set of setpoint bounds
@@ -412,7 +435,7 @@ class Agent:
         """
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
-            self._explore_exploit(exploit)
+            self._explore_exploit_process(exploit)
 
             # -- ENCODE ACTIONS TO HVAC COMMAND --
             action_cmd_print = {0: 'STAY', 1: 'UP', 2: 'DOWN', None: 'Availability OFF'}
@@ -462,7 +485,7 @@ class Agent:
 
         return self.actuation_dict
 
-    def act_strict_setpoints(self, actuate=True, exploit=False):
+    def act_strict_setpoints_2(self, actuate=True, exploit=False):
         """
         Action callback function:
         Takes action from network or exploration, then encodes into HVAC commands and passed into running simulation.
@@ -472,7 +495,7 @@ class Agent:
 
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
-            self._explore_exploit(exploit)
+            self._explore_exploit_process(exploit)
 
             # -- ENCODE ACTIONS TO THERMOSTAT SETPOINTS --
             action_cmd_print = {0: 'LOWEST', 1: 'LOWER', 2: 'IDEAL', 3: 'HIGHER', 4: 'HIGHEST'}
@@ -501,6 +524,64 @@ class Agent:
                           f' Cooling Sp = {round(cooling_sp, 2)}')
         else:
             # Offline Learning
+            pass
+
+        # Combine system actuations with aux actions
+        aux_actuation = self._get_aux_actuation()
+        self.actuation_dict.update(aux_actuation)
+
+        return self.actuation_dict
+
+    def act_heat_cool_off_1(self, actuate=True, exploit=False):
+        """
+        Action callback function:
+        Takes action from network or exploration, then encodes into HVAC commands and passed into running simulation.
+
+        :return: actuation dictionary - EMS variable name (key): actuation value (value)
+        """
+        if actuate:
+            # -- EXPLOITATION vs EXPLORATION --
+            self._explore_exploit_process(exploit)
+
+            # -- ENCODE ACTIONS TO HVAC COMMAND --
+            action_cmd_print = {0: 'OFF', 1: 'HEAT', 2: 'COOL', None: 'Availability OFF'}
+            for zone, action in enumerate(self.action):
+                zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
+
+                # if all((self.indoor_temp_limits - zone_temp) < 0) or \
+                #         all((self.indoor_temp_ideal_range - zone_temp) > 0):
+                #     # outside safe comfortable bounds
+                #     # print('unsafe temps')
+                #     pass
+
+                # adjust thermostat setpoints accordingly
+                if action == 0:
+                    # OFF
+                    heating_sp = zone_temp - self.temp_deadband / 2
+                    cooling_sp = zone_temp + self.temp_deadband / 2
+                elif action == 1:
+                    # HEAT
+                    heating_sp = zone_temp + self.temp_buffer
+                    cooling_sp = zone_temp + self.temp_buffer + self.temp_deadband
+                elif action == 2:
+                    # COOL
+                    heating_sp = zone_temp - self.temp_buffer - self.temp_deadband
+                    cooling_sp = zone_temp - self.temp_buffer
+                else:
+                    # HVAC Availability OFF
+                    heating_sp = action  # None
+                    cooling_sp = action  # None
+
+                self.actuation_dict[f'zn{zone}_heating_sp'] = heating_sp
+                self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
+
+                if self.print:
+                    print(f'\t\tZone{zone} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
+                          f' Heating Sp = {round(heating_sp, 2)},'
+                          f' Cooling Sp = {round(cooling_sp, 2)}')
+
+        # Offline Learning
+        else:
             pass
 
         # Combine system actuations with aux actions
@@ -800,21 +881,27 @@ class Agent:
             zone_temps_since_last_interaction = np.asarray(
                 self.sim.get_ems_data([f'{zone_i}_temp'], interaction_span))
 
-            # get only temps colder than idea
+            # Get only temps colder than idea
             too_cold_temps = np.multiply(zone_temps_since_last_interaction < temp_bounds[:, 0],
                                          zone_temps_since_last_interaction)
             temp_bounds_cold = temp_bounds[too_cold_temps != 0]
             too_cold_temps = too_cold_temps[too_cold_temps != 0]  # only cold temps left
+            cold_temp_difference = too_cold_temps - temp_bounds_cold[:, 0]
 
-            # get only temps warmer than ideal
+            # Get only temps warmer than ideal
             too_warm_temps = np.multiply(zone_temps_since_last_interaction > temp_bounds[:, 1],
                                          zone_temps_since_last_interaction)
             temp_bounds_warm = temp_bounds[too_warm_temps != 0]
             too_warm_temps = too_warm_temps[too_warm_temps != 0]  # only warm temps left
+            warm_temp_difference = too_warm_temps - temp_bounds_warm[:, 1]
 
             # MSE penalty for temps above and below comfortable bounds
-            uncomfortable_metric += ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() + \
-                                    ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()  # sum prev timestep
+            uncomfortable_metric += (cold_temp_difference ** 2).sum() + \
+                                    (warm_temp_difference ** 2).sum()
+
+            # Histogram data
+            self.cold_temps_histogram_data = np.append(self.cold_temps_histogram_data, cold_temp_difference)
+            self.warm_temps_histogram_data = np.append(self.warm_temps_histogram_data, warm_temp_difference)
 
         if self.print:
             print(f'\n\tComfort: {round(uncomfortable_metric, 2)}, '

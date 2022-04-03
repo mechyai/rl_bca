@@ -103,7 +103,7 @@ for i, run in enumerate(runs):
 
         # -- Instantiate RL Agent --
         my_policy = run_manager.create_policy(run)
-        my_memory = run_manager.create_exp_replay(run, rnn=run.rnn)
+        my_memory = run_manager.create_replay_memory(run, rnn=run.rnn)
         my_agent = run_manager.create_agent(run, my_mdp, my_sim, TB)
 
         # -- Set Sim Calling Point(s) & Callback Function(s) --

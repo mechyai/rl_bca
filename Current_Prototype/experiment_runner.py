@@ -1,7 +1,5 @@
 import datetime
 import os
-import gc
-import time
 
 import torch
 
@@ -10,8 +8,9 @@ from bca import RunManager, TensorboardManager
 from bca import mdp_manager, _paths_config, experiment_manager
 
 year = mdp_manager.year
-model_span = 'Test'  # Year, May, Test
+model_span = 'May'  # Year, May, Test
 exp_name = 'Heat_Cool_Off'
+exp_name = f'{exp_name}_{datetime.datetime.now().strftime("%y%m%d-%H%M")}'
 
 # -- Experiment Params --
 experiment_params_dict = {
@@ -19,7 +18,7 @@ experiment_params_dict = {
     'load_model': r''
 }
 
-run_modification = [5e-3, 1e-3, 5e-4, 1e-4]  #, 5e-5, 1e-5, 5e-6, 1e-6]
+run_modification = [5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5]  #, 5e-6, 1e-6]
 
 # -- FILE PATHS --
 # IDF File / Modification Paths
@@ -29,7 +28,7 @@ idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')
 # Experiment Folder
-exp_folder = f'Experiments/{exp_name}_{datetime.datetime.now().strftime("%y%m%d-%H%M")}'
+exp_folder = f'Experiments/{exp_name}'
 
 # -- Simulation Params --
 cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
@@ -54,6 +53,8 @@ my_tb = TensorboardManager(
     run_manager,
     name_path=os.path.join(exp_folder, f'{model_span}_BASELINE')
 )
+
+print('\n********** Baseline **********\n')
 
 baseline_agent = experiment_manager.run_experiment(
     run=run,
@@ -86,7 +87,7 @@ for run_num, param_value in enumerate(run_modification):
         my_bdq.change_learning_rate_discrete(param_value)
 
     for epoch in range(experiment_params_dict['epochs']):
-        print(f'\n\nRun {run_num} of {run_limit}, Epoch {epoch} of {experiment_params_dict["epochs"]}\n{run}\n\n')
+        print(f'\nRun {run_num + 1} of {run_limit}, Epoch {epoch + 1} of {experiment_params_dict["epochs"]}\n{run}\n')
 
         # ---- Tensor Board ----
         param = run.learning_rate
@@ -94,11 +95,13 @@ for run_num, param_value in enumerate(run_modification):
             run_manager,
             name_path=os.path.join(exp_folder,
                                    f'run_{run_num + 1}-{run_limit}_lr_{param}_epoch{epoch + 1}-'
-                                   f'{experiment_params_dict["epochs"]}_TRAIN')
+                                   f'{experiment_params_dict["epochs"]}_{model_span}_TRAIN')
         )
 
+        print('\n********** Train **********\n')
+
         run_type = 'train'
-        baseline_agent = experiment_manager.run_experiment(
+        my_agent = experiment_manager.run_experiment(
             run=run,
             run_manager=run_manager,
             bdq=my_bdq,
@@ -110,7 +113,7 @@ for run_num, param_value in enumerate(run_modification):
             run_type=run_type,
         )
         my_tb.record_epoch_results(
-            agent=baseline_agent,
+            agent=my_agent,
             experimental_params=experiment_params_dict,
             run=run,
             run_count=0,
@@ -121,9 +124,10 @@ for run_num, param_value in enumerate(run_modification):
 
     # -- Save Model --
     if experiment_params_dict['epochs'] > 0:
+        print('\n********** Saved Model ************\n')
         torch.save(my_bdq.policy_network.state_dict(),
-                   os.path.join(exp_folder, f'bdq_runs_{run_num}_epochs_{experiment_params_dict["epochs"]}_lr_{param}'))
-        print('********** Saved Model ************')
+                   os.path.join(exp_folder,
+                                f'bdq_runs_{run_num + 1}_epochs_{experiment_params_dict["epochs"]}_lr_{param}'))
 
     # --------------------------------------------------- Run Testing --------------------------------------------------
     param = run.learning_rate
@@ -131,11 +135,13 @@ for run_num, param_value in enumerate(run_modification):
         run_manager,
         name_path=os.path.join(exp_folder,
                                f'run_{run_num + 1}-{run_limit}_lr_{param}_epoch{epoch + 1}-'
-                               f'{experiment_params_dict["epochs"]}_EXPLOIT')
+                               f'{experiment_params_dict["epochs"]}_{model_span}_EXPLOIT')
     )
 
+    print('\n********** Exploit **********\n')
+
     run_type = 'exploit'
-    baseline_agent = experiment_manager.run_experiment(
+    my_agent = experiment_manager.run_experiment(
         run=run,
         run_manager=run_manager,
         bdq=my_bdq,
@@ -147,7 +153,7 @@ for run_num, param_value in enumerate(run_modification):
         run_type=run_type,
     )
     my_tb.record_epoch_results(
-        agent=baseline_agent,
+        agent=my_agent,
         experimental_params=experiment_params_dict,
         run=run,
         run_count=0,

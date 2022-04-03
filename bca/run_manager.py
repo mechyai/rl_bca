@@ -23,8 +23,8 @@ class RunManager:
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
-        'eps_start': 0.2,
-        'eps_end': 0.05,
+        'eps_start': 0.1,
+        'eps_end': 0.025,
         'eps_decay': 1e-3,
 
         # --- Experience Replay ---
@@ -227,7 +227,7 @@ class RunManager:
 
         return self.policy
 
-    def create_exp_replay(self, run: namedtuple, rnn: False):
+    def create_replay_memory(self, run: namedtuple, rnn: False):
         """Creates and returns new Experience Replay from defined parameters."""
 
         if rnn:
