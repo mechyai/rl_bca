@@ -331,100 +331,23 @@ class Agent:
             self.action = self.bdq.get_greedy_action(torch.Tensor(self.state_normalized).unsqueeze(1))
             return 'Exploit'
 
-    def _act_base_decorator(self, action_dimension: int):
-        """Decorator actuation function to define constant framework of agent actuation functions with parameters."""
+    def _explore_exploit(self, action_dimension: int, exploit: bool):
+        """Helper function to handle explore/exploit decision of actions."""
 
-        def actuation_framework(actuation_function):
-
-            def wrapper(**act_kwargs):
-
-                if act_kwargs['actuate']:
-                    # -- EXPLOITATION vs EXPLORATION --
-                    self.epsilon = self.greedy_epsilon.get_exploration_rate(self.current_step, self.fixed_epsilon)
-
-                    if not act_kwargs['exploit'] and np.random.random() < self.epsilon:
-                        # Explore
-                        self.action = np.random.randint(0, action_dimension, self.bdq.action_branches)
-                        action_type = 'Explore'
-                    else:
-                        # Exploit
-                        action_type = self._exploit_action()
-
-                    if self.print:
-                        print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
-
-                    actuation_function(**act_kwargs)
-                    print('Online Learning')
-
-                # Offline Learning
-                else:
-                    actuation_function(**act_kwargs)
-                    print('Offline Learning')
-
-                # Combine system actuations with aux actuation
-                aux_actuation = self._get_aux_actuation()
-                self.actuation_dict.update(aux_actuation)
-
-            return wrapper
-
-        return actuation_framework
-
-    @_act_base_decorator(3)
-    def act_step_fixed_setpoints_decorated(self, actuate=True, exploit=False):
-        if actuate:
-            # -- ENCODE ACTIONS TO HVAC COMMAND --
-            action_cmd_print = {0: 'STAY', 1: 'UP', 2: 'DOWN', None: 'Availability OFF'}
-
-            # setpoint_windows = {
-            #     0: [14, 17],
-            #     1: [17, 21],
-            #     2: [21, 24],  # comfort
-            #     3: [24, 27],
-            #     4: [27, 30],
-            #     5: [30, 33]
-            # }
-            setpoint_windows = {
-                0: [13, 15.56],
-                1: [15.56, 17],  # LB
-                2: [17, 21.1],
-                3: [21.1, 23.89],  # comfort
-                4: [23.89, 27],
-                5: [27, 29.4],  # UB
-                6: [29.4, 32]
-            }
-
-            current_setpoints = self.current_setpoint_windows
-            for zone_i, action in enumerate(self.action):
-
-                if action == 1 and list(setpoint_windows.keys())[-1] != current_setpoints[zone_i]:
-                    # UP SETPOINT
-                    current_setpoints[zone_i] += 1
-                elif action == 2 and 0 != current_setpoints[zone_i]:
-                    # DOWN SETPOINT
-                    current_setpoints[zone_i] -= 1
-                else:
-                    # STAY, or @ Boudaries
-                    current_setpoints[zone_i] += 0
-
-                # Set heating/cooling setpoints from fixed windows
-                heating_sp = setpoint_windows[current_setpoints[zone_i]][0]
-                cooling_sp = setpoint_windows[current_setpoints[zone_i]][1]
-                self.actuation_dict[f'zn{zone_i}_heating_sp'] = heating_sp
-                self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_sp
-
-                if self.print:
-                    zone_temp = self.mdp.ems_master_list[f'zn{zone_i}_temp'].value
-                    print(f'\t\tZone{zone_i} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
-                          f' Heating Sp = {round(heating_sp, 2)},'
-                          f' Cooling Sp = {round(cooling_sp, 2)}')
-
+        self.epsilon = self.greedy_epsilon.get_exploration_rate(self.current_step, self.fixed_epsilon)
+        if not exploit and np.random.random() < self.epsilon:
+            # Explore
+            self.action = np.random.randint(0, action_dimension, self.bdq.action_branches)
+            action_type = 'Explore'
         else:
-            # OFFLINE
-            pass
+            # Exploit
+            action_type = self._exploit_action()
 
-        return self.actuation_dict
+        if self.print:
+            print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
 
     def act_step_fixed_setpoints(self, actuate=True, exploit=False):
+
         """
         Action callback function:
         Step up/down/nothing between fixed set of setpoint bounds
@@ -433,30 +356,11 @@ class Agent:
         """
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
-            self.epsilon = self.greedy_epsilon.get_exploration_rate(self.current_step, self.fixed_epsilon)
-            if not exploit and np.random.random() < self.epsilon:
-                # Explore
-                self.action = np.random.randint(0, 3, self.bdq.action_branches)
-                action_type = 'Explore'
-            else:
-                # Exploit
-                action_type = self._exploit_action()
-
-            # if self.print:
-            if self.print:
-                print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
+            self._explore_exploit(3, exploit)
 
             # -- ENCODE ACTIONS TO HVAC COMMAND --
             action_cmd_print = {0: 'STAY', 1: 'UP', 2: 'DOWN', None: 'Availability OFF'}
 
-            # setpoint_windows = {
-            #     0: [14, 17],
-            #     1: [17, 21],
-            #     2: [21, 24],  # comfort
-            #     3: [24, 27],
-            #     4: [27, 30],
-            #     5: [30, 33]
-            # }
             setpoint_windows = {
                 0: [13, 15.56],
                 1: [15.56, 17],  # LB
