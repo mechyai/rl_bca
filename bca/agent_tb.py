@@ -42,7 +42,8 @@ class Agent:
                  dqn_model: Union[BranchingDQN, BranchingDQN_RNN],
                  policy: EpsilonGreedyStrategy,
                  replay_memory: Union[ReplayMemory, SequenceReplayMemory],
-                 interaction_frequency: int,
+                 observation_frequency: int,
+                 actuation_frequency: int,
                  rnn: bool = False,
                  reward_aggregation: str = 'mean',
                  learning_loop: int = 1,
@@ -102,14 +103,12 @@ class Agent:
         self.indoor_temp_limits = np.array([15, 30])  # ??? needed?
 
         # -- TIMING --
-        self.interaction_frequency = interaction_frequency
         self.n_ts = 0
         self.current_step = 0
 
         # -- INTERACTION FREQUENCIES --
-        self.observation_ts = interaction_frequency  # how often agent will observe state & keep fixed action - off-policy
-        self.action_ts = interaction_frequency  # how often agent will observe state & act - on-policy
-        self.action_delay = interaction_frequency  # how many ts will agent be fixed at beginning of simulation
+        self.observation_frequency = observation_frequency
+        self.actuation_frequency = actuation_frequency
 
         # -- REPLAY MEMORY --
         self.memory = replay_memory
@@ -331,23 +330,80 @@ class Agent:
             self.action = self.bdq.get_greedy_action(torch.Tensor(self.state_normalized).unsqueeze(1))
             return 'Exploit'
 
-    def _explore_exploit(self, action_dimension: int, exploit: bool):
+    def _explore_exploit(self, exploit: bool):
         """Helper function to handle explore/exploit decision of actions."""
 
         self.epsilon = self.greedy_epsilon.get_exploration_rate(self.current_step, self.fixed_epsilon)
         if not exploit and np.random.random() < self.epsilon:
             # Explore
-            self.action = np.random.randint(0, action_dimension, self.bdq.action_branches)
+            self.action = np.random.randint(0, self.bdq.action_dim, self.bdq.action_branches)
             action_type = 'Explore'
         else:
-            # Exploit
+            # Exploit (handle RNN)
             action_type = self._exploit_action()
 
         if self.print:
             print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
 
-    def act_step_fixed_setpoints(self, actuate=True, exploit=False):
+    def act_heat_cool_off(self, actuate=True, exploit=False):
+        """
+        Action callback function:
+        Takes action from network or exploration, then encodes into HVAC commands and passed into running simulation.
 
+        :return: actuation dictionary - EMS variable name (key): actuation value (value)
+        """
+        if actuate:
+            # -- EXPLOITATION vs EXPLORATION --
+            self._explore_exploit(exploit)
+
+            # -- ENCODE ACTIONS TO HVAC COMMAND --
+            action_cmd_print = {0: 'OFF', 1: 'HEAT', 2: 'COOL', None: 'Availability OFF'}
+            for zone, action in enumerate(self.action):
+                zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
+
+                if all((self.indoor_temp_limits - zone_temp) < 0) or \
+                        all((self.indoor_temp_ideal_range - zone_temp) > 0):
+                    # outside safe comfortable bounds
+                    # print('unsafe temps')
+                    pass
+
+                # adjust thermostat setpoints accordingly
+                if action == 0:
+                    # OFF
+                    heating_sp = zone_temp - self.temp_deadband / 2
+                    cooling_sp = zone_temp + self.temp_deadband / 2
+                elif action == 1:
+                    # HEAT
+                    heating_sp = zone_temp + self.temp_buffer
+                    cooling_sp = zone_temp + self.temp_buffer + self.temp_deadband
+                elif action == 2:
+                    # COOL
+                    heating_sp = zone_temp - self.temp_buffer - self.temp_deadband
+                    cooling_sp = zone_temp - self.temp_buffer
+                else:
+                    # HVAC Availability OFF
+                    heating_sp = action  # None
+                    cooling_sp = action  # None
+
+                self.actuation_dict[f'zn{zone}_heating_sp'] = heating_sp
+                self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
+
+                if self.print:
+                    print(f'\t\tZone{zone} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
+                          f' Heating Sp = {round(heating_sp, 2)},'
+                          f' Cooling Sp = {round(cooling_sp, 2)}')
+
+        # Offline Learning
+        else:
+            pass
+
+        # Combine system actuations with aux actions
+        aux_actuation = self._get_aux_actuation()
+        self.actuation_dict.update(aux_actuation)
+
+        return self.actuation_dict
+
+    def act_step_strict_setpoints(self, actuate=True, exploit=False):
         """
         Action callback function:
         Step up/down/nothing between fixed set of setpoint bounds
@@ -356,7 +412,7 @@ class Agent:
         """
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
-            self._explore_exploit(3, exploit)
+            self._explore_exploit(exploit)
 
             # -- ENCODE ACTIONS TO HVAC COMMAND --
             action_cmd_print = {0: 'STAY', 1: 'UP', 2: 'DOWN', None: 'Availability OFF'}
@@ -400,93 +456,23 @@ class Agent:
         else:
             pass
 
+        # Combine system actuations with aux actions
         aux_actuation = self._get_aux_actuation()
-        self.actuation_dict.update(aux_actuation)  # combine
+        self.actuation_dict.update(aux_actuation)
 
         return self.actuation_dict
 
-    def act_heat_cool_off(self, actuate=True):
+    def act_strict_setpoints(self, actuate=True, exploit=False):
         """
         Action callback function:
         Takes action from network or exploration, then encodes into HVAC commands and passed into running simulation.
 
         :return: actuation dictionary - EMS variable name (key): actuation value (value)
         """
+
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
-            self.epsilon = self.greedy_epsilon.get_exploration_rate(self.current_step, self.fixed_epsilon)
-            if np.random.random() < self.epsilon:
-                # Explore
-                self.action = np.random.randint(0, 3, self.bdq.action_branches)
-                action_type = 'Explore'
-            else:
-                # Exploit
-                self._exploit_action()
-
-            if self.print:
-                print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
-
-            # -- ENCODE ACTIONS TO HVAC COMMAND --
-            action_cmd_print = {0: 'OFF', 1: 'HEAT', 2: 'COOL', None: 'Availability OFF'}
-            for zone, action in enumerate(self.action):
-                zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
-
-                if all((self.indoor_temp_limits - zone_temp) < 0) or all(
-                        (self.indoor_temp_ideal_range - zone_temp) > 0):
-                    # outside safe comfortable bounds
-                    # print('unsafe temps')
-                    pass
-
-                # adjust thermostat setpoints accordingly
-                if action == 0:
-                    # OFF
-                    heating_sp = zone_temp - self.temp_deadband / 2
-                    cooling_sp = zone_temp + self.temp_deadband / 2
-                elif action == 1:
-                    # HEAT
-                    heating_sp = zone_temp + self.temp_buffer
-                    cooling_sp = zone_temp + self.temp_buffer + self.temp_deadband
-                elif action == 2:
-                    # COOL
-                    heating_sp = zone_temp - self.temp_buffer - self.temp_deadband
-                    cooling_sp = zone_temp - self.temp_buffer
-                else:
-                    # HVAC Availability OFF
-                    heating_sp = action  # None
-                    cooling_sp = action  # None
-
-                self.actuation_dict[f'zn{zone}_heating_sp'] = heating_sp
-                self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
-
-                if self.print:
-                    print(f'\t\tZone{zone} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
-                          f' Heating Sp = {round(heating_sp, 2)},'
-                          f' Cooling Sp = {round(cooling_sp, 2)}')
-
-        # Offline Learning
-        else:
-            pass
-
-        aux_actuation = self._get_aux_actuation()
-        self.actuation_dict.update(aux_actuation)  # combine
-
-        return self.actuation_dict
-
-    # IN USE
-    def act_strict_setpoints(self, actuate=True):
-        if actuate:
-            # -- EXPLOITATION vs EXPLORATION --
-            self.epsilon = self.greedy_epsilon.get_exploration_rate(self.current_step, self.fixed_epsilon)
-            if np.random.random() < self.epsilon:
-                # Explore
-                self.action = np.random.randint(0, self.bdq.action_dim, self.bdq.action_branches)
-                action_type = 'Explore'
-            else:
-                # Exploit
-                action_type = self._exploit_action()
-
-            if self.print:
-                print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
+            self._explore_exploit(exploit)
 
             # -- ENCODE ACTIONS TO THERMOSTAT SETPOINTS --
             action_cmd_print = {0: 'LOWEST', 1: 'LOWER', 2: 'IDEAL', 3: 'HIGHER', 4: 'HIGHEST'}
@@ -517,8 +503,9 @@ class Agent:
             # Offline Learning
             pass
 
+        # Combine system actuations with aux actions
         aux_actuation = self._get_aux_actuation()
-        self.actuation_dict.update(aux_actuation)  # combine/replace aux and control actuations
+        self.actuation_dict.update(aux_actuation)
 
         return self.actuation_dict
 
@@ -534,7 +521,7 @@ class Agent:
         reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
 
         # -- GET DATA SINCE LAST INTERACTION --
-        interaction_span = range(self.interaction_frequency)
+        interaction_span = range(self.observation_frequency)
         # ALL
         building_hours = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
         # COMFORT
@@ -660,7 +647,7 @@ class Agent:
         reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
 
         # -- GET DATA SINCE LAST INTERACTION --
-        interaction_span = range(self.interaction_frequency)
+        interaction_span = range(self.observation_frequency)
         # ALL
         building_hours = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
         # COMFORT
@@ -792,7 +779,7 @@ class Agent:
         """
 
         n_zones = self.bdq.action_branches
-        interaction_span = range(self.interaction_frequency)
+        interaction_span = range(self.observation_frequency)
         controlled_zone_names = [f'zn{zone_i}' for zone_i in range(n_zones)]
 
         # Temp Bounds
@@ -850,7 +837,7 @@ class Agent:
         """
 
         n_zones = self.bdq.action_branches
-        interaction_span = range(self.interaction_frequency)
+        interaction_span = range(self.observation_frequency)
         controlled_zone_names = [f'zn{zone_i}' for zone_i in range(n_zones)]
 
         building_hours = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
@@ -924,7 +911,7 @@ class Agent:
         """
 
         n_zones = self.bdq.action_branches
-        interaction_span = range(self.interaction_frequency)
+        interaction_span = range(self.observation_frequency)
         controlled_zone_names = [f'zn{zone_i}' for zone_i in range(n_zones)]
 
         building_hours = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
@@ -975,6 +962,7 @@ class Agent:
 
         return rtp_hvac_costs
 
+    # TODO
     def _is_terminal(self):
         """Determines whether the current state is a terminal state or not. Dictates TD update values."""
         return 0

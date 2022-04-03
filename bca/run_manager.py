@@ -18,7 +18,8 @@ class RunManager:
 
     selected_params = {
         # -- Agent Params --
-        'interaction_ts_frequency': 5,  # * [5, 10, 15],
+        'observation_ts_frequency': 5,  # * [5, 10, 15],
+        'actuation_ts_frequency': 5,  # * [5, 10, 15],
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
@@ -84,7 +85,8 @@ class RunManager:
     }
 
     agent_params = {
-        'interaction_ts_frequency': [5],  # * [5, 10, 15],
+        'observation_ts_frequency': [5],  # * [5, 10, 15],
+        'actuation_ts_frequency': [5],  # * [5, 10, 15],
         'learning_loops': [10],
 
         # --- Behavioral Policy ---
@@ -206,7 +208,8 @@ class RunManager:
             replay_memory=self.experience_replay,
             rnn=run.rnn,
             reward_aggregation=run.reward_aggregation,
-            interaction_frequency=run.interaction_ts_frequency,
+            observation_frequency=run.observation_ts_frequency,
+            actuation_frequency=run.actuation_ts_frequency,
             learning_loop=run.learning_loops,
             tensorboard_manager=tensorboard_manager
         )
