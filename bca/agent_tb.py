@@ -35,6 +35,25 @@ hvac_electricity_energy = {
 }
 
 
+# def _check_action_dimension(this_actuation_functions_dims=0):
+#     """Decorator to verify that action dimensions aligns with BDQ architecture. Raises error and exits if not."""
+#
+#     def func_wrapper(actuation_function):
+#
+#         def check_wrapper(*self, **kwargs):
+#
+#             # Check actuation dimension to align with BDQ branched output
+#             if not self[0]._checked_action_dims:
+#                 if self[0].actuation_dim != this_actuation_functions_dims:
+#                     raise ValueError('Check that your actuation function dims align with your BDQ.')
+#                 self[0]._checked_action_dims = True
+#
+#                 return actuation_function
+#
+#         return check_wrapper
+#
+#     return func_wrapper
+
 class Agent:
     def __init__(self,
                  emspy_sim: BcaEnv,
@@ -44,6 +63,7 @@ class Agent:
                  replay_memory: Union[ReplayMemory, SequenceReplayMemory],
                  observation_frequency: int,
                  actuation_frequency: int,
+                 actuation_dimension: int,
                  rnn: bool = False,
                  reward_aggregation: str = 'mean',
                  learning_loop: int = 1,
@@ -78,6 +98,7 @@ class Agent:
         self.next_state_normalized = None
 
         # -- ACTION SPACE --
+        self.actuation_dim = actuation_dimension
         self.action = None
         self.actuation_dict = {}
         self.epsilon = policy.start
@@ -142,14 +163,15 @@ class Agent:
         self.loss_total = 0
 
         # -- Misc. --
-        self.once = True
-        self.print = False
+        self._once = True
+        self._print = False
+        self._checked_action_dims = False
 
     def observe(self, learn=True):
         # -- FETCH/UPDATE SIMULATION DATA --
         self.next_state_normalized = self._get_encoded_state()
 
-        if self.print:
+        if self._print:
             print(f'\n\n{str(self.time)}\n')
             # print(f'\n\n\tVars: {vars}\n\tMeters: {meters}\n\tWeather: {weather}')
             # print(f'\n\t{self.next_state_normalized}\n')
@@ -204,7 +226,7 @@ class Agent:
         self.TB.record_timestep_results(self)
 
         # -- REPORTING --
-        if self.print:
+        if self._print:
             # self._report_time()  # time
             print(f'\n\t*Reward: {round(self.reward, 2)}, Cumulative: {round(self.reward_sum, 2)}')
 
@@ -274,9 +296,9 @@ class Agent:
         time_list = [month, day, hour, minute]
 
         # -- DO ONCE --
-        if self.once:
+        if self._once:
             self.state_var_names = self.var_names + self.weather_names + meter_names
-            self.once = False
+            self._once = False
 
         # -- ENCODED STATE --
         return np.array(
@@ -346,7 +368,7 @@ class Agent:
             # Exploit (handle RNN)
             action_type = self._exploit_action()
 
-        if self.print:
+        if self._print:
             print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
 
     def _action_framework_copy(self, actuate=True, exploit=False):
@@ -356,6 +378,10 @@ class Agent:
 
         :return: actuation dictionary - EMS variable name (key): actuation value (value)
         """
+
+        # Check action space dim aligns with created BDQ
+        self._action_dimension_check(this_actuation_functions_dims=0)
+
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
             self._explore_exploit_process(exploit)
@@ -375,6 +401,26 @@ class Agent:
 
         return self.actuation_dict
 
+    def _action_dimension_check(self, this_actuation_functions_dims=0):
+        """Used to verify that action dimensions aligns with BDQ architecture. Raises error and exits if not."""
+
+        if not self._checked_action_dims:
+            if self.actuation_dim != this_actuation_functions_dims:
+                raise ValueError('Check that your actuation function dims align with your BDQ.')
+            self._checked_action_dims = True
+
+    def action_directory(self, action_id: int):
+        """This function is used to select and pass the chosen actuation function. This allows it to be a parameter."""
+
+        action_directory = {
+            1: self.act_heat_cool_off_1,
+            2: self.act_strict_setpoints_2,
+            3: self.act_step_strict_setpoints_3,
+            4: self.act_default_adjustments_4
+        }
+
+        return action_directory[action_id]
+
     def act_default_adjustments_4(self, actuate=True, exploit=False):
         """
         Action callback function:
@@ -382,6 +428,7 @@ class Agent:
 
         :return: actuation dictionary - EMS variable name (key): actuation value (value)
         """
+
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
             self._explore_exploit_process(exploit)
@@ -469,7 +516,7 @@ class Agent:
                 self.actuation_dict[f'zn{zone_i}_heating_sp'] = heating_sp
                 self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_sp
 
-                if self.print:
+                if self._print:
                     zone_temp = self.mdp.ems_master_list[f'zn{zone_i}_temp'].value
                     print(f'\t\tZone{zone_i} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
                           f' Heating Sp = {round(heating_sp, 2)},'
@@ -518,7 +565,7 @@ class Agent:
                 self.actuation_dict[f'zn{zone_i}_heating_sp'] = heating_sp
                 self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_sp
 
-                if self.print:
+                if self._print:
                     print(f'\t\tZone{zone_i} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
                           f' Heating Sp = {round(heating_sp, 2)},'
                           f' Cooling Sp = {round(cooling_sp, 2)}')
@@ -539,6 +586,10 @@ class Agent:
 
         :return: actuation dictionary - EMS variable name (key): actuation value (value)
         """
+
+        # Check action space dim aligns with created BDQ
+        self._action_dimension_check(this_actuation_functions_dims=3)
+
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
             self._explore_exploit_process(exploit)
@@ -575,7 +626,7 @@ class Agent:
                 self.actuation_dict[f'zn{zone}_heating_sp'] = heating_sp
                 self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
 
-                if self.print:
+                if self._print:
                     print(f'\t\tZone{zone} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
                           f' Heating Sp = {round(heating_sp, 2)},'
                           f' Cooling Sp = {round(cooling_sp, 2)}')
@@ -608,7 +659,7 @@ class Agent:
         # COMFORT
         # Get comfortable temp bounds based on building hours - occupied vs. unoccupied
         temp_bounds = np.asarray([self.indoor_temp_ideal_range if building_hours[i] == 1
-                                   else self.indoor_temp_unoccupied_range for i in interaction_span])
+                                  else self.indoor_temp_unoccupied_range for i in interaction_span])
         # $RTP
         rtp_since_last_interaction = np.asarray(self.sim.get_ems_data(['rtp'], interaction_span))
         # WIND
@@ -711,7 +762,7 @@ class Agent:
             """
             reward_components_per_zone_dict[zone_i] = reward_per_component
 
-            if self.print:
+            if self._print:
                 print(f'\tReward - {zone_i}: {reward_per_component}')
 
         return reward_components_per_zone_dict
@@ -838,7 +889,7 @@ class Agent:
             """
             reward_components_per_zone_dict[zone_i] = reward_per_component
 
-            if self.print:
+            if self._print:
                 print(f'\tReward - {zone_i}: {reward_per_component}')
 
         return reward_components_per_zone_dict
@@ -903,7 +954,7 @@ class Agent:
             self.cold_temps_histogram_data = np.append(self.cold_temps_histogram_data, cold_temp_difference)
             self.warm_temps_histogram_data = np.append(self.warm_temps_histogram_data, warm_temp_difference)
 
-        if self.print:
+        if self._print:
             print(f'\n\tComfort: {round(uncomfortable_metric, 2)}, '
                   f'Cumulative: {round(self.comfort_dissatisfaction_total + uncomfortable_metric, 2)}')
 
@@ -984,7 +1035,7 @@ class Agent:
             self.wind_energy_hvac_data.append(wind_energy_hvac_usage)
             self.total_energy_hvac_data.append(total_energy_hvac_usage)
 
-        if self.print:
+        if self._print:
             print(
                 f'\tRTP: ${round(rtp_hvac_costs, 2)}, Cumulative: ${round(self.hvac_rtp_costs_total + rtp_hvac_costs, 2)}')
 

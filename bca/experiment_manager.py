@@ -54,14 +54,14 @@ def run_experiment(run: RunManager.Run,
 
     # -- Instantiate RL Agent --
     my_policy = run_manager.create_policy(run)
-    my_memory = run_manager.create_replay_memory(run, rnn=run.rnn)
+    my_memory = run_manager.create_replay_memory(run)
     my_agent = run_manager.create_agent(run, my_mdp, my_sim, tensorboard_manager)
 
     # -- Set Sim Calling Point(s) & Callback Function(s) --
     my_sim.set_calling_point_and_callback_function(
         calling_point=cp,
         observation_function=my_agent.observe,
-        actuation_function=my_agent.act_heat_cool_off_1,  # Try different actuation functions
+        actuation_function=my_agent.action_directory(run.actuation_function),  # Try different actuation functions
         update_state=True,
         update_observation_frequency=run.observation_ts_frequency,
         update_actuation_frequency=run.actuation_ts_frequency,

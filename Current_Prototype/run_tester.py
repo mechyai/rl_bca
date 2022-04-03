@@ -41,7 +41,7 @@ run_limit = len(run_modification)
 # ----------------------------------------------------- Run Study -----------------------------------------------------
 
 # -- Create DQN Model --
-my_bdq = run_manager.create_bdq(run, rnn=run.rnn)
+my_bdq = run_manager.create_bdq(run)
 # Load model, if desired
 if experiment_params_dict['load_model']:
     my_bdq.import_model(experiment_params_dict['load_model'])

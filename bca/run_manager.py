@@ -35,7 +35,8 @@ class RunManager:
         # Fixed
         'observation_dim': 60,
         'action_branches': action_branches,  # n building zones
-        'action_dim': 3,
+        'actuation_function': 1,
+        'actuation_dim': 3,
 
         # Architecture
         'shared_network_size_l1': 96,
@@ -102,7 +103,8 @@ class RunManager:
     bdq_fixed_params = {
         'observation_dim': [64],
         'action_branches': [action_branches],  # n building zones
-        'action_dim': [6],
+        'actuation_function': [1],
+        'actuation_dim': [3],
     }
 
     bdq_params = {
@@ -145,24 +147,34 @@ class RunManager:
         self.runs = self.get_runs(self.hyperparameter_dict)
         self.n_runs = len(self.runs)
 
-    def get_runs(self, params: dict):
+    @staticmethod
+    def get_runs(params: dict):
         """Get all permutations of hyperparameters passed."""
 
         Run = namedtuple('Run', params.keys())
 
+        actuation_functions = params['actuation_function']
+        actuation_dimensions = params['actuation_dim']
+
         runs = []
         for config in product(*params.values()):
             run_config = Run(*config)
+            # Handle incompatible hyperparam configuration
             if run_config.batch_size > run_config.replay_capacity:
-                # Incompatible hyperparam configuration
                 pass
             else:
+                # TODO fix this, so bad
+                # Link actuation functions with their intended dimensions, no permutation here
+                func_index = actuation_functions.index(run_config.actuation_function)
+                # Now could end up with duplicate permutations
+                run_config = run_config._replace(actuation_dim=actuation_dimensions[func_index])
+
                 runs.append(run_config)
 
         return runs
 
     def get_runs_modified(self, modified_params_dict: dict):
-        """Get all permutations of hyperparameters passed."""
+        """Get all permutations of hyperparameters passed. Passed dict must contain only keys aligned with Run tuple."""
 
         selected_params = copy.copy(self.selected_params)
         # Add custom changed values to param dict
@@ -174,17 +186,7 @@ class RunManager:
             if not isinstance(values, list):
                 selected_params[param_name] = [values]  # make list
 
-        Run = namedtuple('Run', selected_params.keys())
-        runs = []
-        for config in product(*selected_params.values()):
-            run_config = Run(*config)
-            if run_config.batch_size > run_config.replay_capacity:
-                # Incompatible hyperparam configuration
-                pass
-            else:
-                runs.append(run_config)
-
-        return runs
+        return self.get_runs(selected_params)
 
     def shuffle_runs(self, runs: None):
         """Returns list of shuffled runs"""
@@ -207,9 +209,10 @@ class RunManager:
             policy=self.policy,
             replay_memory=self.experience_replay,
             rnn=run.rnn,
-            reward_aggregation=run.reward_aggregation,
             observation_frequency=run.observation_ts_frequency,
             actuation_frequency=run.actuation_ts_frequency,
+            actuation_dimension=run.actuation_dim,
+            reward_aggregation=run.reward_aggregation,
             learning_loop=run.learning_loops,
             tensorboard_manager=tensorboard_manager
         )
@@ -227,10 +230,10 @@ class RunManager:
 
         return self.policy
 
-    def create_replay_memory(self, run: namedtuple, rnn: False):
+    def create_replay_memory(self, run: namedtuple):
         """Creates and returns new Experience Replay from defined parameters."""
 
-        if rnn:
+        if run.rnn:
             self.experience_replay = SequenceReplayMemory(
                 capacity=run.replay_capacity,
                 batch_size=run.batch_size,
@@ -245,16 +248,16 @@ class RunManager:
 
         return self.experience_replay
 
-    def create_bdq(self, run: namedtuple, rnn: False):
+    def create_bdq(self, run: namedtuple):
         """Creates and returns new BDQ model from defined parameters."""
 
-        if rnn:
+        if run.rnn:
             self.dqn = BranchingDQN_RNN(
                 observation_dim=run.observation_dim,
                 rnn_hidden_size=run.rnn_hidden_size,
                 rnn_num_layers=run.rnn_num_layers,
                 action_branches=run.action_branches,
-                action_dim=run.action_dim,
+                action_dim=run.run.actuation_dim,
                 shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
                 value_stream_size=[run.value_stream_size],
                 advantage_streams_size=[run.advantage_streams_size],
@@ -271,7 +274,7 @@ class RunManager:
             self.dqn = BranchingDQN(
                 observation_dim=run.observation_dim,
                 action_branches=run.action_branches,
-                action_dim=run.action_dim,
+                action_dim=run.actuation_dim,
                 shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
                 value_stream_size=[run.value_stream_size],
                 advantage_streams_size=[run.advantage_streams_size],
