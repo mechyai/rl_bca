@@ -9,11 +9,11 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from emspy import EmsPy
-from bca import ModelManager, RunManager, TensorboardManager, mdp_manager, paths_config
+from bca import ModelManager, RunManager, TensorboardManager, mdp_manager, _paths_config
 
 # -- FILE PATHS --
 # IDF File / Modification Paths
-bem_folder = os.path.join(paths_config.repo_root, 'Current_Prototype/BEM')
+bem_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/BEM')
 idf_file_base = os.path.join(bem_folder, 'IdfFiles/BEM_V1_2019_baseline_May.idf')  # !-----------------------------------
 idf_final_file = os.path.join(bem_folder, 'BEM_V1_2019_Year.idf')
 # Weather Path

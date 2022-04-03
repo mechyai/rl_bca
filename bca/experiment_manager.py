@@ -61,7 +61,7 @@ def run_experiment(run: RunManager.Run,
     my_sim.set_calling_point_and_callback_function(
         calling_point=cp,
         observation_function=my_agent.observe,
-        actuation_function=my_agent.act_step_fixed_setpoints,  # Try different actuation functions
+        actuation_function=my_agent.act_step_fixed_setpoints_decorated,  # Try different actuation functions
         update_state=True,
         update_observation_frequency=run.interaction_ts_frequency,
         update_actuation_frequency=run.interaction_ts_frequency,

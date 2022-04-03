@@ -1,7 +1,7 @@
 import os
 
 from emspy import MdpManager, BcaEnv, idf_editor
-from bca import mdp_manager, paths_config
+from bca import mdp_manager, _paths_config
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 # OMP: Error #15: Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.
@@ -10,8 +10,8 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 class ModelManager:
     # -- FILE PATHS --
     # IDF File / Modification Paths
-    ep_path = paths_config.ep_path
-    repo_root = paths_config.repo_root
+    ep_path = _paths_config.ep_path
+    repo_root = _paths_config.repo_root
     os_folder = os.path.join(repo_root, 'Current_Prototype/BEM')
     auto_idf_folder = os.path.join(os_folder, 'CustomIdfFiles/Automated')
 

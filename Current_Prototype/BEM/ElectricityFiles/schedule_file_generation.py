@@ -13,7 +13,7 @@ import ErcotDAM_fromCSV as dam
 import ErcotFuelMix_fromCSV as fmix
 
 from emspy import idf_editor
-from bca import paths_config
+from bca import _paths_config
 
 # -- OUTPUT PARAMS --
 # metadata
@@ -22,7 +22,7 @@ year = 2019
 settlement_point_name = 'HB_NORTH'
 settlement_point_type = 'HU'
 # output paths
-repo_root = paths_config.repo_root
+repo_root = _paths_config.repo_root
 save_schedule_file_csv = os.path.join(repo_root, 'Current_Prototype/BEM/ScheduleFiles/')
 save_schedule_file_idf = os.path.join(repo_root, 'Current_Prototype/BEM/CustomIdfFiles/Automated/')
 

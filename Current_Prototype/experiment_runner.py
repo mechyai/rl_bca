@@ -7,7 +7,7 @@ import torch
 
 from emspy import EmsPy
 from bca import RunManager, TensorboardManager
-from bca import mdp_manager, paths_config, experiment_manager
+from bca import mdp_manager, _paths_config, experiment_manager
 
 year = mdp_manager.year
 model_span = 'Test'
@@ -22,7 +22,7 @@ run_modification = [5e-3, 1e-3]  # , 5e-4, 1e-4, 5e-5, 1e-5, 5e-6, 1e-6]
 
 # -- FILE PATHS --
 # IDF File / Modification Paths
-bem_folder = os.path.join(paths_config.repo_root, 'Current_Prototype/BEM')
+bem_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/BEM')
 idf_file_base = os.path.join(bem_folder, f'IdfFiles/BEM_V1_{year}_{model_span}')
 idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
 # Weather Path
