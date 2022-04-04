@@ -1,5 +1,8 @@
 import time
 from typing import Union
+from datetime import datetime as dt
+from datetime import timedelta
+import calendar
 
 import numpy as np
 import torch
@@ -120,6 +123,7 @@ class Agent:
         # -- TIMING --
         self.n_ts = 0
         self.current_step = 0
+        self.friday_date = 0
 
         # -- INTERACTION FREQUENCIES --
         self.observation_frequency = observation_frequency
@@ -244,7 +248,7 @@ class Agent:
         self.meter_encoded_vals = self.mdp.get_ems_encoded_values(meter_names)
         self.weather_encoded_vals = self.mdp.get_ems_encoded_values(self.weather_names)
 
-        # Combine Heating & Cooling Electricity
+        # -- Combine Heating & Cooling Electricity --
         for meter_name in self.meter_encoded_vals.copy():
             # combine heating and cooling into 1 val [-1, 0]:cooling + [0, 1]:heating, then remove individuals
             if 'heating' in meter_name:
@@ -253,7 +257,7 @@ class Agent:
                 cooling_val = self.meter_encoded_vals.pop(zone_n + '_cooling_electricity')
                 self.meter_encoded_vals[zone_n + '_hvac_electricity'] = heating_val + cooling_val
 
-        # RTP High-Price Signal
+        # -- RTP High-Price Signal --
         rtp = self.var_vals['rtp']
         # Add extra RTP pricing state signal
         if rtp > 100:
@@ -263,7 +267,7 @@ class Agent:
         else:
             rtp_alert = [0]
 
-        # Weather Forecast
+        # -- Weather Forecast --
         weather_forecast_list = []
         hours_ahead = 12
         for hour in range(1, hours_ahead + 1, 1):
@@ -282,12 +286,55 @@ class Agent:
                     self.sim.get_weather_forecast(['sun_up'], forecast_day, forecast_hour, zone_ts=1))
             )
 
-        # Timing
-        month = self.time.month / 12
-        day = self.time.day / 31
-        hour = self.time.hour / 24
-        minute = self.time.minute / 60
-        time_list = [month, day, hour, minute]
+        # -- Timing --
+        year = self.time.year
+        month = self.time.month
+        days_of_month = calendar.monthrange(self.time.year, month)[1]
+        day = self.time.day
+        hour = self.time.hour
+        minute = self.time.minute
+        time_list = [month / 12, day / days_of_month, hour / 24, minute / 60]
+
+        # -- Building Schedule Progress --
+        hour_start = 6
+        hour_end = 19
+        weekend = False
+        day_name = self.time.strftime("%A")
+
+        # Handle Weekend Progress
+        if day_name == 'Friday':
+            self.friday_date = day
+        if day_name in ['Friday', 'Saturday', 'Sunday', 'Monday']:
+            weekend_start = dt(year, month, self.friday_date, hour_end, 0)  # end of workday Friday
+            weekend_end = dt(year, month, self.friday_date + 3, hour_start, 0)  # start of workday Monday
+            if weekend_start <= self.time <= weekend_end:
+                # Get progress into weekend
+                weekend = True
+                building_hours_progress = (self.time - weekend_start).total_seconds() \
+                                          / (weekend_end - weekend_start).total_seconds()
+                week_state_hot_encoding = [0, 0, 1]  # Weekend
+
+        # Handle Weekday Progress
+        if day_name in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] and not weekend:
+            workday_start = dt(year, month, day, hour_start, 0)  # start of workday today
+            workday_end = dt(year, month, day, hour_end, 0)  # end of workday today
+            # During workday
+            if workday_start <= self.time <= workday_end:
+                building_hours_progress = (self.time - workday_start).total_seconds() \
+                                          / (workday_end - workday_start).total_seconds()
+                week_state_hot_encoding = [1, 0, 0]  # Work
+            # Before workday
+            elif self.time < workday_start:
+                since_workday_end = (24 - hour_end + hour) * 3600 + minute * 60  # seconds since previous day end
+                building_hours_progress = since_workday_end / ((24 - hour_end + hour_start) * 3600)
+                week_state_hot_encoding = [0, 1, 0]  # Off Work
+            # After workday
+            elif self.time > workday_end:
+                building_hours_progress = (self.time - workday_end).total_seconds() \
+                                          / ((24 - hour_end + hour_start) * 3600)
+                week_state_hot_encoding = [0, 1, 0]  # Of Work
+        elif not weekend:
+            building_hours_progress = None  # catch any errors
 
         # -- DO ONCE --
         if self._once:
@@ -299,6 +346,8 @@ class Agent:
             rtp_alert +
             time_list +
             weather_forecast_list +
+            # [building_hours_progress] +
+            # week_state_hot_encoding +
             list(self.var_encoded_vals.values()) +
             list(self.weather_encoded_vals.values()) +
             list(self.meter_encoded_vals.values()),
