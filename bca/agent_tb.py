@@ -121,6 +121,8 @@ class Agent:
         self.indoor_temp_limits = np.array([15, 30])  # ??? needed?
 
         # -- TIMING --
+        self.weekend_days = ['Friday', 'Saturday', 'Sunday', 'Monday']
+        self.week_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
         self.n_ts = 0
         self.current_step = 0
         self.friday_date = 0
@@ -302,20 +304,22 @@ class Agent:
         day_name = self.time.strftime("%A")
 
         # Handle Weekend Progress
-        if day_name == 'Friday':
-            self.friday_date = day
-        if day_name in ['Friday', 'Saturday', 'Sunday', 'Monday']:
-            weekend_start = dt(year, month, self.friday_date, hour_end, 0)  # end of workday Friday
-            weekend_end = dt(year, month, self.friday_date + 3, hour_start, 0)  # start of workday Monday
+        if day_name in self.weekend_days:
+            # Get weekend end and start, handle potential change in month/year
+            friday = self.time - timedelta(days=self.weekend_days.index(day_name))  # subtract to Friday
+            monday = self.time + timedelta(days=(3 - self.weekend_days.index(day_name)))  # add to Monday
+            weekend_start = dt(friday.year, friday.month, friday.day, hour_end, 0)  # end of workday Friday
+            weekend_end = dt(monday.year, monday.month, monday.day, hour_start, 0)  # start of workday Monday
+
+            # Get progress into weekend
             if weekend_start <= self.time <= weekend_end:
-                # Get progress into weekend
                 weekend = True
                 building_hours_progress = (self.time - weekend_start).total_seconds() \
                                           / (weekend_end - weekend_start).total_seconds()
                 week_state_hot_encoding = [0, 0, 1]  # Weekend
 
         # Handle Weekday Progress
-        if day_name in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] and not weekend:
+        if day_name in self.week_days and not weekend:
             workday_start = dt(year, month, day, hour_start, 0)  # start of workday today
             workday_end = dt(year, month, day, hour_end, 0)  # end of workday today
             # During workday
