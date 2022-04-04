@@ -68,15 +68,15 @@ class TensorboardManager:
             },
             metric_dict=
             {
-                'Hparam/Reward - All': agent.reward_sum,
-                'Hparam/Reward - Comfort': agent.reward_component_sum[0],
-                'Hparam/Reward - RTP': agent.reward_component_sum[1],
-                'Hparam/Reward - Wind': agent.reward_component_sum[2],
+                'Hparam Reward - All': agent.reward_sum,
+                'Hparam Reward - Comfort': agent.reward_component_sum[0],
+                'Hparam Reward - RTP': agent.reward_component_sum[1],
+                'Hparam Reward - Wind': agent.reward_component_sum[2],
             },
             hparam_domain_discrete=
             {
                 **{
-                    'run_type': ['benchmark', 'train', 'exploit'],
+                    'run_type': ['benchmark', 'train', 'exploit', 'test'],
                     'run': list(range(run_limit)),
                     'epoch': list(range(experimental_params['epochs']))
                 },
