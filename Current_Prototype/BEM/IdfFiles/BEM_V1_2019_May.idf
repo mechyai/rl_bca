@@ -201,23 +201,14 @@ LifeCycleCost:UsePriceEscalation,
   1.0950;                                 !- Year Escalation 30
 
 Building,
-  -SmallOffice-ASHRAE 169-2013-5A created: 2021-07-27 13:59:38 -0400, !- Name
-  -0,                                     !- North Axis {deg}
+  -SmallOffice-ASHRAE 169-2013-2A created: 2022-04-04 18:31:37 -0400, !- Name
+  0,                                      !- North Axis {deg}
   City,                                   !- Terrain
   0.04,                                   !- Loads Convergence Tolerance Value {W}
   0.2,                                    !- Temperature Convergence Tolerance Value {deltaC}
   FullInteriorAndExterior,                !- Solar Distribution
   30,                                     !- Maximum Number of Warmup Days
   6;                                      !- Minimum Number of Warmup Days
-
-Shading:Building:Detailed,
-  Shading Surface 1,                      !- Name
-  ,                                       !- Transmittance Schedule Name
-  ,                                       !- Number of Vertices
-  30.379225, 0, 1.16957857389537,         !- X,Y,Z Vertex 1 {m}
-  30.379225, -4.4831, 0,                  !- X,Y,Z Vertex 2 {m}
-  36.0085, -4.4831, 0,                    !- X,Y,Z Vertex 3 {m}
-  36.0085, 0, 1.16957857389537;           !- X,Y,Z Vertex 4 {m}
 
 Zone,
   Attic ZN,                               !- Name
@@ -237,7 +228,7 @@ Zone,
 BuildingSurface:Detailed,
   Attic_floor_core,                       !- Name
   Floor,                                  !- Surface Type
-  Typical Wood Joist Attic Floor R-47.62 1, !- Construction Name
+  Typical Wood Joist Attic Floor R-37.04 1, !- Construction Name
   Attic ZN,                               !- Zone Name
   Surface,                                !- Outside Boundary Condition
   Core_ZN_ceiling,                        !- Outside Boundary Condition Object
@@ -253,7 +244,7 @@ BuildingSurface:Detailed,
 BuildingSurface:Detailed,
   Attic_floor_perimeter_east,             !- Name
   Floor,                                  !- Surface Type
-  Typical Wood Joist Attic Floor R-47.62 1, !- Construction Name
+  Typical Wood Joist Attic Floor R-37.04 1, !- Construction Name
   Attic ZN,                               !- Zone Name
   Surface,                                !- Outside Boundary Condition
   Perimeter_ZN_2_ceiling,                 !- Outside Boundary Condition Object
@@ -269,7 +260,7 @@ BuildingSurface:Detailed,
 BuildingSurface:Detailed,
   Attic_floor_perimeter_north,            !- Name
   Floor,                                  !- Surface Type
-  Typical Wood Joist Attic Floor R-47.62 1, !- Construction Name
+  Typical Wood Joist Attic Floor R-37.04 1, !- Construction Name
   Attic ZN,                               !- Zone Name
   Surface,                                !- Outside Boundary Condition
   Perimeter_ZN_3_ceiling,                 !- Outside Boundary Condition Object
@@ -285,7 +276,7 @@ BuildingSurface:Detailed,
 BuildingSurface:Detailed,
   Attic_floor_perimeter_south,            !- Name
   Floor,                                  !- Surface Type
-  Typical Wood Joist Attic Floor R-47.62 1, !- Construction Name
+  Typical Wood Joist Attic Floor R-37.04 1, !- Construction Name
   Attic ZN,                               !- Zone Name
   Surface,                                !- Outside Boundary Condition
   Perimeter_ZN_1_ceiling,                 !- Outside Boundary Condition Object
@@ -301,7 +292,7 @@ BuildingSurface:Detailed,
 BuildingSurface:Detailed,
   Attic_floor_perimeter_west,             !- Name
   Floor,                                  !- Surface Type
-  Typical Wood Joist Attic Floor R-47.62 1, !- Construction Name
+  Typical Wood Joist Attic Floor R-37.04 1, !- Construction Name
   Attic ZN,                               !- Zone Name
   Surface,                                !- Outside Boundary Condition
   Perimeter_ZN_4_ceiling,                 !- Outside Boundary Condition Object
@@ -478,7 +469,7 @@ Zone,
 BuildingSurface:Detailed,
   Core_ZN_ceiling,                        !- Name
   Ceiling,                                !- Surface Type
-  Typical Wood Joist Attic Floor R-47.62 1 Reversed, !- Construction Name
+  Typical Wood Joist Attic Floor R-37.04 1 Reversed, !- Construction Name
   Core_ZN ZN,                             !- Zone Name
   Surface,                                !- Outside Boundary Condition
   Attic_floor_core,                       !- Outside Boundary Condition Object
@@ -494,7 +485,7 @@ BuildingSurface:Detailed,
 BuildingSurface:Detailed,
   Core_ZN_floor,                          !- Name
   Floor,                                  !- Surface Type
-  Foundation F 09 Perim 0 Area 14966,     !- Construction Name
+  Foundation F 126 Perim 0 Area 14966,    !- Construction Name
   Core_ZN ZN,                             !- Zone Name
   GroundFCfactorMethod,                   !- Outside Boundary Condition
   ,                                       !- Outside Boundary Condition Object
@@ -794,75 +785,14 @@ Sizing:Zone,
   ,                                       !- Design Specification Zone Air Distribution Object Name
   No;                                     !- Account for Dedicated Outdoor Air System
 
-ScheduleTypeLimits,
-  Fractional,                             !- Name
-  0,                                      !- Lower Limit Value {BasedOnField A3}
-  1,                                      !- Upper Limit Value {BasedOnField A3}
-  Continuous;                             !- Numeric Type
-
-Schedule:Day:Interval,
-  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- Name
-  Fractional,                             !- Schedule Type Limits Name
-  No,                                     !- Interpolate to Timestep
-  24:00,                                  !- Time 1 {hh:mm}
-  0;                                      !- Value Until Time 1
-
-Schedule:Day:Interval,
-  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Name
-  Fractional,                             !- Schedule Type Limits Name
-  No,                                     !- Interpolate to Timestep
-  07:00,                                  !- Time 1 {hh:mm}
-  0,                                      !- Value Until Time 1
-  19:00,                                  !- Time 2 {hh:mm}
-  1,                                      !- Value Until Time 2
-  24:00,                                  !- Time 3 {hh:mm}
-  0;                                      !- Value Until Time 3
-
-Schedule:Week:Daily,
-  OfficeSmall MinOA_MotorizedDamper_Sched Week Rule - Jan1-Dec31, !- Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- Sunday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Monday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Tuesday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Wednesday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Thursday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Friday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- Saturday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- Holiday Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Summer Design Day, !- SummerDesignDay Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Winter Design Day, !- WinterDesignDay Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- CustomDay1 Schedule:Day Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Default; !- CustomDay2 Schedule:Day Name
-
-Schedule:Year,
-  OfficeSmall MinOA_MotorizedDamper_Sched, !- Name
-  Fractional,                             !- Schedule Type Limits Name
-  OfficeSmall MinOA_MotorizedDamper_Sched Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
-  1,                                      !- Start Month 1
-  1,                                      !- Start Day 1
-  12,                                     !- End Month 1
-  31;                                     !- End Day 1
-
-Schedule:Day:Interval,
-  OfficeSmall MinOA_MotorizedDamper_Sched Summer Design Day, !- Name
-  Fractional,                             !- Schedule Type Limits Name
-  No,                                     !- Interpolate to Timestep
-  07:00,                                  !- Time 1 {hh:mm}
-  0,                                      !- Value Until Time 1
-  19:00,                                  !- Time 2 {hh:mm}
-  1,                                      !- Value Until Time 2
-  24:00,                                  !- Time 3 {hh:mm}
-  0;                                      !- Value Until Time 3
-
-Schedule:Day:Interval,
-  OfficeSmall MinOA_MotorizedDamper_Sched Winter Design Day, !- Name
-  Fractional,                             !- Schedule Type Limits Name
-  No,                                     !- Interpolate to Timestep
-  24:00,                                  !- Time 1 {hh:mm}
-  0;                                      !- Value Until Time 1
+Schedule:Constant,
+  Always On Discrete,                     !- Name
+  Always On Discrete Limits,              !- Schedule Type Limits Name
+  1;                                      !- Hourly Value
 
 Controller:MechanicalVentilation,
   Controller Mechanical Ventilation 5,    !- Name
-  OfficeSmall MinOA_MotorizedDamper_Sched, !- Availability Schedule Name
+  Always On Discrete,                     !- Availability Schedule Name
   No,                                     !- Demand Controlled Ventilation
   ZoneSum,                                !- System Outdoor Air Method
   ,                                       !- Zone Maximum Outdoor Air Fraction {dimensionless}
@@ -896,7 +826,7 @@ Zone,
 BuildingSurface:Detailed,
   Perimeter_ZN_1_ceiling,                 !- Name
   Ceiling,                                !- Surface Type
-  Typical Wood Joist Attic Floor R-47.62 1 Reversed, !- Construction Name
+  Typical Wood Joist Attic Floor R-37.04 1 Reversed, !- Construction Name
   Perimeter_ZN_1 ZN,                      !- Zone Name
   Surface,                                !- Outside Boundary Condition
   Attic_floor_perimeter_south,            !- Outside Boundary Condition Object
@@ -912,7 +842,7 @@ BuildingSurface:Detailed,
 BuildingSurface:Detailed,
   Perimeter_ZN_1_floor,                   !- Name
   Floor,                                  !- Surface Type
-  Foundation F 09 Perim 2769 Area 11345,  !- Construction Name
+  Foundation F 126 Perim 2769 Area 11345, !- Construction Name
   Perimeter_ZN_1 ZN,                      !- Zone Name
   GroundFCfactorMethod,                   !- Outside Boundary Condition
   ,                                       !- Outside Boundary Condition Object
@@ -936,8 +866,8 @@ BuildingSurface:Detailed,
   NoWind,                                 !- Wind Exposure
   ,                                       !- View Factor to Ground
   ,                                       !- Number of Vertices
-  27.69, 2.04187384066908e-15, 3.05,      !- X,Y,Z Vertex 1 {m}
-  27.69, 2.04187384066908e-15, 0,         !- X,Y,Z Vertex 2 {m}
+  27.69, 0, 3.05,                         !- X,Y,Z Vertex 1 {m}
+  27.69, 0, 0,                            !- X,Y,Z Vertex 2 {m}
   22.69, 5, 0,                            !- X,Y,Z Vertex 3 {m}
   22.69, 5, 3.05;                         !- X,Y,Z Vertex 4 {m}
 
@@ -960,7 +890,7 @@ BuildingSurface:Detailed,
 BuildingSurface:Detailed,
   Perimeter_ZN_1_wall_south,              !- Name
   Wall,                                   !- Surface Type
-  Typical Insulated Wood Framed Exterior Wall R-19.61, !- Construction Name
+  Typical Insulated Wood Framed Exterior Wall R-11.24, !- Construction Name
   Perimeter_ZN_1 ZN,                      !- Zone Name
   Outdoors,                               !- Outside Boundary Condition
   ,                                       !- Outside Boundary Condition Object
@@ -976,7 +906,7 @@ BuildingSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_1_wall_south_door,         !- Name
   GlassDoor,                              !- Surface Type
-  U 0.44 SHGC 0.26 Dbl Ref-B-H Clr 6mm/13mm Air, !- Construction Name
+  U 0.65 SHGC 0.25 Dbl Ref-C-H Clr 6mm/6mm Air, !- Construction Name
   Perimeter_ZN_1_wall_south,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -991,7 +921,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_1_wall_south_Window_1,     !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_1_wall_south,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1006,7 +936,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_1_wall_south_Window_2,     !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_1_wall_south,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1021,7 +951,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_1_wall_south_Window_3,     !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_1_wall_south,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1036,7 +966,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_1_wall_south_Window_4,     !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_1_wall_south,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1051,7 +981,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_1_wall_south_Window_5,     !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_1_wall_south,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1066,7 +996,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_1_wall_south_Window_6,     !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_1_wall_south,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1103,9 +1033,9 @@ InternalMass,
 ZoneInfiltration:DesignFlowRate,
   entry door Infiltration,                !- Name
   Perimeter_ZN_1 ZN,                      !- Zone or ZoneList Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013, !- Schedule Name
+  OfficeSmall INFIL_Door_Opening_SCH,     !- Schedule Name
   Flow/Zone,                              !- Design Flow Rate Calculation Method
-  0.076455414,                            !- Design Flow Rate {m3/s}
+  0.129785425,                            !- Design Flow Rate {m3/s}
   ,                                       !- Flow per Zone Floor Area {m3/s-m2}
   ,                                       !- Flow per Exterior Surface Area {m3/s-m2}
   ,                                       !- Air Changes per Hour {1/hr}
@@ -1263,7 +1193,7 @@ Sizing:Zone,
 
 Controller:MechanicalVentilation,
   Controller Mechanical Ventilation 1,    !- Name
-  OfficeSmall MinOA_MotorizedDamper_Sched, !- Availability Schedule Name
+  Always On Discrete,                     !- Availability Schedule Name
   No,                                     !- Demand Controlled Ventilation
   ZoneSum,                                !- System Outdoor Air Method
   ,                                       !- Zone Maximum Outdoor Air Fraction {dimensionless}
@@ -1289,7 +1219,7 @@ Zone,
 BuildingSurface:Detailed,
   Perimeter_ZN_2_ceiling,                 !- Name
   Ceiling,                                !- Surface Type
-  Typical Wood Joist Attic Floor R-47.62 1 Reversed, !- Construction Name
+  Typical Wood Joist Attic Floor R-37.04 1 Reversed, !- Construction Name
   Perimeter_ZN_2 ZN,                      !- Zone Name
   Surface,                                !- Outside Boundary Condition
   Attic_floor_perimeter_east,             !- Outside Boundary Condition Object
@@ -1305,7 +1235,7 @@ BuildingSurface:Detailed,
 BuildingSurface:Detailed,
   Perimeter_ZN_2_floor,                   !- Name
   Floor,                                  !- Surface Type
-  Foundation F 09 Perim 1846 Area 673,    !- Construction Name
+  Foundation F 126 Perim 1846 Area 673,   !- Construction Name
   Perimeter_ZN_2 ZN,                      !- Zone Name
   GroundFCfactorMethod,                   !- Outside Boundary Condition
   ,                                       !- Outside Boundary Condition Object
@@ -1321,7 +1251,7 @@ BuildingSurface:Detailed,
 BuildingSurface:Detailed,
   Perimeter_ZN_2_wall_east,               !- Name
   Wall,                                   !- Surface Type
-  Typical Insulated Wood Framed Exterior Wall R-19.61, !- Construction Name
+  Typical Insulated Wood Framed Exterior Wall R-11.24, !- Construction Name
   Perimeter_ZN_2 ZN,                      !- Zone Name
   Outdoors,                               !- Outside Boundary Condition
   ,                                       !- Outside Boundary Condition Object
@@ -1337,7 +1267,7 @@ BuildingSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_2_wall_east_Window_1,      !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_2_wall_east,               !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1352,7 +1282,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_2_wall_east_Window_2,      !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_2_wall_east,               !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1367,7 +1297,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_2_wall_east_Window_3,      !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_2_wall_east,               !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1382,7 +1312,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_2_wall_east_Window_4,      !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_2_wall_east,               !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1423,8 +1353,8 @@ BuildingSurface:Detailed,
   ,                                       !- Number of Vertices
   22.69, 5, 3.05,                         !- X,Y,Z Vertex 1 {m}
   22.69, 5, 0,                            !- X,Y,Z Vertex 2 {m}
-  27.69, 2.04187384066908e-15, 0,         !- X,Y,Z Vertex 3 {m}
-  27.69, 2.04187384066908e-15, 3.05;      !- X,Y,Z Vertex 4 {m}
+  27.69, 0, 0,                            !- X,Y,Z Vertex 3 {m}
+  27.69, 0, 3.05;                         !- X,Y,Z Vertex 4 {m}
 
 BuildingSurface:Detailed,
   Perimeter_ZN_2_wall_west,               !- Name
@@ -1597,7 +1527,7 @@ Sizing:Zone,
 
 Controller:MechanicalVentilation,
   Controller Mechanical Ventilation 2,    !- Name
-  OfficeSmall MinOA_MotorizedDamper_Sched, !- Availability Schedule Name
+  Always On Discrete,                     !- Availability Schedule Name
   No,                                     !- Demand Controlled Ventilation
   ZoneSum,                                !- System Outdoor Air Method
   ,                                       !- Zone Maximum Outdoor Air Fraction {dimensionless}
@@ -1623,7 +1553,7 @@ Zone,
 BuildingSurface:Detailed,
   Perimeter_ZN_3_ceiling,                 !- Name
   Ceiling,                                !- Surface Type
-  Typical Wood Joist Attic Floor R-47.62 1 Reversed, !- Construction Name
+  Typical Wood Joist Attic Floor R-37.04 1 Reversed, !- Construction Name
   Perimeter_ZN_3 ZN,                      !- Zone Name
   Surface,                                !- Outside Boundary Condition
   Attic_floor_perimeter_north,            !- Outside Boundary Condition Object
@@ -1639,7 +1569,7 @@ BuildingSurface:Detailed,
 BuildingSurface:Detailed,
   Perimeter_ZN_3_floor,                   !- Name
   Floor,                                  !- Surface Type
-  Foundation F 09 Perim 2769 Area 11345,  !- Construction Name
+  Foundation F 126 Perim 2769 Area 11345, !- Construction Name
   Perimeter_ZN_3 ZN,                      !- Zone Name
   GroundFCfactorMethod,                   !- Outside Boundary Condition
   ,                                       !- Outside Boundary Condition Object
@@ -1671,7 +1601,7 @@ BuildingSurface:Detailed,
 BuildingSurface:Detailed,
   Perimeter_ZN_3_wall_north,              !- Name
   Wall,                                   !- Surface Type
-  Typical Insulated Wood Framed Exterior Wall R-19.61, !- Construction Name
+  Typical Insulated Wood Framed Exterior Wall R-11.24, !- Construction Name
   Perimeter_ZN_3 ZN,                      !- Zone Name
   Outdoors,                               !- Outside Boundary Condition
   ,                                       !- Outside Boundary Condition Object
@@ -1687,7 +1617,7 @@ BuildingSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_3_wall_north_Door1,        !- Name
   Door,                                   !- Surface Type
-  Typical Insulated Metal Door R-2.0,     !- Construction Name
+  Typical Insulated Metal Door R-1.43,    !- Construction Name
   Perimeter_ZN_3_wall_north,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1702,7 +1632,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_3_wall_north_Door2,        !- Name
   Door,                                   !- Surface Type
-  Typical Insulated Metal Door R-2.0,     !- Construction Name
+  Typical Insulated Metal Door R-1.43,    !- Construction Name
   Perimeter_ZN_3_wall_north,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1717,7 +1647,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_3_wall_north_Window_1,     !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_3_wall_north,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1732,7 +1662,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_3_wall_north_Window_2,     !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_3_wall_north,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1747,7 +1677,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_3_wall_north_Window_3,     !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_3_wall_north,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1762,7 +1692,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_3_wall_north_Window_4,     !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_3_wall_north,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1777,7 +1707,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_3_wall_north_Window_5,     !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_3_wall_north,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1792,7 +1722,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_3_wall_north_Window_6,     !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_3_wall_north,              !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -1991,7 +1921,7 @@ Sizing:Zone,
 
 Controller:MechanicalVentilation,
   Controller Mechanical Ventilation 3,    !- Name
-  OfficeSmall MinOA_MotorizedDamper_Sched, !- Availability Schedule Name
+  Always On Discrete,                     !- Availability Schedule Name
   No,                                     !- Demand Controlled Ventilation
   ZoneSum,                                !- System Outdoor Air Method
   ,                                       !- Zone Maximum Outdoor Air Fraction {dimensionless}
@@ -2017,7 +1947,7 @@ Zone,
 BuildingSurface:Detailed,
   Perimeter_ZN_4_ceiling,                 !- Name
   Ceiling,                                !- Surface Type
-  Typical Wood Joist Attic Floor R-47.62 1 Reversed, !- Construction Name
+  Typical Wood Joist Attic Floor R-37.04 1 Reversed, !- Construction Name
   Perimeter_ZN_4 ZN,                      !- Zone Name
   Surface,                                !- Outside Boundary Condition
   Attic_floor_perimeter_west,             !- Outside Boundary Condition Object
@@ -2033,7 +1963,7 @@ BuildingSurface:Detailed,
 BuildingSurface:Detailed,
   Perimeter_ZN_4_floor,                   !- Name
   Floor,                                  !- Surface Type
-  Foundation F 09 Perim 1846 Area 673,    !- Construction Name
+  Foundation F 126 Perim 1846 Area 673,   !- Construction Name
   Perimeter_ZN_4 ZN,                      !- Zone Name
   GroundFCfactorMethod,                   !- Outside Boundary Condition
   ,                                       !- Outside Boundary Condition Object
@@ -2097,7 +2027,7 @@ BuildingSurface:Detailed,
 BuildingSurface:Detailed,
   Perimeter_ZN_4_wall_west,               !- Name
   Wall,                                   !- Surface Type
-  Typical Insulated Wood Framed Exterior Wall R-19.61, !- Construction Name
+  Typical Insulated Wood Framed Exterior Wall R-11.24, !- Construction Name
   Perimeter_ZN_4 ZN,                      !- Zone Name
   Outdoors,                               !- Outside Boundary Condition
   ,                                       !- Outside Boundary Condition Object
@@ -2113,7 +2043,7 @@ BuildingSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_4_wall_west_Window_1,      !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_4_wall_west,               !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -2128,7 +2058,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_4_wall_west_Window_2,      !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_4_wall_west,               !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -2143,7 +2073,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_4_wall_west_Window_3,      !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_4_wall_west,               !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -2158,7 +2088,7 @@ FenestrationSurface:Detailed,
 FenestrationSurface:Detailed,
   Perimeter_ZN_4_wall_west_Window_4,      !- Name
   Window,                                 !- Surface Type
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Construction Name
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Construction Name
   Perimeter_ZN_4_wall_west,               !- Building Surface Name
   ,                                       !- Outside Boundary Condition Object
   ,                                       !- View Factor to Ground
@@ -2325,7 +2255,7 @@ Sizing:Zone,
 
 Controller:MechanicalVentilation,
   Controller Mechanical Ventilation 4,    !- Name
-  OfficeSmall MinOA_MotorizedDamper_Sched, !- Availability Schedule Name
+  Always On Discrete,                     !- Availability Schedule Name
   No,                                     !- Demand Controlled Ventilation
   ZoneSum,                                !- System Outdoor Air Method
   ,                                       !- Zone Maximum Outdoor Air Fraction {dimensionless}
@@ -2339,8 +2269,8 @@ SimulationControl,
   Yes,                                    !- Do Plant Sizing Calculation
   No,                                     !- Run Simulation for Sizing Periods
   Yes,                                    !- Run Simulation for Weather File Run Periods
-  No,                                     !- Do HVAC Sizing Simulation for Sizing Periods
-  1;                                      !- Maximum Number of HVAC Sizing Simulation Passes
+  Yes,                                    !- Do HVAC Sizing Simulation for Sizing Periods
+  2;                                      !- Maximum Number of HVAC Sizing Simulation Passes
 
 ConvergenceLimits,
   1,                                      !- Minimum System Timestep {minutes}
@@ -2384,8 +2314,8 @@ SurfaceConvectionAlgorithm:Outside,
   TARP;                                   !- Algorithm
 
 Sizing:Parameters,
-  1.2,                                    !- Heating Sizing Factor
-  1.2,                                    !- Cooling Sizing Factor
+  1.4,                                    !- Heating Sizing Factor
+  1.4,                                    !- Cooling Sizing Factor
   60;                                     !- Timesteps in Averaging Window
 
 ZoneAirContaminantBalance,
@@ -2585,15 +2515,15 @@ Material:NoMass,
   0.8;                                    !- Visible Absorptance
 
 Material:NoMass,
-  Typical Insulation R-1.15,              !- Name
+  Typical Insulation R-0.58,              !- Name
   Smooth,                                 !- Roughness
-  0.202509043390129,                      !- Thermal Resistance {m2-K/W}
+  0.101874652714525,                      !- Thermal Resistance {m2-K/W}
   0.9,                                    !- Thermal Absorptance
   0.7,                                    !- Solar Absorptance
   0.7;                                    !- Visible Absorptance
 
 Material:NoMass,
-  Typical Insulation R-1.15 1,            !- Name
+  Typical Insulation R-1.15,              !- Name
   Smooth,                                 !- Roughness
   0.202526711234652,                      !- Thermal Resistance {m2-K/W}
   0.9,                                    !- Thermal Absorptance
@@ -2601,46 +2531,51 @@ Material:NoMass,
   0.7;                                    !- Visible Absorptance
 
 Material:NoMass,
-  Typical Insulation R-14.97,             !- Name
+  Typical Insulation R-35.4,              !- Name
   Smooth,                                 !- Roughness
-  2.63722957411194,                       !- Thermal Resistance {m2-K/W}
+  6.23478649910089,                       !- Thermal Resistance {m2-K/W}
   0.9,                                    !- Thermal Absorptance
   0.7,                                    !- Solar Absorptance
   0.7;                                    !- Visible Absorptance
 
 Material:NoMass,
-  Typical Insulation R-17.43,             !- Name
+  Typical Insulation R-35.4 1,            !- Name
   Smooth,                                 !- Roughness
-  3.06941942260806,                       !- Thermal Resistance {m2-K/W}
+  6.23478649910089,                       !- Thermal Resistance {m2-K/W}
   0.9,                                    !- Thermal Absorptance
   0.7,                                    !- Solar Absorptance
   0.7;                                    !- Visible Absorptance
 
 Material:NoMass,
-  Typical Insulation R-45.98,             !- Name
+  Typical Insulation R-6.78,              !- Name
   Smooth,                                 !- Roughness
-  8.09838632642688,                       !- Thermal Resistance {m2-K/W}
+  1.19346679593268,                       !- Thermal Resistance {m2-K/W}
   0.9,                                    !- Thermal Absorptance
   0.7,                                    !- Solar Absorptance
   0.7;                                    !- Visible Absorptance
 
 Material:NoMass,
-  Typical Insulation R-45.98 1,           !- Name
+  Typical Insulation R-9.06,              !- Name
   Smooth,                                 !- Roughness
-  8.09838632642688,                       !- Thermal Resistance {m2-K/W}
+  1.59504467488221,                       !- Thermal Resistance {m2-K/W}
   0.9,                                    !- Thermal Absorptance
   0.7,                                    !- Solar Absorptance
   0.7;                                    !- Visible Absorptance
 
 WindowMaterial:Gas,
-  AIR 13MM,                               !- Name
+  AIR 6MM,                                !- Name
   Air,                                    !- Gas Type
-  0.0127;                                 !- Thickness {m}
+  0.0063;                                 !- Thickness {m}
 
 WindowMaterial:Gas,
-  Gap_1_W_0_0038,                         !- Name
+  Gap_1_W_0_0024,                         !- Name
   Air,                                    !- Gas Type
-  0.00379999999999999;                    !- Thickness {m}
+  0.0024;                                 !- Thickness {m}
+
+WindowMaterial:Gas,
+  Gap_1_W_0_0025,                         !- Name
+  Air,                                    !- Gas Type
+  0.0025;                                 !- Thickness {m}
 
 WindowMaterial:Glazing,
   Clear 3mm,                              !- Name
@@ -2675,6 +2610,24 @@ WindowMaterial:Glazing,
   0.84,                                   !- Front Side Infrared Hemispherical Emissivity
   0.84,                                   !- Back Side Infrared Hemispherical Emissivity
   0.9,                                    !- Conductivity {W/m-K}
+  1,                                      !- Dirt Correction Factor for Solar and Visible Transmittance
+  No;                                     !- Solar Diffusing
+
+WindowMaterial:Glazing,
+  Glass_2022F_LayerAvg,                   !- Name
+  SpectralAverage,                        !- Optical Data Type
+  ,                                       !- Window Glass Spectral Data Set Name
+  0.0039,                                 !- Thickness {m}
+  0.355897,                               !- Solar Transmittance at Normal Incidence
+  0.3940945,                              !- Front Side Solar Reflectance at Normal Incidence
+  0.2656452,                              !- Back Side Solar Reflectance at Normal Incidence
+  0.677694,                               !- Visible Transmittance at Normal Incidence
+  0.042734,                               !- Front Side Visible Reflectance at Normal Incidence
+  0.05547,                                !- Back Side Visible Reflectance at Normal Incidence
+  0,                                      !- Infrared Transmittance at Normal Incidence
+  0.046,                                  !- Front Side Infrared Hemispherical Emissivity
+  0.84,                                   !- Back Side Infrared Hemispherical Emissivity
+  0.999999999999999,                      !- Conductivity {W/m-K}
   1,                                      !- Dirt Correction Factor for Solar and Visible Transmittance
   No;                                     !- Solar Diffusing
 
@@ -2715,37 +2668,37 @@ WindowMaterial:Glazing,
   No;                                     !- Solar Diffusing
 
 WindowMaterial:Glazing,
-  REF B CLEAR HI 6MM,                     !- Name
+  Glass_2175_LayerAvg,                    !- Name
   SpectralAverage,                        !- Optical Data Type
   ,                                       !- Window Glass Spectral Data Set Name
-  0.00599999999999998,                    !- Thickness {m}
-  0.24,                                   !- Solar Transmittance at Normal Incidence
-  0.16,                                   !- Front Side Solar Reflectance at Normal Incidence
-  0.32,                                   !- Back Side Solar Reflectance at Normal Incidence
-  0.3,                                    !- Visible Transmittance at Normal Incidence
-  0.16,                                   !- Front Side Visible Reflectance at Normal Incidence
-  0.29,                                   !- Back Side Visible Reflectance at Normal Incidence
+  0.00859999999999999,                    !- Thickness {m}
+  0.167758,                               !- Solar Transmittance at Normal Incidence
+  0.2176064,                              !- Front Side Solar Reflectance at Normal Incidence
+  0.4379779,                              !- Back Side Solar Reflectance at Normal Incidence
+  0.416044,                               !- Visible Transmittance at Normal Incidence
+  0.078729,                               !- Front Side Visible Reflectance at Normal Incidence
+  0.10654,                                !- Back Side Visible Reflectance at Normal Incidence
   0,                                      !- Infrared Transmittance at Normal Incidence
   0.84,                                   !- Front Side Infrared Hemispherical Emissivity
-  0.6,                                    !- Back Side Infrared Hemispherical Emissivity
-  0.9,                                    !- Conductivity {W/m-K}
+  0.84,                                   !- Back Side Infrared Hemispherical Emissivity
+  0.999999999999999,                      !- Conductivity {W/m-K}
   1,                                      !- Dirt Correction Factor for Solar and Visible Transmittance
   No;                                     !- Solar Diffusing
 
 WindowMaterial:Glazing,
-  REF D CLEAR 6MM,                        !- Name
+  REF C CLEAR HI 6MM,                     !- Name
   SpectralAverage,                        !- Optical Data Type
   ,                                       !- Window Glass Spectral Data Set Name
   0.00599999999999998,                    !- Thickness {m}
-  0.429,                                  !- Solar Transmittance at Normal Incidence
-  0.308,                                  !- Front Side Solar Reflectance at Normal Incidence
-  0.379,                                  !- Back Side Solar Reflectance at Normal Incidence
-  0.334,                                  !- Visible Transmittance at Normal Incidence
-  0.453,                                  !- Front Side Visible Reflectance at Normal Incidence
-  0.505,                                  !- Back Side Visible Reflectance at Normal Incidence
+  0.2,                                    !- Solar Transmittance at Normal Incidence
+  0.16,                                   !- Front Side Solar Reflectance at Normal Incidence
+  0.39,                                   !- Back Side Solar Reflectance at Normal Incidence
+  0.22,                                   !- Visible Transmittance at Normal Incidence
+  0.17,                                   !- Front Side Visible Reflectance at Normal Incidence
+  0.35,                                   !- Back Side Visible Reflectance at Normal Incidence
   0,                                      !- Infrared Transmittance at Normal Incidence
   0.84,                                   !- Front Side Infrared Hemispherical Emissivity
-  0.82,                                   !- Back Side Infrared Hemispherical Emissivity
+  0.55,                                   !- Back Side Infrared Hemispherical Emissivity
   0.9,                                    !- Conductivity {W/m-K}
   1,                                      !- Dirt Correction Factor for Solar and Visible Transmittance
   No;                                     !- Solar Diffusing
@@ -2768,21 +2721,21 @@ Construction,
   Typical Carpet Pad;                     !- Layer 2
 
 Construction,
-  Typical Insulated Exterior Mass Floor R-17.54, !- Name
-  Typical Insulation R-14.97,             !- Layer 1
+  Typical Insulated Exterior Mass Floor R-9.35, !- Name
+  Typical Insulation R-6.78,              !- Layer 1
   4 in. Normalweight Concrete Floor,      !- Layer 2
   Typical Carpet Pad;                     !- Layer 3
 
 Construction,
-  Typical Insulated Metal Door R-2.0,     !- Name
+  Typical Insulated Metal Door R-1.43,    !- Name
   F08 Metal surface,                      !- Layer 1
-  Typical Insulation R-1.15;              !- Layer 2
+  Typical Insulation R-0.58;              !- Layer 2
 
 Construction,
-  Typical Insulated Wood Framed Exterior Wall R-19.61, !- Name
+  Typical Insulated Wood Framed Exterior Wall R-11.24, !- Name
   25mm Stucco,                            !- Layer 1
   5/8 in. Gypsum Board,                   !- Layer 2
-  Typical Insulation R-17.43,             !- Layer 3
+  Typical Insulation R-9.06,              !- Layer 3
   5/8 in. Gypsum Board;                   !- Layer 4
 
 Construction,
@@ -2814,7 +2767,7 @@ Construction,
 
 Construction,
   Typical Overhead Door R-2.0,            !- Name
-  Typical Insulation R-1.15 1;            !- Layer 1
+  Typical Insulation R-1.15;              !- Layer 1
 
 Construction,
   Typical Uninsulated Wood Joist Attic Roof, !- Name
@@ -2822,53 +2775,53 @@ Construction,
   5/8 in. Plywood;                        !- Layer 2
 
 Construction,
-  Typical Wood Joist Attic Floor R-47.62, !- Name
+  Typical Wood Joist Attic Floor R-37.04, !- Name
   5/8 in. Gypsum Board,                   !- Layer 1
-  Typical Insulation R-45.98;             !- Layer 2
+  Typical Insulation R-35.4;              !- Layer 2
 
 Construction,
-  Typical Wood Joist Attic Floor R-47.62 1, !- Name
+  Typical Wood Joist Attic Floor R-37.04 1, !- Name
   5/8 in. Gypsum Board,                   !- Layer 1
-  Typical Insulation R-45.98 1;           !- Layer 2
+  Typical Insulation R-35.4 1;            !- Layer 2
 
 Construction,
-  Typical Wood Joist Attic Floor R-47.62 1 Reversed, !- Name
-  Typical Insulation R-45.98 1,           !- Layer 1
+  Typical Wood Joist Attic Floor R-37.04 1 Reversed, !- Name
+  Typical Insulation R-35.4 1,            !- Layer 1
   5/8 in. Gypsum Board;                   !- Layer 2
 
 Construction,
-  U 0.44 SHGC 0.26 Dbl Ref-B-H Clr 6mm/13mm Air, !- Name
-  REF B CLEAR HI 6MM,                     !- Layer 1
-  AIR 13MM,                               !- Layer 2
+  U 0.60 SHGC 0.25 Dbl 2.5mm air,         !- Name
+  Glass_2175_LayerAvg,                    !- Layer 1
+  Gap_1_W_0_0025,                         !- Layer 2
+  Glass_2022F_LayerAvg;                   !- Layer 3
+
+Construction,
+  U 0.65 SHGC 0.25 Dbl Ref-C-H Clr 6mm/6mm Air, !- Name
+  REF C CLEAR HI 6MM,                     !- Layer 1
+  AIR 6MM,                                !- Layer 2
   CLEAR 6MM;                              !- Layer 3
 
 Construction,
-  U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- Name
-  REF D CLEAR 6MM,                        !- Layer 1
-  AIR 13MM,                               !- Layer 2
-  CLEAR 6MM;                              !- Layer 3
-
-Construction,
-  Window_U_0.50_SHGC_0.40_Skylight_Frame_Width_0.430_in, !- Name
+  Window_U_0.65_SHGC_0.35_Skylight_Frame_Width_2.339_in, !- Name
   Glass_2052_LayerAvg,                    !- Layer 1
-  Gap_1_W_0_0038,                         !- Layer 2
+  Gap_1_W_0_0024,                         !- Layer 2
   Glass_2027F_LayerAvg;                   !- Layer 3
 
 Construction:FfactorGroundFloor,
-  Foundation F 09 Perim 0 Area 14966,     !- Name
-  0.899982026513123,                      !- F-Factor {W/m-K}
+  Foundation F 126 Perim 0 Area 14966,    !- Name
+  1.26343630645112,                       !- F-Factor {W/m-K}
   149.6574,                               !- Area {m2}
   0;                                      !- PerimeterExposed {m}
 
 Construction:FfactorGroundFloor,
-  Foundation F 09 Perim 1846 Area 673,    !- Name
-  0.899982026513123,                      !- F-Factor {W/m-K}
+  Foundation F 126 Perim 1846 Area 673,   !- Name
+  1.26343630645112,                       !- F-Factor {W/m-K}
   67.3,                                   !- Area {m2}
   18.46;                                  !- PerimeterExposed {m}
 
 Construction:FfactorGroundFloor,
-  Foundation F 09 Perim 2769 Area 11345,  !- Name
-  0.899982026513123,                      !- F-Factor {W/m-K}
+  Foundation F 126 Perim 2769 Area 11345, !- Name
+  1.26343630645112,                       !- F-Factor {W/m-K}
   113.45,                                 !- Area {m2}
   27.69;                                  !- PerimeterExposed {m}
 
@@ -2890,14 +2843,13 @@ ScheduleTypeLimits,
   Any Number;                             !- Name
 
 ScheduleTypeLimits,
-  OnOff,                                  !- Name
+  Fractional,                             !- Name
   0,                                      !- Lower Limit Value {BasedOnField A3}
   1,                                      !- Upper Limit Value {BasedOnField A3}
-  Discrete,                               !- Numeric Type
-  availability;                           !- Unit Type
+  Continuous;                             !- Numeric Type
 
 ScheduleTypeLimits,
-  OnOff hvac_library,                     !- Name
+  OnOff,                                  !- Name
   0,                                      !- Lower Limit Value {BasedOnField A3}
   1,                                      !- Upper Limit Value {BasedOnField A3}
   Discrete,                               !- Numeric Type
@@ -2917,16 +2869,6 @@ ScheduleTypeLimits,
   Continuous,                             !- Numeric Type
   velocity;                               !- Unit Type
 
-Schedule:Constant,
-  Always On Discrete,                     !- Name
-  Always On Discrete Limits,              !- Schedule Type Limits Name
-  1;                                      !- Hourly Value
-
-Schedule:Constant,
-  Always On Discrete hvac_library,        !- Name
-  OnOff hvac_library,                     !- Schedule Type Limits Name
-  1;                                      !- Hourly Value
-
 Schedule:Day:Interval,
   Air Velocity Schedule Default,          !- Name
   Velocity,                               !- Schedule Type Limits Name
@@ -2942,7 +2884,7 @@ Schedule:Day:Interval,
   1;                                      !- Value Until Time 1
 
 Schedule:Day:Interval,
-  CJE Always ON HVACOperationSchd,        !- Name
+  CJE HVAC Always On,                     !- Name
   OnOff,                                  !- Schedule Type Limits Name
   No,                                     !- Interpolate to Timestep
   24:00,                                  !- Time 1 {hh:mm}
@@ -3465,46 +3407,46 @@ Schedule:Day:Interval,
   0;                                      !- Value Until Time 1
 
 Schedule:Day:Interval,
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Default, !- Name
+  OfficeSmall INFIL_Door_Opening_SCH Default, !- Name
   Fractional,                             !- Schedule Type Limits Name
   No,                                     !- Interpolate to Timestep
   24:00,                                  !- Time 1 {hh:mm}
   0;                                      !- Value Until Time 1
 
 Schedule:Day:Interval,
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Summer Design Day, !- Name
+  OfficeSmall INFIL_Door_Opening_SCH Summer Design Day, !- Name
   Fractional,                             !- Schedule Type Limits Name
   No,                                     !- Interpolate to Timestep
   24:00,                                  !- Time 1 {hh:mm}
   0;                                      !- Value Until Time 1
 
 Schedule:Day:Interval,
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Winter Design Day, !- Name
+  OfficeSmall INFIL_Door_Opening_SCH Winter Design Day, !- Name
   Fractional,                             !- Schedule Type Limits Name
   No,                                     !- Interpolate to Timestep
   24:00,                                  !- Time 1 {hh:mm}
   0;                                      !- Value Until Time 1
 
 Schedule:Day:Interval,
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Wkdy Day, !- Name
+  OfficeSmall INFIL_Door_Opening_SCH Wkdy Day, !- Name
   Fractional,                             !- Schedule Type Limits Name
   No,                                     !- Interpolate to Timestep
   06:00,                                  !- Time 1 {hh:mm}
   0,                                      !- Value Until Time 1
   07:00,                                  !- Time 2 {hh:mm}
-  0.131,                                  !- Value Until Time 2
+  0.144,                                  !- Value Until Time 2
   08:00,                                  !- Time 3 {hh:mm}
   1,                                      !- Value Until Time 3
   12:00,                                  !- Time 4 {hh:mm}
-  0.131,                                  !- Value Until Time 4
+  0.144,                                  !- Value Until Time 4
   13:00,                                  !- Time 5 {hh:mm}
   1,                                      !- Value Until Time 5
   17:00,                                  !- Time 6 {hh:mm}
-  0.131,                                  !- Value Until Time 6
+  0.144,                                  !- Value Until Time 6
   18:00,                                  !- Time 7 {hh:mm}
   1,                                      !- Value Until Time 7
   19:00,                                  !- Time 8 {hh:mm}
-  0.131,                                  !- Value Until Time 8
+  0.144,                                  !- Value Until Time 8
   24:00,                                  !- Time 9 {hh:mm}
   0;                                      !- Value Until Time 9
 
@@ -3558,6 +3500,42 @@ Schedule:Day:Interval,
   0.25,                                   !- Value Until Time 2
   24:00,                                  !- Time 3 {hh:mm}
   1;                                      !- Value Until Time 3
+
+Schedule:Day:Interval,
+  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- Name
+  Fractional,                             !- Schedule Type Limits Name
+  No,                                     !- Interpolate to Timestep
+  24:00,                                  !- Time 1 {hh:mm}
+  0;                                      !- Value Until Time 1
+
+Schedule:Day:Interval,
+  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Name
+  Fractional,                             !- Schedule Type Limits Name
+  No,                                     !- Interpolate to Timestep
+  07:00,                                  !- Time 1 {hh:mm}
+  0,                                      !- Value Until Time 1
+  19:00,                                  !- Time 2 {hh:mm}
+  1,                                      !- Value Until Time 2
+  24:00,                                  !- Time 3 {hh:mm}
+  0;                                      !- Value Until Time 3
+
+Schedule:Day:Interval,
+  OfficeSmall MinOA_MotorizedDamper_Sched Summer Design Day, !- Name
+  Fractional,                             !- Schedule Type Limits Name
+  No,                                     !- Interpolate to Timestep
+  07:00,                                  !- Time 1 {hh:mm}
+  0,                                      !- Value Until Time 1
+  19:00,                                  !- Time 2 {hh:mm}
+  1,                                      !- Value Until Time 2
+  24:00,                                  !- Time 3 {hh:mm}
+  0;                                      !- Value Until Time 3
+
+Schedule:Day:Interval,
+  OfficeSmall MinOA_MotorizedDamper_Sched Winter Design Day, !- Name
+  Fractional,                             !- Schedule Type Limits Name
+  No,                                     !- Interpolate to Timestep
+  24:00,                                  !- Time 1 {hh:mm}
+  0;                                      !- Value Until Time 1
 
 Schedule:Day:Interval,
   Schedule Day 23,                        !- Name
@@ -3636,24 +3614,24 @@ Schedule:Year,
   31;                                     !- End Day 1
 
 Schedule:Week:Daily,
-  CJE Always ON HVACOperationSchd Week Rule - Jan1-Dec31, !- Name
-  CJE Always ON HVACOperationSchd,        !- Sunday Schedule:Day Name
-  CJE Always ON HVACOperationSchd,        !- Monday Schedule:Day Name
-  CJE Always ON HVACOperationSchd,        !- Tuesday Schedule:Day Name
-  CJE Always ON HVACOperationSchd,        !- Wednesday Schedule:Day Name
-  CJE Always ON HVACOperationSchd,        !- Thursday Schedule:Day Name
-  CJE Always ON HVACOperationSchd,        !- Friday Schedule:Day Name
-  CJE Always ON HVACOperationSchd,        !- Saturday Schedule:Day Name
-  CJE Always ON HVACOperationSchd,        !- Holiday Schedule:Day Name
+  CJE HVAC Always On Week Rule - Jan1-Dec31, !- Name
+  CJE HVAC Always On,                     !- Sunday Schedule:Day Name
+  CJE HVAC Always On,                     !- Monday Schedule:Day Name
+  CJE HVAC Always On,                     !- Tuesday Schedule:Day Name
+  CJE HVAC Always On,                     !- Wednesday Schedule:Day Name
+  CJE HVAC Always On,                     !- Thursday Schedule:Day Name
+  CJE HVAC Always On,                     !- Friday Schedule:Day Name
+  CJE HVAC Always On,                     !- Saturday Schedule:Day Name
+  CJE HVAC Always On,                     !- Holiday Schedule:Day Name
   OfficeSmall HVACOperationSchd Summer Design Day 1, !- SummerDesignDay Schedule:Day Name
   OfficeSmall HVACOperationSchd Winter Design Day 1, !- WinterDesignDay Schedule:Day Name
-  CJE Always ON HVACOperationSchd,        !- CustomDay1 Schedule:Day Name
-  CJE Always ON HVACOperationSchd;        !- CustomDay2 Schedule:Day Name
+  CJE HVAC Always On,                     !- CustomDay1 Schedule:Day Name
+  CJE HVAC Always On;                     !- CustomDay2 Schedule:Day Name
 
 Schedule:Year,
-  CJE Always ON HVACOperationSchd,        !- Name
+  CJE HVAC Always On,                     !- Name
   OnOff,                                  !- Schedule Type Limits Name
-  CJE Always ON HVACOperationSchd Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
+  CJE HVAC Always On Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
   1,                                      !- Start Month 1
   1,                                      !- Start Day 1
   12,                                     !- End Month 1
@@ -3972,24 +3950,24 @@ Schedule:Year,
   31;                                     !- End Day 1
 
 Schedule:Week:Daily,
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Week Rule - Jan1-Dec31, !- Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Default, !- Sunday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Wkdy Day, !- Monday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Wkdy Day, !- Tuesday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Wkdy Day, !- Wednesday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Wkdy Day, !- Thursday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Wkdy Day, !- Friday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Default, !- Saturday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Default, !- Holiday Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Summer Design Day, !- SummerDesignDay Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Winter Design Day, !- WinterDesignDay Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Default, !- CustomDay1 Schedule:Day Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Default; !- CustomDay2 Schedule:Day Name
+  OfficeSmall INFIL_Door_Opening_SCH Week Rule - Jan1-Dec31, !- Name
+  OfficeSmall INFIL_Door_Opening_SCH Default, !- Sunday Schedule:Day Name
+  OfficeSmall INFIL_Door_Opening_SCH Wkdy Day, !- Monday Schedule:Day Name
+  OfficeSmall INFIL_Door_Opening_SCH Wkdy Day, !- Tuesday Schedule:Day Name
+  OfficeSmall INFIL_Door_Opening_SCH Wkdy Day, !- Wednesday Schedule:Day Name
+  OfficeSmall INFIL_Door_Opening_SCH Wkdy Day, !- Thursday Schedule:Day Name
+  OfficeSmall INFIL_Door_Opening_SCH Wkdy Day, !- Friday Schedule:Day Name
+  OfficeSmall INFIL_Door_Opening_SCH Default, !- Saturday Schedule:Day Name
+  OfficeSmall INFIL_Door_Opening_SCH Default, !- Holiday Schedule:Day Name
+  OfficeSmall INFIL_Door_Opening_SCH Summer Design Day, !- SummerDesignDay Schedule:Day Name
+  OfficeSmall INFIL_Door_Opening_SCH Winter Design Day, !- WinterDesignDay Schedule:Day Name
+  OfficeSmall INFIL_Door_Opening_SCH Default, !- CustomDay1 Schedule:Day Name
+  OfficeSmall INFIL_Door_Opening_SCH Default; !- CustomDay2 Schedule:Day Name
 
 Schedule:Year,
-  OfficeSmall INFIL_Door_Opening_SCH_2013, !- Name
+  OfficeSmall INFIL_Door_Opening_SCH,     !- Name
   Fractional,                             !- Schedule Type Limits Name
-  OfficeSmall INFIL_Door_Opening_SCH_2013 Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
+  OfficeSmall INFIL_Door_Opening_SCH Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
   1,                                      !- Start Month 1
   1,                                      !- Start Day 1
   12,                                     !- End Month 1
@@ -4014,6 +3992,30 @@ Schedule:Year,
   OfficeSmall INFIL_QUARTER_ON_SCH,       !- Name
   Fractional,                             !- Schedule Type Limits Name
   OfficeSmall INFIL_QUARTER_ON_SCH Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
+  1,                                      !- Start Month 1
+  1,                                      !- Start Day 1
+  12,                                     !- End Month 1
+  31;                                     !- End Day 1
+
+Schedule:Week:Daily,
+  OfficeSmall MinOA_MotorizedDamper_Sched Week Rule - Jan1-Dec31, !- Name
+  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- Sunday Schedule:Day Name
+  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Monday Schedule:Day Name
+  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Tuesday Schedule:Day Name
+  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Wednesday Schedule:Day Name
+  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Thursday Schedule:Day Name
+  OfficeSmall MinOA_MotorizedDamper_Sched SmrDsn|Wkdy Day, !- Friday Schedule:Day Name
+  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- Saturday Schedule:Day Name
+  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- Holiday Schedule:Day Name
+  OfficeSmall MinOA_MotorizedDamper_Sched Summer Design Day, !- SummerDesignDay Schedule:Day Name
+  OfficeSmall MinOA_MotorizedDamper_Sched Winter Design Day, !- WinterDesignDay Schedule:Day Name
+  OfficeSmall MinOA_MotorizedDamper_Sched Default, !- CustomDay1 Schedule:Day Name
+  OfficeSmall MinOA_MotorizedDamper_Sched Default; !- CustomDay2 Schedule:Day Name
+
+Schedule:Year,
+  OfficeSmall MinOA_MotorizedDamper_Sched, !- Name
+  Fractional,                             !- Schedule Type Limits Name
+  OfficeSmall MinOA_MotorizedDamper_Sched Week Rule - Jan1-Dec31, !- Schedule:Week Name 1
   1,                                      !- Start Month 1
   1,                                      !- Start Day 1
   12,                                     !- End Month 1
@@ -4147,7 +4149,7 @@ AvailabilityManagerAssignmentList,
 
 AvailabilityManager:Scheduled,
   Core_ZN ZN PSZ-AC-1 Availability Manager, !- Name
-  CJE Always ON HVACOperationSchd;        !- Schedule Name
+  CJE HVAC Always On;                     !- Schedule Name
 
 BranchList,
   Core_ZN ZN PSZ-AC-1 Supply Branches,    !- Name
@@ -4193,7 +4195,7 @@ Controller:OutdoorAir,
   ,                                       !- Economizer Minimum Limit Dry-Bulb Temperature {C}
   LockoutWithHeating,                     !- Lockout Type
   FixedMinimum,                           !- Minimum Limit Type
-  OfficeSmall MinOA_MotorizedDamper_Sched, !- Minimum Outdoor Air Schedule Name
+  Always On Discrete,                     !- Minimum Outdoor Air Schedule Name
   ,                                       !- Minimum Fraction of Outdoor Air Schedule Name
   ,                                       !- Maximum Fraction of Outdoor Air Schedule Name
   Controller Mechanical Ventilation 5,    !- Mechanical Ventilation Controller Name
@@ -4241,7 +4243,7 @@ AirLoopHVAC:UnitarySystem,
   Load,                                   !- Control Type
   Core_ZN ZN,                             !- Controlling Zone or Thermostat Location
   None,                                   !- Dehumidification Control Type
-  CJE Always ON HVACOperationSchd,        !- Availability Schedule Name
+  CJE HVAC Always On,                     !- Availability Schedule Name
   Core_ZN ZN PSZ-AC-1 Mixed Air Node,     !- Air Inlet Node Name
   Core_ZN ZN PSZ-AC-1 Supply Outlet Node, !- Air Outlet Node Name
   Fan:OnOff,                              !- Supply Fan Object Type
@@ -4249,10 +4251,10 @@ AirLoopHVAC:UnitarySystem,
   BlowThrough,                            !- Fan Placement
   OfficeSmall HVACOperationSchd,          !- Supply Air Fan Operating Mode Schedule Name
   Coil:Heating:DX:SingleSpeed,            !- Heating Coil Object Type
-  Core_ZN ZN HP Htg Coil 26 Clg kBtu/hr 8.0HSPF, !- Heating Coil Name
+  Core_ZN ZN HP Htg Coil 27 Clg kBtu/hr 8.0HSPF, !- Heating Coil Name
   1,                                      !- DX Heating Coil Sizing Ratio
   Coil:Cooling:DX:SingleSpeed,            !- Cooling Coil Object Type
-  Core_ZN ZN PSZ-AC-1 1spd DX HP Clg Coil 26kBtu/hr 14.0SEER, !- Cooling Coil Name
+  Core_ZN ZN PSZ-AC-1 1spd DX HP Clg Coil 27kBtu/hr 14.0SEER, !- Cooling Coil Name
   No,                                     !- Use DOAS DX Cooling Coil
   2,                                      !- Minimum Supply Air Temperature {C}
   SensibleOnlyLoadControl,                !- Latent Load Control
@@ -4317,7 +4319,7 @@ Curve:Cubic,
   1;                                      !- Maximum Value of x {BasedOnField A2}
 
 Coil:Heating:DX:SingleSpeed,
-  Core_ZN ZN HP Htg Coil 26 Clg kBtu/hr 8.0HSPF, !- Name
+  Core_ZN ZN HP Htg Coil 27 Clg kBtu/hr 8.0HSPF, !- Name
   Always On Discrete,                     !- Availability Schedule Name
   Autosize,                               !- Gross Rated Heating Capacity {W}
   3.3592,                                 !- Gross Rated Heating COP {W/W}
@@ -4448,7 +4450,7 @@ Curve:Quadratic,
   1;                                      !- Maximum Value of x {BasedOnField A2}
 
 Coil:Cooling:DX:SingleSpeed,
-  Core_ZN ZN PSZ-AC-1 1spd DX HP Clg Coil 26kBtu/hr 14.0SEER, !- Name
+  Core_ZN ZN PSZ-AC-1 1spd DX HP Clg Coil 27kBtu/hr 14.0SEER, !- Name
   Always On Discrete,                     !- Availability Schedule Name
   Autosize,                               !- Gross Rated Total Cooling Capacity {W}
   Autosize,                               !- Gross Rated Sensible Heat Ratio
@@ -4591,7 +4593,7 @@ AvailabilityManagerAssignmentList,
 
 AvailabilityManager:Scheduled,
   Perimeter_ZN_1 ZN PSZ-AC-2 Availability Manager, !- Name
-  CJE Always ON HVACOperationSchd;        !- Schedule Name
+  CJE HVAC Always On;                     !- Schedule Name
 
 BranchList,
   Perimeter_ZN_1 ZN PSZ-AC-2 Supply Branches, !- Name
@@ -4637,7 +4639,7 @@ Controller:OutdoorAir,
   ,                                       !- Economizer Minimum Limit Dry-Bulb Temperature {C}
   LockoutWithHeating,                     !- Lockout Type
   FixedMinimum,                           !- Minimum Limit Type
-  OfficeSmall MinOA_MotorizedDamper_Sched, !- Minimum Outdoor Air Schedule Name
+  Always On Discrete,                     !- Minimum Outdoor Air Schedule Name
   ,                                       !- Minimum Fraction of Outdoor Air Schedule Name
   ,                                       !- Maximum Fraction of Outdoor Air Schedule Name
   Controller Mechanical Ventilation 1,    !- Mechanical Ventilation Controller Name
@@ -4685,7 +4687,7 @@ AirLoopHVAC:UnitarySystem,
   Load,                                   !- Control Type
   Perimeter_ZN_1 ZN,                      !- Controlling Zone or Thermostat Location
   None,                                   !- Dehumidification Control Type
-  CJE Always ON HVACOperationSchd,        !- Availability Schedule Name
+  CJE HVAC Always On,                     !- Availability Schedule Name
   Perimeter_ZN_1 ZN PSZ-AC-2 Mixed Air Node, !- Air Inlet Node Name
   Perimeter_ZN_1 ZN PSZ-AC-2 Supply Outlet Node, !- Air Outlet Node Name
   Fan:OnOff,                              !- Supply Fan Object Type
@@ -4693,10 +4695,10 @@ AirLoopHVAC:UnitarySystem,
   BlowThrough,                            !- Fan Placement
   OfficeSmall HVACOperationSchd,          !- Supply Air Fan Operating Mode Schedule Name
   Coil:Heating:DX:SingleSpeed,            !- Heating Coil Object Type
-  Perimeter_ZN_1 ZN HP Htg Coil 27 Clg kBtu/hr 8.0HSPF, !- Heating Coil Name
+  Perimeter_ZN_1 ZN HP Htg Coil 29 Clg kBtu/hr 8.0HSPF, !- Heating Coil Name
   1,                                      !- DX Heating Coil Sizing Ratio
   Coil:Cooling:DX:SingleSpeed,            !- Cooling Coil Object Type
-  Perimeter_ZN_1 ZN PSZ-AC-2 1spd DX HP Clg Coil 27kBtu/hr 14.0SEER, !- Cooling Coil Name
+  Perimeter_ZN_1 ZN PSZ-AC-2 1spd DX HP Clg Coil 29kBtu/hr 14.0SEER, !- Cooling Coil Name
   No,                                     !- Use DOAS DX Cooling Coil
   2,                                      !- Minimum Supply Air Temperature {C}
   SensibleOnlyLoadControl,                !- Latent Load Control
@@ -4761,7 +4763,7 @@ Curve:Cubic,
   1;                                      !- Maximum Value of x {BasedOnField A2}
 
 Coil:Heating:DX:SingleSpeed,
-  Perimeter_ZN_1 ZN HP Htg Coil 27 Clg kBtu/hr 8.0HSPF, !- Name
+  Perimeter_ZN_1 ZN HP Htg Coil 29 Clg kBtu/hr 8.0HSPF, !- Name
   Always On Discrete,                     !- Availability Schedule Name
   Autosize,                               !- Gross Rated Heating Capacity {W}
   3.3592,                                 !- Gross Rated Heating COP {W/W}
@@ -4799,7 +4801,7 @@ Curve:Biquadratic,
   46.11111;                               !- Maximum Value of y {BasedOnField A3}
 
 Coil:Cooling:DX:SingleSpeed,
-  Perimeter_ZN_1 ZN PSZ-AC-2 1spd DX HP Clg Coil 27kBtu/hr 14.0SEER, !- Name
+  Perimeter_ZN_1 ZN PSZ-AC-2 1spd DX HP Clg Coil 29kBtu/hr 14.0SEER, !- Name
   Always On Discrete,                     !- Availability Schedule Name
   Autosize,                               !- Gross Rated Total Cooling Capacity {W}
   Autosize,                               !- Gross Rated Sensible Heat Ratio
@@ -4878,7 +4880,7 @@ AirLoopHVAC:ZoneMixer,
 AirLoopHVAC,
   Perimeter_ZN_2 ZN PSZ-AC-3,             !- Name
   ,                                       !- Controller List Name
-  Perimeter_ZN_2 ZN PSZ-AC-3Availability Manager List, !- Availability Manager List Name
+  Air Loop HVAC 1 AvailabilityManagerAssignmentList 1, !- Availability Manager List Name
   AutoSize,                               !- Design Supply Air Flow Rate {m3/s}
   Perimeter_ZN_2 ZN PSZ-AC-3 Supply Branches, !- Branch List Name
   ,                                       !- Connector List Name
@@ -4936,13 +4938,18 @@ Sizing:System,
   OnOff;                                  !- Central Cooling Capacity Control Method
 
 AvailabilityManagerAssignmentList,
-  Perimeter_ZN_2 ZN PSZ-AC-3Availability Manager List, !- Name
-  AvailabilityManager:Scheduled,          !- Availability Manager Object Type 1
-  Perimeter_ZN_2 ZN PSZ-AC-3 Availability Manager; !- Availability Manager Name 1
+  Air Loop HVAC 1 AvailabilityManagerAssignmentList 1, !- Name
+  AvailabilityManager:NightCycle,         !- Availability Manager Object Type 1
+  Availability Manager Night Cycle 2;     !- Availability Manager Name 1
 
-AvailabilityManager:Scheduled,
-  Perimeter_ZN_2 ZN PSZ-AC-3 Availability Manager, !- Name
-  CJE Always ON HVACOperationSchd;        !- Schedule Name
+AvailabilityManager:NightCycle,
+  Availability Manager Night Cycle 2,     !- Name
+  Always On Discrete,                     !- Applicability Schedule Name
+  CJE HVAC Always On,                     !- Fan Schedule Name
+  StayOff,                                !- Control Type
+  1,                                      !- Thermostat Tolerance {deltaC}
+  FixedRunTime,                           !- Cycling Run Time Control Type
+  1800;                                   !- Cycling Run Time {s}
 
 BranchList,
   Perimeter_ZN_2 ZN PSZ-AC-3 Supply Branches, !- Name
@@ -4988,7 +4995,7 @@ Controller:OutdoorAir,
   ,                                       !- Economizer Minimum Limit Dry-Bulb Temperature {C}
   LockoutWithHeating,                     !- Lockout Type
   FixedMinimum,                           !- Minimum Limit Type
-  OfficeSmall MinOA_MotorizedDamper_Sched, !- Minimum Outdoor Air Schedule Name
+  Always On Discrete,                     !- Minimum Outdoor Air Schedule Name
   ,                                       !- Minimum Fraction of Outdoor Air Schedule Name
   ,                                       !- Maximum Fraction of Outdoor Air Schedule Name
   Controller Mechanical Ventilation 2,    !- Mechanical Ventilation Controller Name
@@ -5036,7 +5043,7 @@ AirLoopHVAC:UnitarySystem,
   Load,                                   !- Control Type
   Perimeter_ZN_2 ZN,                      !- Controlling Zone or Thermostat Location
   None,                                   !- Dehumidification Control Type
-  CJE Always ON HVACOperationSchd,        !- Availability Schedule Name
+  CJE HVAC Always On,                     !- Availability Schedule Name
   Perimeter_ZN_2 ZN PSZ-AC-3 Mixed Air Node, !- Air Inlet Node Name
   Perimeter_ZN_2 ZN PSZ-AC-3 Supply Outlet Node, !- Air Outlet Node Name
   Fan:OnOff,                              !- Supply Fan Object Type
@@ -5044,10 +5051,10 @@ AirLoopHVAC:UnitarySystem,
   BlowThrough,                            !- Fan Placement
   OfficeSmall HVACOperationSchd,          !- Supply Air Fan Operating Mode Schedule Name
   Coil:Heating:DX:SingleSpeed,            !- Heating Coil Object Type
-  Perimeter_ZN_2 ZN HP Htg Coil 21 Clg kBtu/hr 8.0HSPF, !- Heating Coil Name
+  Perimeter_ZN_2 ZN HP Htg Coil 24 Clg kBtu/hr 8.0HSPF, !- Heating Coil Name
   1,                                      !- DX Heating Coil Sizing Ratio
   Coil:Cooling:DX:SingleSpeed,            !- Cooling Coil Object Type
-  Perimeter_ZN_2 ZN PSZ-AC-3 1spd DX HP Clg Coil 21kBtu/hr 14.0SEER, !- Cooling Coil Name
+  Perimeter_ZN_2 ZN PSZ-AC-3 1spd DX HP Clg Coil 24kBtu/hr 14.0SEER, !- Cooling Coil Name
   No,                                     !- Use DOAS DX Cooling Coil
   2,                                      !- Minimum Supply Air Temperature {C}
   SensibleOnlyLoadControl,                !- Latent Load Control
@@ -5112,7 +5119,7 @@ Curve:Cubic,
   1;                                      !- Maximum Value of x {BasedOnField A2}
 
 Coil:Heating:DX:SingleSpeed,
-  Perimeter_ZN_2 ZN HP Htg Coil 21 Clg kBtu/hr 8.0HSPF, !- Name
+  Perimeter_ZN_2 ZN HP Htg Coil 24 Clg kBtu/hr 8.0HSPF, !- Name
   Always On Discrete,                     !- Availability Schedule Name
   Autosize,                               !- Gross Rated Heating Capacity {W}
   3.3592,                                 !- Gross Rated Heating COP {W/W}
@@ -5150,7 +5157,7 @@ Curve:Biquadratic,
   46.11111;                               !- Maximum Value of y {BasedOnField A3}
 
 Coil:Cooling:DX:SingleSpeed,
-  Perimeter_ZN_2 ZN PSZ-AC-3 1spd DX HP Clg Coil 21kBtu/hr 14.0SEER, !- Name
+  Perimeter_ZN_2 ZN PSZ-AC-3 1spd DX HP Clg Coil 24kBtu/hr 14.0SEER, !- Name
   Always On Discrete,                     !- Availability Schedule Name
   Autosize,                               !- Gross Rated Total Cooling Capacity {W}
   Autosize,                               !- Gross Rated Sensible Heat Ratio
@@ -5293,7 +5300,7 @@ AvailabilityManagerAssignmentList,
 
 AvailabilityManager:Scheduled,
   Perimeter_ZN_3 ZN PSZ-AC-4 Availability Manager, !- Name
-  CJE Always ON HVACOperationSchd;        !- Schedule Name
+  CJE HVAC Always On;                     !- Schedule Name
 
 BranchList,
   Perimeter_ZN_3 ZN PSZ-AC-4 Supply Branches, !- Name
@@ -5339,7 +5346,7 @@ Controller:OutdoorAir,
   ,                                       !- Economizer Minimum Limit Dry-Bulb Temperature {C}
   LockoutWithHeating,                     !- Lockout Type
   FixedMinimum,                           !- Minimum Limit Type
-  OfficeSmall MinOA_MotorizedDamper_Sched, !- Minimum Outdoor Air Schedule Name
+  Always On Discrete,                     !- Minimum Outdoor Air Schedule Name
   ,                                       !- Minimum Fraction of Outdoor Air Schedule Name
   ,                                       !- Maximum Fraction of Outdoor Air Schedule Name
   Controller Mechanical Ventilation 3,    !- Mechanical Ventilation Controller Name
@@ -5387,7 +5394,7 @@ AirLoopHVAC:UnitarySystem,
   Load,                                   !- Control Type
   Perimeter_ZN_3 ZN,                      !- Controlling Zone or Thermostat Location
   None,                                   !- Dehumidification Control Type
-  CJE Always ON HVACOperationSchd,        !- Availability Schedule Name
+  CJE HVAC Always On,                     !- Availability Schedule Name
   Perimeter_ZN_3 ZN PSZ-AC-4 Mixed Air Node, !- Air Inlet Node Name
   Perimeter_ZN_3 ZN PSZ-AC-4 Supply Outlet Node, !- Air Outlet Node Name
   Fan:OnOff,                              !- Supply Fan Object Type
@@ -5395,10 +5402,10 @@ AirLoopHVAC:UnitarySystem,
   BlowThrough,                            !- Fan Placement
   OfficeSmall HVACOperationSchd,          !- Supply Air Fan Operating Mode Schedule Name
   Coil:Heating:DX:SingleSpeed,            !- Heating Coil Object Type
-  Perimeter_ZN_3 ZN HP Htg Coil 23 Clg kBtu/hr 8.0HSPF, !- Heating Coil Name
+  Perimeter_ZN_3 ZN HP Htg Coil 28 Clg kBtu/hr 8.0HSPF, !- Heating Coil Name
   1,                                      !- DX Heating Coil Sizing Ratio
   Coil:Cooling:DX:SingleSpeed,            !- Cooling Coil Object Type
-  Perimeter_ZN_3 ZN PSZ-AC-4 1spd DX HP Clg Coil 23kBtu/hr 14.0SEER, !- Cooling Coil Name
+  Perimeter_ZN_3 ZN PSZ-AC-4 1spd DX HP Clg Coil 28kBtu/hr 14.0SEER, !- Cooling Coil Name
   No,                                     !- Use DOAS DX Cooling Coil
   2,                                      !- Minimum Supply Air Temperature {C}
   SensibleOnlyLoadControl,                !- Latent Load Control
@@ -5463,7 +5470,7 @@ Curve:Cubic,
   1;                                      !- Maximum Value of x {BasedOnField A2}
 
 Coil:Heating:DX:SingleSpeed,
-  Perimeter_ZN_3 ZN HP Htg Coil 23 Clg kBtu/hr 8.0HSPF, !- Name
+  Perimeter_ZN_3 ZN HP Htg Coil 28 Clg kBtu/hr 8.0HSPF, !- Name
   Always On Discrete,                     !- Availability Schedule Name
   Autosize,                               !- Gross Rated Heating Capacity {W}
   3.3592,                                 !- Gross Rated Heating COP {W/W}
@@ -5501,7 +5508,7 @@ Curve:Biquadratic,
   46.11111;                               !- Maximum Value of y {BasedOnField A3}
 
 Coil:Cooling:DX:SingleSpeed,
-  Perimeter_ZN_3 ZN PSZ-AC-4 1spd DX HP Clg Coil 23kBtu/hr 14.0SEER, !- Name
+  Perimeter_ZN_3 ZN PSZ-AC-4 1spd DX HP Clg Coil 28kBtu/hr 14.0SEER, !- Name
   Always On Discrete,                     !- Availability Schedule Name
   Autosize,                               !- Gross Rated Total Cooling Capacity {W}
   Autosize,                               !- Gross Rated Sensible Heat Ratio
@@ -5580,7 +5587,7 @@ AirLoopHVAC:ZoneMixer,
 AirLoopHVAC,
   Perimeter_ZN_4 ZN PSZ-AC-5,             !- Name
   ,                                       !- Controller List Name
-  Air Loop HVAC 1 AvailabilityManagerAssignmentList 3, !- Availability Manager List Name
+  Perimeter_ZN_4 ZN PSZ-AC-5Availability Manager List, !- Availability Manager List Name
   AutoSize,                               !- Design Supply Air Flow Rate {m3/s}
   Perimeter_ZN_4 ZN PSZ-AC-5 Supply Branches, !- Branch List Name
   ,                                       !- Connector List Name
@@ -5638,18 +5645,13 @@ Sizing:System,
   OnOff;                                  !- Central Cooling Capacity Control Method
 
 AvailabilityManagerAssignmentList,
-  Air Loop HVAC 1 AvailabilityManagerAssignmentList 3, !- Name
-  AvailabilityManager:NightCycle,         !- Availability Manager Object Type 1
-  Availability Manager Night Cycle 4;     !- Availability Manager Name 1
+  Perimeter_ZN_4 ZN PSZ-AC-5Availability Manager List, !- Name
+  AvailabilityManager:Scheduled,          !- Availability Manager Object Type 1
+  Perimeter_ZN_4 ZN PSZ-AC-5 Availability Manager; !- Availability Manager Name 1
 
-AvailabilityManager:NightCycle,
-  Availability Manager Night Cycle 4,     !- Name
-  Always On Discrete,                     !- Applicability Schedule Name
-  OfficeSmall HVACOperationSchd,          !- Fan Schedule Name
-  CycleOnAny,                             !- Control Type
-  1,                                      !- Thermostat Tolerance {deltaC}
-  FixedRunTime,                           !- Cycling Run Time Control Type
-  1800;                                   !- Cycling Run Time {s}
+AvailabilityManager:Scheduled,
+  Perimeter_ZN_4 ZN PSZ-AC-5 Availability Manager, !- Name
+  CJE HVAC Always On;                     !- Schedule Name
 
 BranchList,
   Perimeter_ZN_4 ZN PSZ-AC-5 Supply Branches, !- Name
@@ -5695,7 +5697,7 @@ Controller:OutdoorAir,
   ,                                       !- Economizer Minimum Limit Dry-Bulb Temperature {C}
   LockoutWithHeating,                     !- Lockout Type
   FixedMinimum,                           !- Minimum Limit Type
-  OfficeSmall MinOA_MotorizedDamper_Sched, !- Minimum Outdoor Air Schedule Name
+  Always On Discrete,                     !- Minimum Outdoor Air Schedule Name
   ,                                       !- Minimum Fraction of Outdoor Air Schedule Name
   ,                                       !- Maximum Fraction of Outdoor Air Schedule Name
   Controller Mechanical Ventilation 4,    !- Mechanical Ventilation Controller Name
@@ -5743,7 +5745,7 @@ AirLoopHVAC:UnitarySystem,
   Load,                                   !- Control Type
   Perimeter_ZN_4 ZN,                      !- Controlling Zone or Thermostat Location
   None,                                   !- Dehumidification Control Type
-  OfficeSmall HVACOperationSchd,          !- Availability Schedule Name
+  CJE HVAC Always On,                     !- Availability Schedule Name
   Perimeter_ZN_4 ZN PSZ-AC-5 Mixed Air Node, !- Air Inlet Node Name
   Perimeter_ZN_4 ZN PSZ-AC-5 Supply Outlet Node, !- Air Outlet Node Name
   Fan:OnOff,                              !- Supply Fan Object Type
@@ -5751,10 +5753,10 @@ AirLoopHVAC:UnitarySystem,
   BlowThrough,                            !- Fan Placement
   OfficeSmall HVACOperationSchd,          !- Supply Air Fan Operating Mode Schedule Name
   Coil:Heating:DX:SingleSpeed,            !- Heating Coil Object Type
-  Perimeter_ZN_4 ZN HP Htg Coil 24 Clg kBtu/hr 8.0HSPF, !- Heating Coil Name
+  Perimeter_ZN_4 ZN HP Htg Coil 26 Clg kBtu/hr 8.0HSPF, !- Heating Coil Name
   1,                                      !- DX Heating Coil Sizing Ratio
   Coil:Cooling:DX:SingleSpeed,            !- Cooling Coil Object Type
-  Perimeter_ZN_4 ZN PSZ-AC-5 1spd DX HP Clg Coil 24kBtu/hr 14.0SEER, !- Cooling Coil Name
+  Perimeter_ZN_4 ZN PSZ-AC-5 1spd DX HP Clg Coil 26kBtu/hr 14.0SEER, !- Cooling Coil Name
   No,                                     !- Use DOAS DX Cooling Coil
   2,                                      !- Minimum Supply Air Temperature {C}
   SensibleOnlyLoadControl,                !- Latent Load Control
@@ -5819,7 +5821,7 @@ Curve:Cubic,
   1;                                      !- Maximum Value of x {BasedOnField A2}
 
 Coil:Heating:DX:SingleSpeed,
-  Perimeter_ZN_4 ZN HP Htg Coil 24 Clg kBtu/hr 8.0HSPF, !- Name
+  Perimeter_ZN_4 ZN HP Htg Coil 26 Clg kBtu/hr 8.0HSPF, !- Name
   Always On Discrete,                     !- Availability Schedule Name
   Autosize,                               !- Gross Rated Heating Capacity {W}
   3.3592,                                 !- Gross Rated Heating COP {W/W}
@@ -5857,7 +5859,7 @@ Curve:Biquadratic,
   46.11111;                               !- Maximum Value of y {BasedOnField A3}
 
 Coil:Cooling:DX:SingleSpeed,
-  Perimeter_ZN_4 ZN PSZ-AC-5 1spd DX HP Clg Coil 24kBtu/hr 14.0SEER, !- Name
+  Perimeter_ZN_4 ZN PSZ-AC-5 1spd DX HP Clg Coil 26kBtu/hr 14.0SEER, !- Name
   Always On Discrete,                     !- Availability Schedule Name
   Autosize,                               !- Gross Rated Total Cooling Capacity {W}
   Autosize,                               !- Gross Rated Sensible Heat Ratio
@@ -6272,79 +6274,24 @@ Site:Location,
   131;                                    !- Elevation {m}
 
 Site:GroundTemperature:FCfactorMethod,
-  9.7,                                    !- January Ground Temperature {C}
-  6,                                      !- February Ground Temperature {C}
-  -2.2,                                   !- March Ground Temperature {C}
-  -3.4,                                   !- April Ground Temperature {C}
-  -4.2,                                   !- May Ground Temperature {C}
-  2.7,                                    !- June Ground Temperature {C}
-  7.5,                                    !- July Ground Temperature {C}
-  13.7,                                   !- August Ground Temperature {C}
-  18.6,                                   !- September Ground Temperature {C}
-  22,                                     !- October Ground Temperature {C}
-  20.7,                                   !- November Ground Temperature {C}
-  16.5;                                   !- December Ground Temperature {C}
+  24.2,                                   !- January Ground Temperature {C}
+  18.9,                                   !- February Ground Temperature {C}
+  15.7,                                   !- March Ground Temperature {C}
+  13.6,                                   !- April Ground Temperature {C}
+  15.5,                                   !- May Ground Temperature {C}
+  17.1,                                   !- June Ground Temperature {C}
+  21.2,                                   !- July Ground Temperature {C}
+  26.9,                                   !- August Ground Temperature {C}
+  27.6,                                   !- September Ground Temperature {C}
+  27.9,                                   !- October Ground Temperature {C}
+  27.4,                                   !- November Ground Temperature {C}
+  26.2;                                   !- December Ground Temperature {C}
 
 Site:WaterMainsTemperature,
   Correlation,                            !- Calculation Method
   ,                                       !- Temperature Schedule Name
-  8.96666666666667,                       !- Annual Average Outdoor Air Temperature {C}
-  26.2;                                   !- Maximum Difference In Monthly Average Outdoor Air Temperatures {deltaC}
-
-SizingPeriod:DesignDay,
-  Buffalo.Niagara.Intl.AP_NY_USA Ann Clg .4% Condns DB=>MWB, !- Name
-  7,                                      !- Month
-  21,                                     !- Day of Month
-  SummerDesignDay,                        !- Day Type
-  30.3,                                   !- Maximum Dry-Bulb Temperature {C}
-  9.3,                                    !- Daily Dry-Bulb Temperature Range {deltaC}
-  DefaultMultipliers,                     !- Dry-Bulb Temperature Range Modifier Type
-  ,                                       !- Dry-Bulb Temperature Range Modifier Day Schedule Name
-  Wetbulb,                                !- Humidity Condition Type
-  21.8,                                   !- Wetbulb or DewPoint at Maximum Dry-Bulb {C}
-  ,                                       !- Humidity Condition Day Schedule Name
-  ,                                       !- Humidity Ratio at Maximum Dry-Bulb {kgWater/kgDryAir}
-  ,                                       !- Enthalpy at Maximum Dry-Bulb {J/kg}
-  ,                                       !- Daily Wet-Bulb Temperature Range {deltaC}
-  98769,                                  !- Barometric Pressure {Pa}
-  5.7,                                    !- Wind Speed {m/s}
-  240,                                    !- Wind Direction {deg}
-  No,                                     !- Rain Indicator
-  No,                                     !- Snow Indicator
-  No,                                     !- Daylight Saving Time Indicator
-  ASHRAETau,                              !- Solar Model Indicator
-  ,                                       !- Beam Solar Day Schedule Name
-  ,                                       !- Diffuse Solar Day Schedule Name
-  0.462,                                  !- ASHRAE Clear Sky Optical Depth for Beam Irradiance (taub) {dimensionless}
-  2.001;                                  !- ASHRAE Clear Sky Optical Depth for Diffuse Irradiance (taud) {dimensionless}
-
-SizingPeriod:DesignDay,
-  Buffalo.Niagara.Intl.AP_NY_USA Ann Htg 99.6% Condns DB, !- Name
-  1,                                      !- Month
-  21,                                     !- Day of Month
-  WinterDesignDay,                        !- Day Type
-  -16.3,                                  !- Maximum Dry-Bulb Temperature {C}
-  0,                                      !- Daily Dry-Bulb Temperature Range {deltaC}
-  DefaultMultipliers,                     !- Dry-Bulb Temperature Range Modifier Type
-  ,                                       !- Dry-Bulb Temperature Range Modifier Day Schedule Name
-  Wetbulb,                                !- Humidity Condition Type
-  -16.3,                                  !- Wetbulb or DewPoint at Maximum Dry-Bulb {C}
-  ,                                       !- Humidity Condition Day Schedule Name
-  ,                                       !- Humidity Ratio at Maximum Dry-Bulb {kgWater/kgDryAir}
-  ,                                       !- Enthalpy at Maximum Dry-Bulb {J/kg}
-  ,                                       !- Daily Wet-Bulb Temperature Range {deltaC}
-  98769,                                  !- Barometric Pressure {Pa}
-  5.1,                                    !- Wind Speed {m/s}
-  270,                                    !- Wind Direction {deg}
-  No,                                     !- Rain Indicator
-  No,                                     !- Snow Indicator
-  No,                                     !- Daylight Saving Time Indicator
-  ASHRAEClearSky,                         !- Solar Model Indicator
-  ,                                       !- Beam Solar Day Schedule Name
-  ,                                       !- Diffuse Solar Day Schedule Name
-  ,                                       !- ASHRAE Clear Sky Optical Depth for Beam Irradiance (taub) {dimensionless}
-  ,                                       !- ASHRAE Clear Sky Optical Depth for Diffuse Irradiance (taud) {dimensionless}
-  0;                                      !- Sky Clearness
+  21.85,                                  !- Annual Average Outdoor Air Temperature {C}
+  14.3;                                   !- Maximum Difference In Monthly Average Outdoor Air Temperatures {deltaC}
 
 SizingPeriod:DesignDay,
   Dallas Fort Worth Intl Ap Ann Clg .4% Condns DB=>MWB, !- Name
@@ -6579,8 +6526,7 @@ People,
   ,                                       !- Clothing Insulation Calculation Method
   ,                                       !- Clothing Insulation Calculation Method Schedule Name
   Clothing Schedule,                      !- Clothing Insulation Schedule Name
-  Air Velocity Schedule,                  !- Air Velocity Schedule Name
-  Fanger;                                 !- Thermal Comfort Model Type 1
+  Air Velocity Schedule;                  !- Air Velocity Schedule Name
 
 ElectricEquipment,
   Office WholeBuilding - Sm Office Elec Equip, !- Name
@@ -6609,63 +6555,6 @@ Exterior:Lights,
   AstronomicalClock,                      !- Control Option
   General;                                !- End-Use Subcategory
 
-ElectricLoadCenter:Inverter:Simple,
-  Electric Load Center Inverter Simple 1, !- Name
-  ,                                       !- Availability Schedule Name
-  ,                                       !- Zone Name
-  ,                                       !- Radiative Fraction
-  0.98;                                   !- Inverter Efficiency
-
-ElectricLoadCenter:Distribution,
-  Electric Load Center Distribution 1,    !- Name
-  ,                                       !- Generator List Name
-  ,                                       !- Generator Operation Scheme Type
-  ,                                       !- Generator Demand Limit Scheme Purchased Electric Demand Limit {W}
-  ,                                       !- Generator Track Schedule Name Scheme Schedule Name
-  ,                                       !- Generator Track Meter Scheme Meter Name
-  DirectCurrentWithInverter,              !- Electrical Buss Type
-  Electric Load Center Inverter Simple 1; !- Inverter Name
-
-PhotovoltaicPerformance:Simple,
-  Photovoltaic Performance Simple 1,      !- Name
-  1,                                      !- Fraction of Surface Area with Active Solar Cells {dimensionless}
-  Fixed,                                  !- Conversion Efficiency Input Mode
-  0.2;                                    !- Value for Cell Efficiency if Fixed
-
-Generator:Photovoltaic,
-  Generator Photovoltaic 1,               !- Name
-  Shading Surface 1,                      !- Surface Name
-  PhotovoltaicPerformance:Simple,         !- Photovoltaic Performance Object Type
-  Photovoltaic Performance Simple 1,      !- Module Performance Name
-  Decoupled,                              !- Heat Transfer Integration Mode
-  1,                                      !- Number of Series Strings in Parallel {dimensionless}
-  1;                                      !- Number of Modules in Series {dimensionless}
-
-ElectricLoadCenter:Inverter:Simple,
-  Electric Load Center Inverter Simple 2, !- Name
-  ,                                       !- Availability Schedule Name
-  ,                                       !- Zone Name
-  ,                                       !- Radiative Fraction
-  0.98;                                   !- Inverter Efficiency
-
-ElectricLoadCenter:Distribution,
-  Electric Load Center Distribution 2,    !- Name
-  Electric Load Center Distribution 2 Generators, !- Generator List Name
-  Baseload,                               !- Generator Operation Scheme Type
-  ,                                       !- Generator Demand Limit Scheme Purchased Electric Demand Limit {W}
-  ,                                       !- Generator Track Schedule Name Scheme Schedule Name
-  ,                                       !- Generator Track Meter Scheme Meter Name
-  DirectCurrentWithInverter,              !- Electrical Buss Type
-  Electric Load Center Inverter Simple 2; !- Inverter Name
-
-ElectricLoadCenter:Generators,
-  Electric Load Center Distribution 2 Generators, !- Name
-  Generator Photovoltaic 1,               !- Generator Name 1
-  Generator:Photovoltaic,                 !- Generator Object Type 1
-  ,                                       !- Generator Rated Electric Power Output 1 {W}
-  ,                                       !- Generator Availability Schedule Name 1
-  ;                                       !- Generator Rated Thermal to Electrical Power Ratio 1
-
 Output:Meter:MeterFileOnly,
   Electricity:Facility,                   !- Key Name
   Hourly;                                 !- Reporting Frequency
@@ -6680,32 +6569,7 @@ Output:Meter:MeterFileOnly,
 
 Output:Variable,
   *,                                      !- Key Value
-  Schedule Value,                         !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Zone Outdoor Air Wind Speed,            !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Zone Ventilation Fan Electricity Energy, !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Zone Thermal Comfort Fanger Model PMV,  !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Zone Thermal Comfort Fanger Model PPD,  !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Zone Mechanical Ventilation Mass Flow Rate, !- Variable Name
+  Zone Thermostat Cooling Setpoint Temperature, !- Variable Name
   Timestep;                               !- Reporting Frequency
 
 Output:Variable,
@@ -6715,117 +6579,7 @@ Output:Variable,
 
 Output:Variable,
   *,                                      !- Key Value
-  Zone Mean Air Dewpoint Temperature,     !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Zone Ventilation Mass Flow Rate,        !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Electric Load Center Produced Electricity Rate, !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Electric Load Center Produced Electricity Energy, !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Unitary System Electricity Energy,      !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Generator Produced DC Electricity Energy, !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Zone Air Temperature,                   !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Zone Air Relative Humidity,             !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Zone Air Humidity Ratio,                !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Zone Air CO2 Concentration,             !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Zone Air Generic Air Contaminant Concentration, !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Fan Electricity Energy,                 !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Fan Electricity Rate,                   !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Air System Outdoor Air Economizer Status, !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Heating Coil Electricity Energy,        !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Unitary System Electricity Rate,        !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Heating Coil Electricity Rate,          !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Generator Produced DC Electricity Rate, !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Heating Coil NaturalGas Rate,           !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Heating Coil NaturalGas Energy,         !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Zone People Occupant Count,             !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Zone Ventilation Air Change Rate,       !- Variable Name
-  Timestep;                               !- Reporting Frequency
-
-Output:Variable,
-  *,                                      !- Key Value
-  Zone Thermostat Cooling Setpoint Temperature, !- Variable Name
+  Zone Outdoor Air Drybulb Temperature,   !- Variable Name
   Timestep;                               !- Reporting Frequency
 
 Output:Variable,
@@ -6835,12 +6589,37 @@ Output:Variable,
 
 Output:Variable,
   *,                                      !- Key Value
-  Zone Outdoor Air Drybulb Temperature,   !- Variable Name
+  Fan Electricity Rate,                   !- Variable Name
   Timestep;                               !- Reporting Frequency
 
 Output:Variable,
   *,                                      !- Key Value
-  Zone Outdoor Air Wetbulb Temperature,   !- Variable Name
+  Fan Electricity Energy,                 !- Variable Name
+  Timestep;                               !- Reporting Frequency
+
+Output:Variable,
+  *,                                      !- Key Value
+  Schedule Value,                         !- Variable Name
+  Timestep;                               !- Reporting Frequency
+
+Output:Variable,
+  *,                                      !- Key Value
+  Unitary System Electricity Energy,      !- Variable Name
+  Timestep;                               !- Reporting Frequency
+
+Output:Variable,
+  *,                                      !- Key Value
+  Unitary System Electricity Rate,        !- Variable Name
+  Timestep;                               !- Reporting Frequency
+
+Output:Variable,
+  *,                                      !- Key Value
+  Zone Air Relative Humidity,             !- Variable Name
+  Timestep;                               !- Reporting Frequency
+
+Output:Variable,
+  *,                                      !- Key Value
+  Zone Air Temperature,                   !- Variable Name
   Timestep;                               !- Reporting Frequency
 
 OutputControl:Table:Style,
@@ -6858,6 +6637,277 @@ LifeCycleCost:NonrecurringCost,
   Construction,                           !- Category
   0,                                      !- Cost
   ServicePeriod;                          !- Start of Costs
+
+Output:Variable,
+  ,                                       !- Key Value
+  Site Outdoor Air Drybulb Temperature,   !- Variable Name
+  monthly;                                !- Reporting Frequency
+
+Output:Variable,
+  ,                                       !- Key Value
+  Zone Air Temperature,                   !- Variable Name
+  hourly;                                 !- Reporting Frequency
+
+Output:Variable,
+  ,                                       !- Key Value
+  Zone Air Relative Humidity,             !- Variable Name
+  hourly;                                 !- Reporting Frequency
+
+Output:Table:Monthly,
+  Building Energy Performance - FuelOilNo1, !- Name
+  2,                                      !- Digits After Decimal
+  Heating:FuelOilNo1,                     !- Variable or Meter Name 1
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
+  Cooling:FuelOilNo1,                     !- Variable or Meter Name 2
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
+  Interior Lighting:FuelOilNo1,           !- Variable or Meter Name 3
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
+  Exterior Lighting:FuelOilNo1,           !- Variable or Meter Name 4
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
+  Interior Equipment:FuelOilNo1,          !- Variable or Meter Name 5
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
+  Exterior Equipment:FuelOilNo1,          !- Variable or Meter Name 6
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
+  Fans:FuelOilNo1,                        !- Variable or Meter Name 7
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
+  Pumps:FuelOilNo1,                       !- Variable or Meter Name 8
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
+  Heat Rejection:FuelOilNo1,              !- Variable or Meter Name 9
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
+  Humidification:FuelOilNo1,              !- Variable or Meter Name 10
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
+  Heat Recovery:FuelOilNo1,               !- Variable or Meter Name 11
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
+  Water Systems:FuelOilNo1,               !- Variable or Meter Name 12
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
+  Refrigeration:FuelOilNo1,               !- Variable or Meter Name 13
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
+  Generators:FuelOilNo1,                  !- Variable or Meter Name 14
+  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
+
+Output:Table:Monthly,
+  Building Energy Performance - FuelOilNo2, !- Name
+  2,                                      !- Digits After Decimal
+  Heating:FuelOilNo2,                     !- Variable or Meter Name 1
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
+  Cooling:FuelOilNo2,                     !- Variable or Meter Name 2
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
+  Interior Lighting:FuelOilNo2,           !- Variable or Meter Name 3
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
+  Exterior Lighting:FuelOilNo2,           !- Variable or Meter Name 4
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
+  Interior Equipment:FuelOilNo2,          !- Variable or Meter Name 5
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
+  Exterior Equipment:FuelOilNo2,          !- Variable or Meter Name 6
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
+  Fans:FuelOilNo2,                        !- Variable or Meter Name 7
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
+  Pumps:FuelOilNo2,                       !- Variable or Meter Name 8
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
+  Heat Rejection:FuelOilNo2,              !- Variable or Meter Name 9
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
+  Humidification:FuelOilNo2,              !- Variable or Meter Name 10
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
+  Heat Recovery:FuelOilNo2,               !- Variable or Meter Name 11
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
+  Water Systems:FuelOilNo2,               !- Variable or Meter Name 12
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
+  Refrigeration:FuelOilNo2,               !- Variable or Meter Name 13
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
+  Generators:FuelOilNo2,                  !- Variable or Meter Name 14
+  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
+
+Output:Table:Monthly,
+  Building Energy Performance - PropaneGas, !- Name
+  2,                                      !- Digits After Decimal
+  Heating:PropaneGas,                     !- Variable or Meter Name 1
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
+  Cooling:PropaneGas,                     !- Variable or Meter Name 2
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
+  Interior Lighting:PropaneGas,           !- Variable or Meter Name 3
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
+  Exterior Lighting:PropaneGas,           !- Variable or Meter Name 4
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
+  Interior Equipment:PropaneGas,          !- Variable or Meter Name 5
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
+  Exterior Equipment:PropaneGas,          !- Variable or Meter Name 6
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
+  Fans:PropaneGas,                        !- Variable or Meter Name 7
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
+  Pumps:PropaneGas,                       !- Variable or Meter Name 8
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
+  Heat Rejection:PropaneGas,              !- Variable or Meter Name 9
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
+  Humidification:PropaneGas,              !- Variable or Meter Name 10
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
+  Heat Recovery:PropaneGas,               !- Variable or Meter Name 11
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
+  Water Systems:PropaneGas,               !- Variable or Meter Name 12
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
+  Refrigeration:PropaneGas,               !- Variable or Meter Name 13
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
+  Generators:PropaneGas,                  !- Variable or Meter Name 14
+  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
+
+Output:Table:Monthly,
+  Building Energy Performance - Coal,     !- Name
+  2,                                      !- Digits After Decimal
+  Heating:Coal,                           !- Variable or Meter Name 1
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
+  Cooling:Coal,                           !- Variable or Meter Name 2
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
+  Interior Lighting:Coal,                 !- Variable or Meter Name 3
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
+  Exterior Lighting:Coal,                 !- Variable or Meter Name 4
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
+  Interior Equipment:Coal,                !- Variable or Meter Name 5
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
+  Exterior Equipment:Coal,                !- Variable or Meter Name 6
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
+  Fans:Coal,                              !- Variable or Meter Name 7
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
+  Pumps:Coal,                             !- Variable or Meter Name 8
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
+  Heat Rejection:Coal,                    !- Variable or Meter Name 9
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
+  Humidification:Coal,                    !- Variable or Meter Name 10
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
+  Heat Recovery:Coal,                     !- Variable or Meter Name 11
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
+  Water Systems:Coal,                     !- Variable or Meter Name 12
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
+  Refrigeration:Coal,                     !- Variable or Meter Name 13
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
+  Generators:Coal,                        !- Variable or Meter Name 14
+  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
+
+Output:Table:Monthly,
+  Building Energy Performance - Diesel,   !- Name
+  2,                                      !- Digits After Decimal
+  Heating:Diesel,                         !- Variable or Meter Name 1
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
+  Cooling:Diesel,                         !- Variable or Meter Name 2
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
+  Interior Lighting:Diesel,               !- Variable or Meter Name 3
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
+  Exterior Lighting:Diesel,               !- Variable or Meter Name 4
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
+  Interior Equipment:Diesel,              !- Variable or Meter Name 5
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
+  Exterior Equipment:Diesel,              !- Variable or Meter Name 6
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
+  Fans:Diesel,                            !- Variable or Meter Name 7
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
+  Pumps:Diesel,                           !- Variable or Meter Name 8
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
+  Heat Rejection:Diesel,                  !- Variable or Meter Name 9
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
+  Humidification:Diesel,                  !- Variable or Meter Name 10
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
+  Heat Recovery:Diesel,                   !- Variable or Meter Name 11
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
+  Water Systems:Diesel,                   !- Variable or Meter Name 12
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
+  Refrigeration:Diesel,                   !- Variable or Meter Name 13
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
+  Generators:Diesel,                      !- Variable or Meter Name 14
+  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
+
+Output:Table:Monthly,
+  Building Energy Performance - Gasoline, !- Name
+  2,                                      !- Digits After Decimal
+  Heating:Gasoline,                       !- Variable or Meter Name 1
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
+  Cooling:Gasoline,                       !- Variable or Meter Name 2
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
+  Interior Lighting:Gasoline,             !- Variable or Meter Name 3
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
+  Exterior Lighting:Gasoline,             !- Variable or Meter Name 4
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
+  Interior Equipment:Gasoline,            !- Variable or Meter Name 5
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
+  Exterior Equipment:Gasoline,            !- Variable or Meter Name 6
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
+  Fans:Gasoline,                          !- Variable or Meter Name 7
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
+  Pumps:Gasoline,                         !- Variable or Meter Name 8
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
+  Heat Rejection:Gasoline,                !- Variable or Meter Name 9
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
+  Humidification:Gasoline,                !- Variable or Meter Name 10
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
+  Heat Recovery:Gasoline,                 !- Variable or Meter Name 11
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
+  Water Systems:Gasoline,                 !- Variable or Meter Name 12
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
+  Refrigeration:Gasoline,                 !- Variable or Meter Name 13
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
+  Generators:Gasoline,                    !- Variable or Meter Name 14
+  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
+
+Output:Table:Monthly,
+  Building Energy Performance - OtherFuel1, !- Name
+  2,                                      !- Digits After Decimal
+  Heating:OtherFuel1,                     !- Variable or Meter Name 1
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
+  Cooling:OtherFuel1,                     !- Variable or Meter Name 2
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
+  Interior Lighting:OtherFuel1,           !- Variable or Meter Name 3
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
+  Exterior Lighting:OtherFuel1,           !- Variable or Meter Name 4
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
+  Interior Equipment:OtherFuel1,          !- Variable or Meter Name 5
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
+  Exterior Equipment:OtherFuel1,          !- Variable or Meter Name 6
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
+  Fans:OtherFuel1,                        !- Variable or Meter Name 7
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
+  Pumps:OtherFuel1,                       !- Variable or Meter Name 8
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
+  Heat Rejection:OtherFuel1,              !- Variable or Meter Name 9
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
+  Humidification:OtherFuel1,              !- Variable or Meter Name 10
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
+  Heat Recovery:OtherFuel1,               !- Variable or Meter Name 11
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
+  Water Systems:OtherFuel1,               !- Variable or Meter Name 12
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
+  Refrigeration:OtherFuel1,               !- Variable or Meter Name 13
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
+  Generators:OtherFuel1,                  !- Variable or Meter Name 14
+  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
+
+Output:Table:Monthly,
+  Building Energy Performance - OtherFuel2, !- Name
+  2,                                      !- Digits After Decimal
+  Heating:OtherFuel2,                     !- Variable or Meter Name 1
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 1
+  Cooling:OtherFuel2,                     !- Variable or Meter Name 2
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 2
+  Interior Lighting:OtherFuel2,           !- Variable or Meter Name 3
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 3
+  Exterior Lighting:OtherFuel2,           !- Variable or Meter Name 4
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 4
+  Interior Equipment:OtherFuel2,          !- Variable or Meter Name 5
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 5
+  Exterior Equipment:OtherFuel2,          !- Variable or Meter Name 6
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 6
+  Fans:OtherFuel2,                        !- Variable or Meter Name 7
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 7
+  Pumps:OtherFuel2,                       !- Variable or Meter Name 8
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 8
+  Heat Rejection:OtherFuel2,              !- Variable or Meter Name 9
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 9
+  Humidification:OtherFuel2,              !- Variable or Meter Name 10
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 10
+  Heat Recovery:OtherFuel2,               !- Variable or Meter Name 11
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 11
+  Water Systems:OtherFuel2,               !- Variable or Meter Name 12
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 12
+  Refrigeration:OtherFuel2,               !- Variable or Meter Name 13
+  SumOrAverage,                           !- Aggregation Type for Variable or Meter 13
+  Generators:OtherFuel2,                  !- Variable or Meter Name 14
+  SumOrAverage;                           !- Aggregation Type for Variable or Meter 14
 
 Output:Table:Monthly,
   Building Energy Performance - Electricity, !- Name

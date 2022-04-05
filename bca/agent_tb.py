@@ -38,16 +38,16 @@ hvac_electricity_energy = {
 }
 
 
-
 class Agent:
     @staticmethod
     def actuation_function_dim(actuation_function_id):
         """Returns the number of action dimensions linked to the particular actuation function"""
         action_dim_directory = {
-            1: 3,  # act_heat_cool_off_1,
-            2: 0,  # act_strict_setpoints_2,
-            3: 3,  # act_step_strict_setpoints_3,
-            4: 0,  # act_default_adjustments_4
+            1: 3,  # act_heat_cool_off_1
+            2: 6,  # act_strict_setpoints_2
+            3: 3,  # act_step_strict_setpoints_3
+            4: 6,  # act_default_adjustments_4
+            5: 7,  # act_cool_only_5
         }
 
         return action_dim_directory[actuation_function_id]
@@ -437,6 +437,10 @@ class Agent:
             """
             Put actuation function here
             """
+            for zone_i, action in enumerate(self.action):
+                pass
+                # self.actuation_dict[f'zn{zone_i}_heating_sp'] = heating_sp
+                # self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_sp
 
         # Offline Learning
         else:
@@ -463,11 +467,54 @@ class Agent:
             1: self.act_heat_cool_off_1,
             2: self.act_strict_setpoints_2,
             3: self.act_step_strict_setpoints_3,
-            4: self.act_default_adjustments_4
+            4: self.act_default_adjustments_4,
+            5: self.act_cool_only_5,
         }
 
         return action_directory[action_id]
 
+    def act_cool_only_5(self, actuate=True, exploit=False):
+        """
+        Action callback function:
+        Takes action from network or exploration, then encodes into HVAC commands and passed into running simulation.
+
+        :return: actuation dictionary - EMS variable name (key): actuation value (value)
+        """
+
+        # Check action space dim aligns with created BDQ
+        self._action_dimension_check(this_actuation_functions_dims=7)
+
+        if actuate:
+            # -- EXPLOITATION vs EXPLORATION --
+            self._explore_exploit_process(exploit)
+
+            # -- ENCODE ACTIONS TO HVAC COMMAND --
+
+            cooling_setpoints = {
+                0: 18.1,
+                1: 21.1,  # LB Comfort
+                2: 22.5,
+                3: 23.89,  # UB Comfort
+                4: 26.89,
+                5: 29.4,
+                6: 31
+            }
+
+            for zone_i, action in enumerate(self.action):
+
+                self.actuation_dict[f'zn{zone_i}_heating_sp'] = 15.56
+                self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_setpoints[action]
+
+        # Offline Learning
+        else:
+            pass
+
+        # Combine system actuations with aux actions
+        aux_actuation = self._get_aux_actuation()
+        self.actuation_dict.update(aux_actuation)
+
+        return self.actuation_dict
+    
     def act_default_adjustments_4(self, actuate=True, exploit=False):
         """
         Action callback function:
@@ -475,6 +522,9 @@ class Agent:
 
         :return: actuation dictionary - EMS variable name (key): actuation value (value)
         """
+        
+        # Check action space dim aligns with created BDQ
+        self._action_dimension_check(this_actuation_functions_dims=6)
 
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
@@ -527,6 +577,9 @@ class Agent:
 
         :return: actuation dictionary - EMS variable name (key): actuation value (value)
         """
+        # Check action space dim aligns with created BDQ
+        self._action_dimension_check(this_actuation_functions_dims=3)
+        
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
             self._explore_exploit_process(exploit)
@@ -586,7 +639,9 @@ class Agent:
 
         :return: actuation dictionary - EMS variable name (key): actuation value (value)
         """
-
+        # Check action space dim aligns with created BDQ
+        self._action_dimension_check(this_actuation_functions_dims=6)
+        
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
             self._explore_exploit_process(exploit)

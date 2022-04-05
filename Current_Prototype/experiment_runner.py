@@ -10,18 +10,19 @@ from bca import mdp_manager, _paths_config, experiment_manager
 year = mdp_manager.year
 model_span = 'May'  # Year, May, Test
 model_test = 'June'
-exp_name = 'Heat_Cool_Off'
+exp_name = 'Default_Adjustments_LR_Decay'
 exp_name = f'{exp_name}_{datetime.datetime.now().strftime("%y%m%d-%H%M")}'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 5,
-    'load_model': r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Experiments\Heat_Cool_Off_220403-1050\bdq_runs_5_epochs_5_lr_5e-05',
-    'exploit_only': True,
+    'epochs': 10,
+    'load_model': r'',
+    'exploit_only': False,
     'test': True
 }
 
-run_modification = [5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5]  #, 5e-6, 1e-6]
+run_modification = [5e-3, 1e-3, 5e-4, 1e-4] #, 5e-5, 1e-5, 5e-6]  # 1e-6]
+# run_modification = [5e-3]
 
 # -- FILE PATHS --
 # IDF File / Modification Paths
@@ -32,7 +33,10 @@ idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')
 # Experiment Folder
-exp_folder = f'Experiments/{exp_name}'
+if experiment_params_dict['exploit_only']:
+    exp_folder = f'Experiments/{exp_name}_EXPLOIT'
+else:
+    exp_folder = f'Experiments/{exp_name}'
 
 # -- Simulation Params --
 cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
@@ -66,7 +70,7 @@ if not experiment_params_dict['exploit_only']:
         run_manager=run_manager,
         bdq=my_bdq,
         tensorboard_manager=my_tb,
-        idf_file_base=idf_file_base + '_Baseline.idf',
+        idf_file_base=idf_file_base + '.idf',
         idf_file_final=idf_final_file,
         epw_file=epw_file,
         year=year,
@@ -96,7 +100,7 @@ if not experiment_params_dict['exploit_only']:
         run_manager=run_manager,
         bdq=my_bdq,
         tensorboard_manager=my_tb,
-        idf_file_base=idf_file_base_test + '_Baseline.idf',
+        idf_file_base=idf_file_base_test + '.idf',
         idf_file_final=idf_final_file,
         epw_file=epw_file,
         year=year,
@@ -204,11 +208,11 @@ if not experiment_params_dict['exploit_only']:
             run_manager,
             name_path=os.path.join(exp_folder,
                                    f'run_{run_num + 1}-{run_limit}_lr_{param}_TEST_epoch{epoch + 1}-'
-                                   f'{experiment_params_dict["epochs"]}_{model_span}')
+                                   f'{experiment_params_dict["epochs"]}_{model_test}')
         )
 
         run_type = 'test'
-        baseline_agent = experiment_manager.run_experiment(
+        agent = experiment_manager.run_experiment(
             run=run,
             run_manager=run_manager,
             bdq=my_bdq,
@@ -220,7 +224,7 @@ if not experiment_params_dict['exploit_only']:
             run_type=run_type,
         )
         my_tb.record_epoch_results(
-            agent=baseline_agent,
+            agent=agent,
             experimental_params=experiment_params_dict,
             run=run,
             run_count=0,
@@ -230,12 +234,17 @@ if not experiment_params_dict['exploit_only']:
         )
 
 else:
+    # Save model used to folder, with same name
+    print('\n********** Saved Model ************\n')
+    torch.save(my_bdq.policy_network.state_dict(),
+               os.path.join(exp_folder, experiment_params_dict['load_model'].split('/')[-1]))  # get original name
+
     if not experiment_params_dict['test']:
         print('\n********** Exploit **********\n')
 
         my_tb = TensorboardManager(
             run_manager,
-            name_path=os.path.join(exp_folder, f'_manual_{model_span}_EXPLOIT')
+            name_path=os.path.join(exp_folder, f'__manual_{model_span}_EXPLOIT')
         )
 
         run_type = 'exploit'
@@ -264,23 +273,23 @@ else:
 
         my_tb = TensorboardManager(
             run_manager,
-            name_path=os.path.join(exp_folder, f'_manual_{model_span}_TEST')
+            name_path=os.path.join(exp_folder, f'__manual_{model_test}_TEST')
         )
 
         run_type = 'test'
-        baseline_agent = experiment_manager.run_experiment(
+        my_agent = experiment_manager.run_experiment(
             run=run,
             run_manager=run_manager,
             bdq=my_bdq,
             tensorboard_manager=my_tb,
-            idf_file_base=idf_file_base_test + '_Baseline.idf',
+            idf_file_base=idf_file_base_test + '.idf',
             idf_file_final=idf_final_file,
             epw_file=epw_file,
             year=year,
             run_type=run_type,
         )
         my_tb.record_epoch_results(
-            agent=baseline_agent,
+            agent=my_agent,
             experimental_params=experiment_params_dict,
             run=run,
             run_count=0,

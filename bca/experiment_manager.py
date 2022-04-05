@@ -22,7 +22,7 @@ def run_experiment(run: RunManager.Run,
         learn = False
         act = False
         exploit = False
-    elif run_type == 'exploit':
+    elif run_type == 'exploit' or run_type == 'test':
         learn = False
         act = True
         exploit = True

@@ -8,7 +8,7 @@ from bca import RunManager, TensorboardManager
 from bca import mdp_manager, _paths_config, experiment_manager
 
 year = mdp_manager.year
-model_span = 'Test'  # Year, May, Test
+model_span = 'May_Week'  # Year, May,  Test
 exp_name = 'testing'
 test_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}'
 

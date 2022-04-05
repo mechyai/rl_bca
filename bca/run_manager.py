@@ -35,7 +35,7 @@ class RunManager:
         # Fixed
         'observation_dim': 60,
         'action_branches': action_branches,  # n building zones
-        'actuation_function': 1,
+        'actuation_function': 5,  # -----------------------------------------------------------------------------------
 
         # Architecture
         'shared_network_size_l1': 96,
