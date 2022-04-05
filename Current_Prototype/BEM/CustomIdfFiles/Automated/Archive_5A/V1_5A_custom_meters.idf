@@ -93,11 +93,11 @@ Output:Meter:MeterFileOnly,
 Meter:Custom,
     ZN0 HVAC Heating Electricity,
     Electricity,                                                !- Fuel Type
-    CORE_ZN ZN HP HTG COIL 27 CLG KBTU/HR 8.0HSPF,              !- Key Name 1
+    CORE_ZN ZN HP HTG COIL 26 CLG KBTU/HR 8.0HSPF,              !- Key Name 1
     Heating Coil Electricity Energy,                            !- Output Variable or Meter Name 1
-    CORE_ZN ZN HP HTG COIL 27 CLG KBTU/HR 8.0HSPF,              !- Key Name 2
+    CORE_ZN ZN HP HTG COIL 26 CLG KBTU/HR 8.0HSPF,              !- Key Name 2
     Heating Coil Defrost Electricity Energy,                    !- Output Variable or Meter Name 2
-    CORE_ZN ZN HP HTG COIL 27 CLG KBTU/HR 8.0HSPF,              !- Key Name 3
+    CORE_ZN ZN HP HTG COIL 26 CLG KBTU/HR 8.0HSPF,              !- Key Name 3
     Heating Coil Crankcase Heater Electricity Energy,           !- Output Variable or Meter Name 3
     CORE_ZN ZN PSZ-AC-1 GAS BACKUP HTG COIL,                    !- Key Name 4
     Heating Coil Electricity Energy,                            !- Output Variable or Meter Name 4
@@ -108,11 +108,11 @@ Meter:Custom,
 Meter:Custom,
     ZN1 HVAC Heating Electricity,
     Electricity,
-    PERIMETER_ZN_1 ZN HP HTG COIL 29 CLG KBTU/HR 8.0HSPF,
+    PERIMETER_ZN_1 ZN HP HTG COIL 27 CLG KBTU/HR 8.0HSPF,
     Heating Coil Electricity Energy,
-    PERIMETER_ZN_1 ZN HP HTG COIL 29 CLG KBTU/HR 8.0HSPF,
+    PERIMETER_ZN_1 ZN HP HTG COIL 27 CLG KBTU/HR 8.0HSPF,
     Heating Coil Defrost Electricity Energy,
-    PERIMETER_ZN_1 ZN HP HTG COIL 29 CLG KBTU/HR 8.0HSPF,
+    PERIMETER_ZN_1 ZN HP HTG COIL 27 CLG KBTU/HR 8.0HSPF,
     Heating Coil Crankcase Heater Electricity Energy,
     PERIMETER_ZN_1 ZN PSZ-AC-2 GAS BACKUP HTG COIL,
     Heating Coil Electricity Energy,
@@ -124,11 +124,11 @@ Meter:Custom,
 Meter:Custom,
     ZN2 HVAC Heating Electricity,
     Electricity,
-    PERIMETER_ZN_2 ZN HP HTG COIL 24 CLG KBTU/HR 8.0HSPF,
+    PERIMETER_ZN_2 ZN HP HTG COIL 21 CLG KBTU/HR 8.0HSPF,
     Heating Coil Electricity Energy,
-    PERIMETER_ZN_2 ZN HP HTG COIL 24 CLG KBTU/HR 8.0HSPF,
+    PERIMETER_ZN_2 ZN HP HTG COIL 21 CLG KBTU/HR 8.0HSPF,
     Heating Coil Defrost Electricity Energy,
-    PERIMETER_ZN_2 ZN HP HTG COIL 24 CLG KBTU/HR 8.0HSPF,
+    PERIMETER_ZN_2 ZN HP HTG COIL 21 CLG KBTU/HR 8.0HSPF,
     Heating Coil Crankcase Heater Electricity Energy,
     PERIMETER_ZN_2 ZN PSZ-AC-3 GAS BACKUP HTG COIL,
     Heating Coil Electricity Energy,
@@ -140,11 +140,11 @@ Meter:Custom,
 Meter:Custom,
     ZN3 HVAC Heating Electricity,
     Electricity,
-    PERIMETER_ZN_3 ZN HP HTG COIL 28 CLG KBTU/HR 8.0HSPF,
+    PERIMETER_ZN_3 ZN HP HTG COIL 23 CLG KBTU/HR 8.0HSPF,
     Heating Coil Electricity Energy,
-    PERIMETER_ZN_3 ZN HP HTG COIL 28 CLG KBTU/HR 8.0HSPF,
+    PERIMETER_ZN_3 ZN HP HTG COIL 23 CLG KBTU/HR 8.0HSPF,
     Heating Coil Defrost Electricity Energy,
-    PERIMETER_ZN_3 ZN HP HTG COIL 28 CLG KBTU/HR 8.0HSPF,
+    PERIMETER_ZN_3 ZN HP HTG COIL 23 CLG KBTU/HR 8.0HSPF,
     Heating Coil Crankcase Heater Electricity Energy,
     PERIMETER_ZN_3 ZN PSZ-AC-4 GAS BACKUP HTG COIL,
     Heating Coil Electricity Energy,
@@ -154,11 +154,11 @@ Meter:Custom,
 Meter:Custom,
     ZN4 HVAC Heating Electricity,
     Electricity,
-    PERIMETER_ZN_4 ZN HP HTG COIL 26 CLG KBTU/HR 8.0HSPF,
+    PERIMETER_ZN_4 ZN HP HTG COIL 24 CLG KBTU/HR 8.0HSPF,
     Heating Coil Electricity Energy,
-    PERIMETER_ZN_4 ZN HP HTG COIL 26 CLG KBTU/HR 8.0HSPF,
+    PERIMETER_ZN_4 ZN HP HTG COIL 24 CLG KBTU/HR 8.0HSPF,
     Heating Coil Defrost Electricity Energy,
-    PERIMETER_ZN_4 ZN HP HTG COIL 26 CLG KBTU/HR 8.0HSPF,
+    PERIMETER_ZN_4 ZN HP HTG COIL 24 CLG KBTU/HR 8.0HSPF,
     Heating Coil Crankcase Heater Electricity Energy,
     PERIMETER_ZN_4 ZN PSZ-AC-5 GAS BACKUP HTG COIL,
     Heating Coil Electricity Energy,
@@ -215,7 +215,7 @@ Meter:Custom,
 Meter:Custom,
     ZN0 HVAC Cooling Electricity,
     Electricity,                                                        !- Fuel Type
-    CORE_ZN ZN PSZ-AC-1 1SPD DX HP CLG COIL 27KBTU/HR 14.0SEER,         !- Key Name 1
+    CORE_ZN ZN PSZ-AC-1 1SPD DX HP CLG COIL 26KBTU/HR 14.0SEER,         !- Key Name 1
     Cooling Coil Electricity Energy,                                    !- Output Variable or Meter Name 1
     CORE_ZN ZN PSZ-AC-1 UNITARY HP,                                     !- Key Name 2
     Unitary System Cooling Ancillary Electricity Energy;                !- Output Variable or Meter Name 2
@@ -223,7 +223,7 @@ Meter:Custom,
 Meter:Custom,
     ZN1 HVAC Cooling Electricity,
     Electricity,
-    PERIMETER_ZN_1 ZN PSZ-AC-2 1SPD DX HP CLG COIL 29KBTU/HR 14.0SEER,
+    PERIMETER_ZN_1 ZN PSZ-AC-2 1SPD DX HP CLG COIL 27KBTU/HR 14.0SEER,
     Cooling Coil Electricity Energy,
     PERIMETER_ZN_1 ZN PSZ-AC-2 UNITARY HP,
     Unitary System Cooling Ancillary Electricity Energy;
@@ -232,7 +232,7 @@ Meter:Custom,
 Meter:Custom,
     ZN2 HVAC Cooling Electricity,
     Electricity,
-    PERIMETER_ZN_2 ZN PSZ-AC-3 1SPD DX HP CLG COIL 24KBTU/HR 14.0SEER,
+    PERIMETER_ZN_2 ZN PSZ-AC-3 1SPD DX HP CLG COIL 21KBTU/HR 14.0SEER,
     Cooling Coil Electricity Energy,
     PERIMETER_ZN_2 ZN PSZ-AC-3 UNITARY HP,
     Unitary System Cooling Ancillary Electricity Energy;
@@ -241,7 +241,7 @@ Meter:Custom,
 Meter:Custom,
     ZN3 HVAC Cooling Electricity,
     Electricity,
-    PERIMETER_ZN_3 ZN PSZ-AC-4 1SPD DX HP CLG COIL 28KBTU/HR 14.0SEER,
+    PERIMETER_ZN_3 ZN PSZ-AC-4 1SPD DX HP CLG COIL 23KBTU/HR 14.0SEER,
     Cooling Coil Electricity Energy,
     PERIMETER_ZN_3 ZN PSZ-AC-4 UNITARY HP,
     Unitary System Cooling Ancillary Electricity Energy;
@@ -250,7 +250,7 @@ Meter:Custom,
 Meter:Custom,
     ZN4 HVAC Cooling Electricity,
     Electricity,
-    PERIMETER_ZN_4 ZN PSZ-AC-5 1SPD DX HP CLG COIL 26KBTU/HR 14.0SEER,
+    PERIMETER_ZN_4 ZN PSZ-AC-5 1SPD DX HP CLG COIL 24KBTU/HR 14.0SEER,
     Cooling Coil Electricity Energy,
     PERIMETER_ZN_4 ZN PSZ-AC-5 UNITARY HP,
     Unitary System Cooling Ancillary Electricity Energy;
@@ -394,9 +394,9 @@ Meter:Custom,
 
 
 ! PV Solar Generation [Electricity, J]
-!
-!Meter:Custom,
-!    Solar Generation,
-!    Electricity,
-!    Generator Photovoltaic 1,                           !- Key Name 1
-!    Generator Produced DC Electricity Energy;           !- Output Variable or Meter Name 1
+
+Meter:Custom,
+    Solar Generation,
+    Electricity,
+    Generator Photovoltaic 1,                           !- Key Name 1
+    Generator Produced DC Electricity Energy;           !- Output Variable or Meter Name 1
