@@ -10,18 +10,18 @@ from bca import mdp_manager, _paths_config, experiment_manager
 year = mdp_manager.year
 model_span = 'May'  # Year, May, Test
 model_test = 'June'
-exp_name = 'Default_Adjustments_LR_Decay'
+exp_name = 'Cool_Only_LR_Decay_Gamma_0.6'
 exp_name = f'{exp_name}_{datetime.datetime.now().strftime("%y%m%d-%H%M")}'
 
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 10,
-    'load_model': r'',
+    'load_model': r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Experiments\Cool_Only_LR_Decay_Gamma_0.6_220405-0043\bdq_runs_1_epochs_10_lr_0.005',
     'exploit_only': False,
     'test': True
 }
 
-run_modification = [5e-3, 1e-3, 5e-4, 1e-4] #, 5e-5, 1e-5, 5e-6]  # 1e-6]
+run_modification = [1e-3, 5e-4, 1e-4] #, 5e-5, 1e-5, 5e-6]  # 1e-6]
 # run_modification = [5e-3]
 
 # -- FILE PATHS --
@@ -217,7 +217,7 @@ if not experiment_params_dict['exploit_only']:
             run_manager=run_manager,
             bdq=my_bdq,
             tensorboard_manager=my_tb,
-            idf_file_base=idf_file_base_test + '_Baseline.idf',
+            idf_file_base=idf_file_base_test + '.idf',
             idf_file_final=idf_final_file,
             epw_file=epw_file,
             year=year,

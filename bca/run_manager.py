@@ -47,7 +47,7 @@ class RunManager:
         'reward_aggregation': 'mean',  # sum or mean
         'optimizer': 'Adagrad',
         'learning_rate': 1e-3,
-        'gamma': 0.7,
+        'gamma': 0.6,
 
         # Network mods
         'td_target': 'mean',  # (0) mean or (1) max

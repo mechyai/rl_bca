@@ -8,7 +8,7 @@ from bca import RunManager, TensorboardManager
 from bca import mdp_manager, _paths_config, experiment_manager
 
 year = mdp_manager.year
-model_span = 'May_Week'  # Year, May,  Test
+model_span = 'Test'  # Year, May,  Test
 exp_name = 'testing'
 test_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}'
 
@@ -58,7 +58,7 @@ for run_num, param_value in enumerate(run_modification):
             name_path=os.path.join(exp_folder, test_name)
         )
 
-        run_type = 'exploit'
+        run_type = 'train'
         agent = experiment_manager.run_experiment(
             run=run,
             run_manager=run_manager,

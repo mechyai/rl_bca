@@ -66,6 +66,7 @@ class ReplayMemory(object):
         self.next_state_memory = None
         self.reward_memory = None
         self.terminal_memory = None
+
         self.first_sample = True
 
     def push(self, state, action, next_state, reward, terminal_flag):
@@ -104,6 +105,7 @@ class ReplayMemory(object):
     def can_provide_sample(self):
         """Check if replay memory has enough experience tuples to sample batch from"""
         return self.interaction_count >= self.batch_size
+
 
 class PrioritizedReplayMemory:
     """Manages a replay memory, where data is stored as numpy arrays in a named tuple."""
