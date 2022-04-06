@@ -202,17 +202,16 @@ class BranchingQNetwork(nn.Module):
         self.value_stream = nn.Sequential(*layers, final_layer)
 
         # --- Advantage Streams ---
-        layers = []
-        prev_layer_size = shared_final_layer
-        for i, layer_size in enumerate(advantage_streams_size):
-            if layer_size != 0:
-                layers.append(nn.Linear(prev_layer_size, layer_size))
-                prev_layer_size = layer_size
-
-        final_layer = nn.Linear(prev_layer_size, action_dim)
-        self.advantage_streams = nn.ModuleList(
-            [nn.Sequential(*layers, final_layer) for i in range(action_branches)]
-        )
+        self.advantage_streams = nn.ModuleList()
+        for branch in range(action_branches):
+            layers = []
+            prev_layer_size = shared_final_layer
+            for i, layer_size in enumerate(advantage_streams_size):
+                if layer_size != 0:
+                    layers.append(nn.Linear(prev_layer_size, layer_size))
+                    prev_layer_size = layer_size
+            final_layer = nn.Linear(prev_layer_size, action_dim)
+            self.advantage_streams.append(nn.Sequential(*layers, final_layer))
 
     def forward(self, state_input):
         # Shared Network
@@ -284,7 +283,7 @@ class BranchingDQN(nn.Module):
         return qvals.gather(2, actions.unsqueeze(2)).squeeze(-1)
 
     def get_next_double_qval(self, next_states):
-        # double q learning
+        # Double q learning implementation
         with torch.no_grad():
             argmax = torch.argmax(self.policy_network(next_states), dim=2)
             return self.target_network(next_states).gather(2, argmax.unsqueeze(2)).squeeze(-1)
@@ -320,10 +319,14 @@ class BranchingDQN(nn.Module):
 
         expected_Q = batch_rewards + next_Q * self.gamma * (1 - batch_terminals)  # target
 
-        loss = F.mse_loss(expected_Q, current_Q)  # minimize TD error with Mean-Squared-Error
+        loss_old = F.mse_loss(expected_Q, current_Q)  # minimize TD error with Mean-Squared-Error
+
+        loss_fn = nn.MSELoss(reduction='none')  # Get no mean reduction
+        loss_each = loss_fn(expected_Q, current_Q)  # Capture each individual loss component
+        loss_total = torch.mean(loss_each)
 
         self.optimizer.zero_grad()
-        loss.backward()
+        loss_total.backward()
 
         # -- Modify Gradients --
         if self.gradient_clip_norm != 0:
@@ -343,7 +346,7 @@ class BranchingDQN(nn.Module):
         self.update_target_net()
         self.step_count += 1
 
-        return loss.detach().cpu()
+        return float(loss_total.detach().cpu()), loss_each.detach().cpu()
 
     def import_model(self, model_path: str):
         """
