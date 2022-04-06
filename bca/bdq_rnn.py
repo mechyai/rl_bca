@@ -162,17 +162,16 @@ class BranchingQNetwork_RNN(nn.Module):
         self.value_stream = nn.Sequential(*layers, final_layer)
 
         # --- Advantage Streams ---
-        layers = []
-        prev_layer_size = shared_final_layer
-        for i, layer_size in enumerate(advantage_streams_size):
-            if layer_size != 0:
-                layers.append(nn.Linear(prev_layer_size, layer_size))
-                prev_layer_size = layer_size
-
-        final_layer = nn.Linear(prev_layer_size, action_dim)
-        self.advantage_streams = nn.ModuleList(
-            [nn.Sequential(*layers, final_layer) for i in range(action_branches)]
-        )
+        self.advantage_streams = nn.ModuleList()
+        for branch in range(action_branches):
+            layers = []
+            prev_layer_size = shared_final_layer
+            for i, layer_size in enumerate(advantage_streams_size):
+                if layer_size != 0:
+                    layers.append(nn.Linear(prev_layer_size, layer_size))
+                    prev_layer_size = layer_size
+            final_layer = nn.Linear(prev_layer_size, action_dim)
+            self.advantage_streams.append(nn.Sequential(*layers, final_layer))
 
     def forward(self, state_input):
         # RNN Node
