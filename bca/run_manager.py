@@ -6,7 +6,7 @@ from itertools import product
 
 from emspy import BcaEnv, MdpManager
 from bca import BranchingDQN, BranchingDQN_RNN
-from bca import ReplayMemory, SequenceReplayMemory, EpsilonGreedyStrategy, Agent_TB
+from bca import ReplayMemory, PrioritizedReplayMemory, SequenceReplayMemory, EpsilonGreedyStrategy, Agent_TB
 from bca import TensorboardManager
 
 
@@ -29,7 +29,7 @@ class RunManager:
 
         # --- Experience Replay ---
         'replay_capacity': 1000,
-        'batch_size': 64,
+        'batch_size': 8,
 
         # -- BDQ --
         # Fixed
@@ -38,8 +38,8 @@ class RunManager:
         'actuation_function': 5,  # -----------------------------------------------------------------------------------
 
         # Architecture
-        'shared_network_size_l1': 96,
-        'shared_network_size_l2': 96,
+        'shared_network_size_l1': 0,
+        'shared_network_size_l2': 0,
         'value_stream_size': 48,
         'advantage_streams_size': 48,
 
@@ -47,7 +47,7 @@ class RunManager:
         'reward_aggregation': 'mean',  # sum or mean
         'optimizer': 'Adagrad',
         'learning_rate': 1e-3,
-        'gamma': 0.6,
+        'gamma': 0.8,
 
         # Network mods
         'td_target': 'mean',  # (0) mean or (1) max
@@ -60,11 +60,12 @@ class RunManager:
         'rnn': False,
 
         # -- Replay Memory --
+        'PER': False,
         'sequence_ts_spacing': 3,
         'sequence_length': 5,
 
         # -- BDQ Architecture --
-        'rnn_hidden_size': 64,
+        'rnn_hidden_size': 128,
         'rnn_num_layers': 2,
     }
     Run = namedtuple('Run', selected_params.keys())
@@ -76,6 +77,7 @@ class RunManager:
         'rnn': [True, False],
 
         # -- Replay Memory --
+        'PER' : [False, True],
         'sequence_ts_spacing': [1, 3],
         'sequence_length': [5, 10],
 
@@ -108,7 +110,7 @@ class RunManager:
     bdq_params = {
         # --- BDQ ---
         # Architecture
-        'shared_network_size_l1': [96],
+        'shared_network_size_l1': [],
         'shared_network_size_l2': [],
         'value_stream_size': [48],
         'advantage_streams_size': [48],
@@ -228,6 +230,11 @@ class RunManager:
                 batch_size=run.batch_size,
                 sequence_length=run.sequence_length,
                 sequence_ts_spacing=run.sequence_ts_spacing
+            )
+        elif run.PER:
+            self.experience_replay = PrioritizedReplayMemory(
+                capacity=run.replay_capacity,
+                batch_size=run.batch_size
             )
         else:
             self.experience_replay = ReplayMemory(

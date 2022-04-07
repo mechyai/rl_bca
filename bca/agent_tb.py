@@ -9,7 +9,7 @@ import torch
 
 from emspy import BcaEnv, MdpManager
 
-from bca import BranchingDQN, EpsilonGreedyStrategy, ReplayMemory
+from bca import BranchingDQN, EpsilonGreedyStrategy, ReplayMemory, PrioritizedReplayMemory
 from bca import BranchingDQN_RNN, SequenceReplayMemory
 from bca import TensorboardManager, mdp_manager
 
@@ -57,7 +57,7 @@ class Agent:
                  mdp: MdpManager,
                  dqn_model: Union[BranchingDQN, BranchingDQN_RNN],
                  policy: EpsilonGreedyStrategy,
-                 replay_memory: Union[ReplayMemory, SequenceReplayMemory],
+                 replay_memory: Union[ReplayMemory, PrioritizedReplayMemory, SequenceReplayMemory],
                  observation_frequency: int,
                  actuation_frequency: int,
                  actuation_dimension: int,
@@ -203,9 +203,24 @@ class Agent:
         if learn:
             if self.memory.can_provide_sample():  # must have enough interactions stored
                 for i in range(self.learning_loop):
-                    batch = self.memory.sample()
-                    self.loss = float(self.bdq.update_policy(batch))  # batch learning
+                    if isinstance(self.memory, PrioritizedReplayMemory):
+                        # Get prioritized batch
+                        batch, sample_indices = self.memory.sample()
+                        # Learn from prioritized batch
+                        weights = self.memory.get_gradient_weights(sample_indices)
+                        self.loss, loss_each = self.bdq.update_policy(batch, gradient_weights=weights)
+                        # Update replay priorities
+                        self.memory.update_priorities(sample_indices, loss_each)
+                    else:
+                        # Get random batch
+                        batch = self.memory.sample()
+                        self.loss, loss_each = self.bdq.update_policy(batch)  # batch learning
+
                     self.loss_total += self.loss
+
+                # for i in range(len(self.bdq.policy_network.advantage_streams)):
+                #     self.TB.tb.add_histogram(f'L0/Advantage Stream {i} L0', self.bdq.policy_network.advantage_streams[i][0].weight, self.current_step)
+                #     self.TB.tb.add_histogram(f'L1/Advantage Stream {i} L1', self.bdq.policy_network.advantage_streams[i][1].weight, self.current_step)
 
             # Adaptive Learning Rate
             # self.bdq.update_learning_rate()
