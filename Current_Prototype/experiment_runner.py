@@ -1,5 +1,7 @@
 import datetime
 import os
+import shutil
+import time
 
 import torch
 
@@ -8,20 +10,22 @@ from bca import RunManager, TensorboardManager
 from bca import mdp_manager, _paths_config, experiment_manager
 
 year = mdp_manager.year
-model_span = 'May'  # Year, May, Test
+model_span = 'Test'  # Year, May, Test
 model_test = 'June'
-exp_name = 'Cool_Only_LR_Decay_Gamma_0.6'
-exp_name = f'{exp_name}_{datetime.datetime.now().strftime("%y%m%d-%H%M")}'
+# exp_name = 'Cool_Only_LR_Decay_Gamma_0.8_RNN_No_Shared'
+exp_name = 'Tester'
+exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 10,
-    'load_model': r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Experiments\Cool_Only_LR_Decay_Gamma_0.6_220405-0043\bdq_runs_1_epochs_10_lr_0.005',
+    'epochs': 2,
+    'load_model': r'',
     'exploit_only': False,
-    'test': True
+    'test': True,
+    'experiment_desc': ''
 }
 
-run_modification = [1e-3, 5e-4, 1e-4] #, 5e-5, 1e-5, 5e-6]  # 1e-6]
+run_modification = [5e-3, 1e-3, 5e-4] #, 5e-5, 1e-5, 5e-6]  # 1e-6]
 # run_modification = [5e-3]
 
 # -- FILE PATHS --
@@ -138,6 +142,7 @@ if not experiment_params_dict['exploit_only']:
             )
 
             print('\n********** Train **********\n')
+            time_start = time.time()
 
             run_type = 'train'
             my_agent = experiment_manager.run_experiment(
@@ -161,12 +166,15 @@ if not experiment_params_dict['exploit_only']:
                 run_type=run_type
             )
 
+            time_train = round(time_start - time.time(), 2) / 60
+
+
         # -- Save Model --
         if experiment_params_dict['epochs'] > 0:
             print('\n********** Saved Model ************\n')
+            model_name = f'bdq_runs_{run_num + 1}_epochs_{experiment_params_dict["epochs"]}_lr_{param}'
             torch.save(my_bdq.policy_network.state_dict(),
-                       os.path.join(exp_folder,
-                                    f'bdq_runs_{run_num + 1}_epochs_{experiment_params_dict["epochs"]}_lr_{param}'))
+                       os.path.join(exp_folder, model_name))
 
         # ------------------------------------------------- Run Testing ------------------------------------------------
 
@@ -202,6 +210,12 @@ if not experiment_params_dict['exploit_only']:
             run_type=run_type
         )
 
+        # Save SQL
+        shutil.copy(r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\out\eplusout.sql', exp_folder)
+        time.sleep(1)
+        os.rename(os.path.join(exp_folder, 'eplusout.sql'),
+                  os.path.join(exp_folder, f'{model_span}_run_{run_num}-{run_limit}_ep{epoch}_EXPLOIT_SQL.sql'))
+
         print('\n********** Test **********\n')
 
         my_tb = TensorboardManager(
@@ -232,6 +246,29 @@ if not experiment_params_dict['exploit_only']:
             epoch=0,
             run_type=run_type
         )
+
+        # Save SQL
+        shutil.copy(r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\out\eplusout.sql', exp_folder)
+        time.sleep(1)
+        os.rename(os.path.join(exp_folder, 'eplusout.sql'),
+                  os.path.join(exp_folder, f'{model_test}_run_{run_num}-{run_limit}_ep{epoch}_TEST_SQL.sql'))
+
+        exp_file = os.path.join(exp_folder, '_exp_results_log.txt')
+        # -- Save / Write Data --
+        with open(exp_file, 'a+') as file:
+            file.write(f'\n -----------------------------------------------------------------')
+            file.write(f'\n\n Experiment Descp: {experiment_params_dict["experiment_desc"]}')
+            file.write(f'\n\n Model Name: {model_name}')
+            file.write(f'\n\tTime Train = {time_train} mins')
+            file.write(f'\n\t*Epochs trained = Run {run_num}-{run_limit}, Epoch: {epoch + 1}')
+            file.write(f'\n\t******* Cumulative Reward = {my_agent.reward_sum}')
+            file.write(f'\n\t*Performance Metrics:')
+            file.write(f'\n\t\tDiscomfort Metric = {my_agent.comfort_dissatisfaction_total}')
+            file.write(f'\n\t\tRTP HVAC Cost Metric = {my_agent.hvac_rtp_costs_total}')
+            file.write('\n\n\tHyperparameters:')
+            for key, val in run._asdict().items():
+                file.write(f'\n\t\t{key}: {val}')
+            file.write(f'\n\nModel Architecture:\n{my_bdq.policy_network}')
 
 else:
     # Save model used to folder, with same name
