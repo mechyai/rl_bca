@@ -179,7 +179,8 @@ class BranchingQNetwork_RNN(nn.Module):
         out, _ = self.rnn(state_input, h0)  # out: batch size, seq len, hidden siz
         out = out[:, -1, :]  # get last timestep
         # Shared Network
-        out = self.shared_model(out)
+        if len(self.shared_model) != 0:
+            out = self.shared_model(out)
         # Value Branch
         value = self.value_stream(out)
         # Advantage Streams
