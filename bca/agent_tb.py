@@ -485,9 +485,69 @@ class Agent:
             3: self.act_step_strict_setpoints_3,
             4: self.act_default_adjustments_4,
             5: self.act_cool_only_5,
+            6: self.act_cool_only_default_adjustment_6
         }
 
         return action_directory[action_id]
+
+    def act_cool_only_default_adjustment_6(self, actuate=True, exploit=False):
+        """
+               Action callback function:
+               Takes action from network or exploration, then encodes into HVAC commands and passed into running simulation.
+
+               :return: actuation dictionary - EMS variable name (key): actuation value (value)
+               """
+
+        # Check action space dim aligns with created BDQ
+        self._action_dimension_check(this_actuation_functions_dims=0)
+
+        if actuate:
+            # -- EXPLOITATION vs EXPLORATION --
+            self._explore_exploit_process(exploit)
+
+            # -- ENCODE ACTIONS TO HVAC COMMAND --
+            """
+            Put actuation function here
+            """
+            # -- ENCODE ACTIONS TO HVAC COMMAND --
+            occupied_setpoints = {
+                0: [21.1, 23.89],  # IDEAL
+                1: [19.1, 21.1],  # LOWER
+                2: [21.1, 22.5],  # INNER LOWER
+                3: [22.5, 23.89],  # INNER UPPER
+                4: [23.89, 25.89],  # UPPER
+                5: [21.8, 23.19]  # INNER
+            }
+
+            unoccupied_setpoints = {
+                0: [15.56, 29.4],  # IDEAL
+                1: [13.56, 15.56],  # LOWER
+                2: [15.56, 22.5],  # INNER LOWER
+                3: [22.5, 29.4],  # INNER UPPER
+                4: [29.4, 32.4],  # UPPER
+                5: [21.1, 23.89]  # INNER
+            }
+
+            occupied = self.sim.get_ems_data(['hvac_operation_sched'])
+
+            for zone_i, action in enumerate(self.action):
+                if occupied:
+                    heating_sp, cooling_sp = occupied_setpoints[action]
+                else:
+                    heating_sp, cooling_sp = unoccupied_setpoints[action]
+
+                self.actuation_dict[f'zn{zone_i}_heating_sp'] = 15.56
+                self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_sp
+
+        # Offline Learning
+        else:
+            pass
+
+        # Combine system actuations with aux actions
+        aux_actuation = self._get_aux_actuation()
+        self.actuation_dict.update(aux_actuation)
+
+        return self.actuation_dict
 
     def act_cool_only_5(self, actuate=True, exploit=False):
         """
@@ -505,7 +565,6 @@ class Agent:
             self._explore_exploit_process(exploit)
 
             # -- ENCODE ACTIONS TO HVAC COMMAND --
-
             cooling_setpoints = {
                 0: 18.1,
                 1: 21.1,  # LB Comfort
