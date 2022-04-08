@@ -210,12 +210,13 @@ class Agent:
                         weights = self.memory.get_gradient_weights(sample_indices)
                         self.loss, loss_each = self.bdq.update_policy(batch, gradient_weights=weights)
                         # Update replay priorities
-                        self.memory.update_priorities(sample_indices, loss_each)
+                        self.memory.update_td_losses(sample_indices, loss_each)
                     else:
                         # Get random batch
                         batch = self.memory.sample()
                         self.loss, loss_each = self.bdq.update_policy(batch)  # batch learning
 
+                    # Update data
                     self.loss_total += self.loss
 
                 # for i in range(len(self.bdq.policy_network.advantage_streams)):
@@ -433,6 +434,14 @@ class Agent:
         if self._print:
             print(f'\n\tAction: {self.action} ({action_type}, eps = {self.epsilon})')
 
+    def _action_dimension_check(self, this_actuation_functions_dims=0):
+        """Used to verify that action dimensions aligns with BDQ architecture. Raises error and exits if not."""
+
+        if not self._checked_action_dims:
+            if self.actuation_dim != this_actuation_functions_dims:
+                raise ValueError('Check that your actuation function dims align with your BDQ.')
+            self._checked_action_dims = True
+
     def _action_framework_copy(self, actuate=True, exploit=False):
         """
         Action callback function:
@@ -466,14 +475,6 @@ class Agent:
         self.actuation_dict.update(aux_actuation)
 
         return self.actuation_dict
-
-    def _action_dimension_check(self, this_actuation_functions_dims=0):
-        """Used to verify that action dimensions aligns with BDQ architecture. Raises error and exits if not."""
-
-        if not self._checked_action_dims:
-            if self.actuation_dim != this_actuation_functions_dims:
-                raise ValueError('Check that your actuation function dims align with your BDQ.')
-            self._checked_action_dims = True
 
     def action_directory(self, action_id: int):
         """This function is used to select and pass the chosen actuation function. This allows it to be a parameter."""

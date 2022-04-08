@@ -53,14 +53,14 @@ class RunManager:
         'td_target': 'mean',  # (0) mean or (1) max
         'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': 1 / (action_branches),
-        'target_update_freq': 1e3,  # [50, 150, 500, 1e3, 1e4],
+        'target_update_freq': 2e3,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
 
         # RNN
         # -- Agent / Model --
         'rnn': False,
 
         # -- Replay Memory --
-        'PER': False,
+        'PER': True,
         'sequence_ts_spacing': 3,
         'sequence_length': 5,
 
@@ -74,16 +74,16 @@ class RunManager:
     rnn_params = {
         # -- Agent / Model --
 
-        'rnn': [True, False],
+        'rnn': [False],
 
         # -- Replay Memory --
-        'PER' : [False, True],
-        'sequence_ts_spacing': [1, 3],
-        'sequence_length': [5, 10],
+        'PER': [False, True],
+        'sequence_ts_spacing': [3],
+        'sequence_length': [5],
 
         # -- BDQ Architecture --
         'rnn_hidden_size': [64],
-        'rnn_num_layers': [1, 2],
+        'rnn_num_layers': [1],
     }
 
     agent_params = {
@@ -92,40 +92,40 @@ class RunManager:
         'learning_loops': [10],
 
         # --- Behavioral Policy ---
-        'eps_start': [0.15],
-        'eps_end': [0.05],
+        'eps_start': [0.1],
+        'eps_end': [0.01],
         'eps_decay': [1e-5],
 
         # --- Experience Replay ---
-        'replay_capacity': [500, 1000, 5000],
-        'batch_size': [32, 64, 128],
+        'replay_capacity': [5000],
+        'batch_size': [32],
     }
 
     bdq_fixed_params = {
-        'observation_dim': [64],
+        'observation_dim': [60],
         'action_branches': [action_branches],  # n building zones
-        'actuation_function': [1],
+        'actuation_function': [5],
     }
 
     bdq_params = {
         # --- BDQ ---
         # Architecture
-        'shared_network_size_l1': [],
-        'shared_network_size_l2': [],
+        'shared_network_size_l1': [96],
+        'shared_network_size_l2': [56],
         'value_stream_size': [48],
         'advantage_streams_size': [48],
 
         # TD Update
         'reward_aggregation': ['mean'],  # sum or mean
         'optimizer': ['Adam'],
-        'learning_rate': [1e-3, 1e-4, 1e-5],
-        'gamma': [0.3, 0.5, 0.7],
+        'learning_rate': [5e-4],
+        'gamma': [0.7],
 
         # Network mods
-        'td_target': ['max'],  # mean or max
+        'td_target': ['mean'],  # mean or max
         'gradient_clip_norm': [1],  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': [1 / (1 + action_branches)],
-        'target_update_freq': [500.0, 1e3, 2e3]  # [50, 150, 500, 1e3, 1e4],
+        'target_update_freq': [3e3]  # [50, 150, 500, 1e3, 1e4],
     }
 
     # hyperparameter_dict = {**agent_params, **bdq_fixed_params, **bdq_params}
@@ -234,7 +234,9 @@ class RunManager:
         elif run.PER:
             self.experience_replay = PrioritizedReplayMemory(
                 capacity=run.replay_capacity,
-                batch_size=run.batch_size
+                batch_size=run.batch_size,
+                alpha_start=0.5,
+                betta_start=0.1
             )
         else:
             self.experience_replay = ReplayMemory(
