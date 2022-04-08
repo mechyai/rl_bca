@@ -12,15 +12,15 @@ from bca import mdp_manager, _paths_config, experiment_manager
 year = mdp_manager.year
 model_span = 'May'  # Year, May, Test
 model_test = 'June'
-exp_name = '__PER_TEST'
+exp_name = 'Hparam_run'
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 prepend_tb = 'PER'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 3,
+    'epochs': 5,
     'run_index_start': 0,
-    'run_index_limit': 2,
+    'run_index_limit': 10,
     'load_model': r'',
     'experiment_desc': 'testing PER'
 }
@@ -204,7 +204,7 @@ for run_num, run in enumerate(runs):
     )
 
     # Save SQL
-    shutil.copy(r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\out\eplusout.sql', exp_folder)
+    shutil.copy(os.path.join(_paths_config.repo_root, r'\Current_Prototype\out\eplusout.sql', exp_folder))
     time.sleep(1)
     os.rename(os.path.join(exp_folder, 'eplusout.sql'),
               os.path.join(exp_folder, f'{model_span}_run_{run_num}-{run_limit}_ep{epoch}_EXPLOIT_SQL.sql'))
@@ -241,7 +241,7 @@ for run_num, run in enumerate(runs):
     )
 
     # Save SQL
-    shutil.copy(r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\out\eplusout.sql', exp_folder)
+    shutil.copy(os.path.join(_paths_config.repo_root, r'\Current_Prototype\out\eplusout.sql', exp_folder))
     time.sleep(1)
     os.rename(os.path.join(exp_folder, 'eplusout.sql'),
               os.path.join(exp_folder, f'{model_test}_run_{run_num}-{run_limit}_ep{epoch}_TEST_SQL.sql'))

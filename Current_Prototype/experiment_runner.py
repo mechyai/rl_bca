@@ -211,7 +211,7 @@ if not experiment_params_dict['exploit_only']:
         )
 
         # Save SQL
-        shutil.copy(r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\out\eplusout.sql', exp_folder)
+        shutil.copy(os.path.join(_paths_config.repo_root, r'\Current_Prototype\out\eplusout.sql', exp_folder))
         time.sleep(1)
         os.rename(os.path.join(exp_folder, 'eplusout.sql'),
                   os.path.join(exp_folder, f'{model_span}_run_{run_num}-{run_limit}_ep{epoch}_EXPLOIT_SQL.sql'))
@@ -248,7 +248,7 @@ if not experiment_params_dict['exploit_only']:
         )
 
         # Save SQL
-        shutil.copy(r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\out\eplusout.sql', exp_folder)
+        shutil.copy(os.path.join(_paths_config.repo_root, r'\Current_Prototype\out\eplusout.sql', exp_folder))
         time.sleep(1)
         os.rename(os.path.join(exp_folder, 'eplusout.sql'),
                   os.path.join(exp_folder, f'{model_test}_run_{run_num}-{run_limit}_ep{epoch}_TEST_SQL.sql'))
