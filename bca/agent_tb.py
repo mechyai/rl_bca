@@ -48,6 +48,7 @@ class Agent:
             3: 3,  # act_step_strict_setpoints_3
             4: 6,  # act_default_adjustments_4
             5: 7,  # act_cool_only_5
+            6: 6,  # act_cool_only_default_adjustment_6
         }
 
         return action_dim_directory[actuation_function_id]

@@ -24,12 +24,13 @@ class RunManager:
 
         # --- Behavioral Policy ---
         'eps_start': 0.1,
-        'eps_end': 0.025,
+        'eps_end': 0.01,
         'eps_decay': 1e-3,
 
         # --- Experience Replay ---
-        'replay_capacity': 1000,
-        'batch_size': 8,
+        'PER': True,
+        'replay_capacity': 5000,
+        'batch_size': 64,
 
         # -- BDQ --
         # Fixed
@@ -38,15 +39,15 @@ class RunManager:
         'actuation_function': 5,  # -----------------------------------------------------------------------------------
 
         # Architecture
-        'shared_network_size_l1': 0,
-        'shared_network_size_l2': 0,
+        'shared_network_size_l1': 96,
+        'shared_network_size_l2': 96,
         'value_stream_size': 48,
-        'advantage_streams_size': 48,
+        'advantage_streams_size': 36,
 
         # TD Update
         'reward_aggregation': 'mean',  # sum or mean
         'optimizer': 'Adagrad',
-        'learning_rate': 1e-3,
+        'learning_rate': 5e-4,
         'gamma': 0.8,
 
         # Network mods
@@ -58,9 +59,6 @@ class RunManager:
         # RNN
         # -- Agent / Model --
         'rnn': False,
-
-        # -- Replay Memory --
-        'PER': True,
         'sequence_ts_spacing': 3,
         'sequence_length': 5,
 

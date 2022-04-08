@@ -10,22 +10,22 @@ from bca import RunManager, TensorboardManager
 from bca import mdp_manager, _paths_config, experiment_manager
 
 year = mdp_manager.year
-model_span = 'Test'  # Year, May, Test
+model_span = 'April_May'  # Year, May, Test
 model_test = 'June'
-# exp_name = 'Cool_Only_LR_Decay_Gamma_0.8_RNN_No_Shared'
-exp_name = 'Tester'
+exp_name = 'Cool_Only_LR_Decay_PER_test'
+# exp_name = 'Tester'
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 2,
+    'epochs': 10,
     'load_model': r'',
     'exploit_only': False,
     'test': True,
     'experiment_desc': ''
 }
 
-run_modification = [5e-3, 1e-3, 5e-4] #, 5e-5, 1e-5, 5e-6]  # 1e-6]
+run_modification = [5e-3, 1e-3, 5e-4, 5e-5]  #, 1e-5, 5e-6]  # 1e-6]
 # run_modification = [5e-3]
 
 # -- FILE PATHS --
