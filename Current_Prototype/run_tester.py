@@ -12,7 +12,11 @@ from bca_manager import _paths_config, experiment_manager
 
 
 year = MDP.year
-model_span = 'June'  # Year, May,  Test
+month_start = 'April'
+month_end = 'April'
+day_start = 1
+day_end = 2
+
 exp_name = 'testing'
 test_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}'
 
@@ -72,6 +76,8 @@ for run_num, param_value in enumerate(run_modification):
             idf_file_final=idf_final_file,
             epw_file=epw_file,
             year=year,
+            start_month=month_start,
+            end_day=day_end,
             run_type=run_type,
         )
         my_tb.record_epoch_results(

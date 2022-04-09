@@ -1,6 +1,6 @@
 from .tensorboard_manager import TensorboardManager
 
-from .bem_manager2 import ModelManager
+from .bem_manager import ModelManager
 
 from .run_manager import RunManager
 

@@ -50,8 +50,8 @@ class TensorboardManager:
         # self.tb.add_scalar('__Epoch/Reward - Wind', agent.reward_component_sum[2], epoch)
 
         # Histogram
-        discomfort_histogram = np.append(agent.cold_temps_histogram_data, agent.warm_temps_histogram_data)
-        self.tb.add_histogram('Temp Discomfort per Min', discomfort_histogram)
+        # discomfort_histogram = np.append(agent.cold_temps_histogram_data, agent.warm_temps_histogram_data)
+        # self.tb.add_histogram('Temp Discomfort per Min', discomfort_histogram)
         # self.tb.add_histogram('Cold Discomfort per Min', agent.cold_temps_histogram_data)
         # self.tb.add_histogram('Warm Discomfort per Min', agent.warm_temps_histogram_data)
 
