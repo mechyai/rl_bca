@@ -2,18 +2,22 @@ import gc
 from typing import Union
 
 from emspy import EmsPy
-from bca import RunManager, ModelManager, TensorboardManager, mdp_manager
-from bca import BranchingDQN, BranchingDQN_RNN
+from bca import BranchingDQN, BranchingDQN_RNN, MDP
+from bca_manager import RunManager, ModelManager, TensorboardManager
 
 
 def run_experiment(run: RunManager.Run,
                    run_manager: RunManager,
                    bdq: Union[BranchingDQN, BranchingDQN_RNN],
                    tensorboard_manager: TensorboardManager,
-                   idf_file_base: str,
+                   osm_file: str,
                    idf_file_final: str,
                    epw_file: str,
                    year: int,
+                   start_month: Union[str, int] = 'January',
+                   end_month: Union[str, int] = None,
+                   start_day: int = None,
+                   end_day: int = None,
                    run_type: str = 'train'
                    ):
     """This runs an entire simulation for given parameters and objects."""
@@ -41,12 +45,14 @@ def run_experiment(run: RunManager.Run,
 
     # -- INSTANTIATE MDP / CUSTOM IDF / CREATE SIM --
     my_model = ModelManager(
-        mdp_manager_file=mdp_manager,
-        idf_file_input=idf_file_base,
+        mdp_manager_file=MDP,
+        osm_file=osm_file,
         idf_file_output=idf_file_final,
         year=year
     )
-    my_model.create_custom_idf()
+    my_model.set_run_period(start_month, end_month, start_day, end_day)  # change OSM run period
+    my_model.osm_to_idf()  # convert to IDF
+    my_model.create_custom_idf()  # append automated customizations
 
     # -- Create MDP & Building Sim Instance --
     my_mdp = my_model.create_mdp()
@@ -55,7 +61,7 @@ def run_experiment(run: RunManager.Run,
     # -- Instantiate RL Agent --
     my_policy = run_manager.create_policy(run)
     my_memory = run_manager.create_replay_memory(run)
-    my_agent = run_manager.create_agent(run, my_mdp, my_sim, tensorboard_manager)
+    my_agent = run_manager.create_agent(run, my_mdp, my_sim, my_model, tensorboard_manager)
 
     # -- Set Sim Calling Point(s) & Callback Function(s) --
     my_sim.set_calling_point_and_callback_function(

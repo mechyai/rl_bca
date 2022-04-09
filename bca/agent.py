@@ -11,7 +11,7 @@ from emspy import BcaEnv, MdpManager
 
 from bca import BranchingDQN, EpsilonGreedyStrategy, ReplayMemory, PrioritizedReplayMemory
 from bca import BranchingDQN_RNN, SequenceReplayMemory
-from bca import TensorboardManager, mdp_manager
+from bca import MDP
 
 # -- Normalization Params --
 hvac_electricity_energy = {
@@ -56,6 +56,7 @@ class Agent:
     def __init__(self,
                  emspy_sim: BcaEnv,
                  mdp: MdpManager,
+                 bem_model,  # TODO fix imports
                  dqn_model: Union[BranchingDQN, BranchingDQN_RNN],
                  policy: EpsilonGreedyStrategy,
                  replay_memory: Union[ReplayMemory, PrioritizedReplayMemory, SequenceReplayMemory],
@@ -65,7 +66,7 @@ class Agent:
                  rnn: bool = False,
                  reward_aggregation: str = 'mean',
                  learning_loop: int = 1,
-                 tensorboard_manager: TensorboardManager = None
+                 tensorboard_manager = None  # TODO fix imports
                  ):
 
         # -- SIMULATION STATES --
@@ -164,6 +165,7 @@ class Agent:
         self.loss_total = 0
 
         # -- Misc. --
+        self.bem = bem_model
         self._once = True
         self._print = False
         self._checked_action_dims = False
@@ -295,13 +297,13 @@ class Agent:
             forecast_hour = (current_hour + hour) % 24  # E+ clock is 0-23 hrs
 
             weather_forecast_list.append(
-                mdp_manager.normalize_min_max_saturate(
+                MDP.normalize_min_max_saturate(
                     self.sim.get_weather_forecast(['oa_db'], forecast_day, forecast_hour, zone_ts=1),
-                    mdp_manager.outdoor_temp_min,
-                    mdp_manager.outdoor_temp_max)
+                    MDP.outdoor_temp_min,
+                    MDP.outdoor_temp_max)
             )
             weather_forecast_list.append(
-                mdp_manager.digitize_bool(
+                MDP.digitize_bool(
                     self.sim.get_weather_forecast(['sun_up'], forecast_day, forecast_hour, zone_ts=1))
             )
 
@@ -389,8 +391,8 @@ class Agent:
             'reward_cumulative_comfort': self.reward_component_sum[0],
             'reward_rtp': reward_component_instance[1],
             'reward_cumulative_rtp': self.reward_component_sum[1],
-            'reward_wind': reward_component_instance[2],
-            'reward_cumulative_wind': self.reward_component_sum[2],
+            # 'reward_wind': reward_component_instance[2],
+            # 'reward_cumulative_wind': self.reward_component_sum[2],
             # -- Results Metric --
             # Comfort
             'comfort': self.comfort_dissatisfaction,
@@ -500,7 +502,7 @@ class Agent:
                """
 
         # Check action space dim aligns with created BDQ
-        self._action_dimension_check(this_actuation_functions_dims=0)
+        self._action_dimension_check(this_actuation_functions_dims=6)
 
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
@@ -920,20 +922,20 @@ class Agent:
             -- INTERMITTENT RENEWABLE ENERGY USAGE --
             Quantify how much HVAC electricity consumed came from wind and total.
             """
-            total_hvac_electricity = heating_electricity_since_last_interaction \
-                                     + cooling_energy_since_last_interaction \
-                                     + fan_electricity_off_hours
-
-            # joules_to_MWh = 2.77778e-10
-            # total_hvac_electricity = joules_to_MWh * total_hvac_electricity
-            intermittent_gen_mix = np.divide(wind_gen_since_last_interaction, total_gen_since_last_interaction)
-            # Normalize, stretch to cover 0-1 better, range for 2019 is 0-~0.6
-            intermittent_gen_mix = ((intermittent_gen_mix - 0) / (0.7 - 0)) * (1 - 0.0) + 0  # min/max
-
-            reward = np.multiply(total_hvac_electricity, (intermittent_gen_mix - 1)).sum()
-            reward *= lambda_intermittent
-
-            reward_per_component = np.append(reward_per_component, reward)
+            # total_hvac_electricity = heating_electricity_since_last_interaction \
+            #                          + cooling_energy_since_last_interaction \
+            #                          + fan_electricity_off_hours
+            #
+            # # joules_to_MWh = 2.77778e-10
+            # # total_hvac_electricity = joules_to_MWh * total_hvac_electricity
+            # intermittent_gen_mix = np.divide(wind_gen_since_last_interaction, total_gen_since_last_interaction)
+            # # Normalize, stretch to cover 0-1 better, range for 2019 is 0-~0.6
+            # intermittent_gen_mix = ((intermittent_gen_mix - 0) / (0.7 - 0)) * (1 - 0.0) + 0  # min/max
+            #
+            # reward = np.multiply(total_hvac_electricity, (intermittent_gen_mix - 1)).sum()
+            # reward *= lambda_intermittent
+            #
+            # reward_per_component = np.append(reward_per_component, reward)
 
             """
             All Reward Components / Zone

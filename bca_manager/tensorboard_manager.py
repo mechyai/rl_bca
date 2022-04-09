@@ -24,7 +24,7 @@ class TensorboardManager:
         self.tb.add_scalar('Reward/Cumulative', agent.reward_sum, agent.current_step)
         self.tb.add_scalar('Reward/Comfort', agent.reward_component_sum[0], agent.current_step)
         self.tb.add_scalar('Reward/RTP', agent.reward_component_sum[1], agent.current_step)
-        self.tb.add_scalar('Reward/Wind', agent.reward_component_sum[2], agent.current_step)
+        # self.tb.add_scalar('Reward/Wind', agent.reward_component_sum[2], agent.current_step)
         # Sim Data
         self.tb.add_scalar('_SimData/RTP', agent.mdp.get_mdp_element('rtp').value, agent.current_step)
         # Sim Results
@@ -47,7 +47,7 @@ class TensorboardManager:
         self.tb.add_scalar('__Epoch/Reward - All', agent.reward_sum, epoch)
         self.tb.add_scalar('__Epoch/Reward - Comfort', agent.reward_component_sum[0], epoch)
         self.tb.add_scalar('__Epoch/Reward - RTP', agent.reward_component_sum[1], epoch)
-        self.tb.add_scalar('__Epoch/Reward - Wind', agent.reward_component_sum[2], epoch)
+        # self.tb.add_scalar('__Epoch/Reward - Wind', agent.reward_component_sum[2], epoch)
 
         # Histogram
         discomfort_histogram = np.append(agent.cold_temps_histogram_data, agent.warm_temps_histogram_data)
@@ -71,7 +71,7 @@ class TensorboardManager:
                 'Hparam Reward - All': agent.reward_sum,
                 'Hparam Reward - Comfort': agent.reward_component_sum[0],
                 'Hparam Reward - RTP': agent.reward_component_sum[1],
-                'Hparam Reward - Wind': agent.reward_component_sum[2],
+                # 'Hparam Reward - Wind': agent.reward_component_sum[2],
             },
             hparam_domain_discrete=
             {

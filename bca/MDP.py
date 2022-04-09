@@ -74,14 +74,14 @@ tc_vars = {
 
     # Schedule Files
     # $rtp
-    'rtp': [('Schedule Value', f'ERCOT RTM {year}'), normalize_min_max_saturate, 0, 1000],
-    'dap0': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 0hr Ahead'), normalize_min_max_saturate, 0, 1000],
-    'dap1': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 1hr Ahead'), normalize_min_max_saturate, 0, 1000],
-    'dap2': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 2hr Ahead'), normalize_min_max_saturate, 0, 1000],
-    'dap3': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 3hr Ahead'), normalize_min_max_saturate, 0, 1000],
-    'dap4': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 4hr Ahead'), normalize_min_max_saturate, 0, 1000],
-    'dap5': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 5hr Ahead'), normalize_min_max_saturate, 0, 1000],
-    'dap6': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 6hr Ahead'), normalize_min_max_saturate, 0, 1000],
+    'rtp': [('Schedule Value', f'ERCOT RTM {year}'), normalize_min_max_saturate, 0, 250],
+    'dap0': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 0hr Ahead'), normalize_min_max_saturate, 0, 500],
+    'dap1': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 1hr Ahead'), normalize_min_max_saturate, 0, 500],
+    'dap2': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 2hr Ahead'), normalize_min_max_saturate, 0, 500],
+    'dap3': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 3hr Ahead'), normalize_min_max_saturate, 0, 500],
+    'dap4': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 4hr Ahead'), normalize_min_max_saturate, 0, 500],
+    'dap5': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 5hr Ahead'), normalize_min_max_saturate, 0, 500],
+    'dap6': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 6hr Ahead'), normalize_min_max_saturate, 0, 500],
 
     # fuel mix
     'wind_gen': [('Schedule Value', f'ERCOT FMIX {year} - Wind'), normalize_min_max_saturate, 0, 3700],
@@ -127,7 +127,7 @@ tc_vars = {
 tc_meters = {
     # Building-wide
     # 'electricity_facility': ['Electricity:Facility'],
-    'electricity_HVAC': ['Electricity:HVAC', normalize_min_max_saturate, 0, 690000],
+    'electricity_HVAC': ['Electricity:HVAC', normalize_min_max_saturate, 0, 800000],
     # 'electricity_heating': ['Heating:Electricity'],
     # 'electricity_cooling': ['Cooling:Electricity'],
     # 'gas_heating': ['NaturalGas:HVAC'],
@@ -137,29 +137,29 @@ tc_meters = {
     # -- Zn0 (custom meters) --
     'zn0_heating_electricity': ['Zn0 HVAC Heating Electricity', normalize_min_max_saturate, 0, 141000, 0, 1],
     # 'zn0_heating_gas': ['Zn0 HVAC Heating Natural Gas'],
-    'zn0_cooling_electricity': ['Zn0 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 142000, -1, 0],
-    'zn0_fan_electricity': ['Zn0 HVAC Fan Electricity', normalize_min_max_saturate, 0, 22000],
+    'zn0_cooling_electricity': ['Zn0 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 140000, -1, 0],
+    'zn0_fan_electricity': ['Zn0 HVAC Fan Electricity', normalize_min_max_saturate, 0, 26000],
     # 'zn0_hvac_electricity': ['Zn0 HVAC Electricity', normalize_min_max_saturate, 0, 150000],
 
     # -- Zn1 (custom meters) --
     'zn1_heating_electricity': ['Zn1 HVAC Heating Electricity', normalize_min_max_saturate, 0, 182000, 0, 1],
     # 'zn1_heating_gas': ['Zn1 HVAC Heating Natural Gas'],
-    'zn1_cooling_electricity': ['Zn1 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 154000, -1, 0],
-    'zn1_fan_electricity': ['Zn1 HVAC Fan Electricity', normalize_min_max_saturate, 0, 24000],
+    'zn1_cooling_electricity': ['Zn1 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 166000, -1, 0],
+    'zn1_fan_electricity': ['Zn1 HVAC Fan Electricity', normalize_min_max_saturate, 0, 31000],
     # 'zn1_hvac_electricity': ['Zn1 HVAC Electricity', normalize_min_max_saturate, 0, 190000],
 
     # -- Zn2 (custom meters) --
     'zn2_heating_electricity': ['Zn2 HVAC Heating Electricity', normalize_min_max_saturate, 0, 146000, 0, 1],
     # 'zn2_heating_gas': ['Zn2 HVAC Heating Natural Gas'],
-    'zn2_cooling_electricity': ['Zn2 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 111000, -1, 0],
-    'zn2_fan_electricity': ['Zn2 HVAC Fan Electricity', normalize_min_max_saturate, 0, 18000],
+    'zn2_cooling_electricity': ['Zn2 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 120000, -1, 0],
+    'zn2_fan_electricity': ['Zn2 HVAC Fan Electricity', normalize_min_max_saturate, 0, 23000],
     # 'zn2_hvac_electricity': ['Zn2 HVAC Electricity', normalize_min_max_saturate, 0, 150000],
 
     # -- Zn3 (custom meters) --
     'zn3_heating_electricity': ['Zn3 HVAC Heating Electricity', normalize_min_max_saturate, 0, 169000, 0, 1],
     # 'zn3_heating_gas': ['Zn3 HVAC Heating Natural Gas'],
-    'zn3_cooling_electricity': ['Zn3 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 139000, -1, 0],
-    'zn3_fan_electricity': ['Zn3 HVAC Fan Electricity', normalize_min_max_saturate, 0, 21000],
+    'zn3_cooling_electricity': ['Zn3 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 15300, -1, 0],
+    'zn3_fan_electricity': ['Zn3 HVAC Fan Electricity', normalize_min_max_saturate, 0, 29000],
     # 'zn3_hvac_electricity': ['Zn3 HVAC Electricity', normalize_min_max_saturate, 0, 170000],
 
     # -- Zn4 (custom meters) --
@@ -179,7 +179,7 @@ tc_weather = {  # used for current and forecasted weather
     # 'rain': ['is_raining', digitize_bool],  # T/F
     # 'snow': ['is_snowing', digitize_bool],  # T/F
     'wind_dir': ['wind_direction', normalize_min_max_strict, 0, 360],  # IDD - deg, 0-360
-    'wind_speed': ['wind_speed', normalize_min_max_strict, 0, 400]  # IDD - m/s, 0-40
+    'wind_speed': ['wind_speed', normalize_min_max_strict, 0, 40]  # IDD - m/s, 0-40
 }
 
 # ACTION SPACE (& Auxiliary Control)

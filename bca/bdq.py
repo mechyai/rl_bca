@@ -249,6 +249,7 @@ class BranchingQNetwork(nn.Module):
             for i, layer_size in enumerate(advantage_streams_size):
                 if layer_size != 0:
                     layers.append(nn.Linear(prev_layer_size, layer_size))
+                    layers.append(nn.ReLU())
                     prev_layer_size = layer_size
             final_layer = nn.Linear(prev_layer_size, action_dim)
             self.advantage_streams.append(nn.Sequential(*layers, final_layer))

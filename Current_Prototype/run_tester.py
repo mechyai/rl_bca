@@ -4,11 +4,15 @@ import os
 import torch
 
 from emspy import EmsPy
-from bca import RunManager, TensorboardManager
-from bca import mdp_manager, _paths_config, experiment_manager
 
-year = mdp_manager.year
-model_span = 'Test'  # Year, May,  Test
+from bca import MDP
+
+from bca_manager import RunManager, TensorboardManager
+from bca_manager import _paths_config, experiment_manager
+
+
+year = MDP.year
+model_span = 'June'  # Year, May,  Test
 exp_name = 'testing'
 test_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}'
 
@@ -23,7 +27,7 @@ run_modification = [5e-3]  #, 5e-5, 1e-5, 5e-6, 1e-6]
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/BEM')
-idf_file_base = os.path.join(bem_folder, f'IdfFiles/BEM_V1_{year}_{model_span}')
+osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Testbed.osm')
 idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')
@@ -64,7 +68,7 @@ for run_num, param_value in enumerate(run_modification):
             run_manager=run_manager,
             bdq=my_bdq,
             tensorboard_manager=my_tb,
-            idf_file_base=idf_file_base + '.idf',
+            osm_file=osm_base,
             idf_file_final=idf_final_file,
             epw_file=epw_file,
             year=year,

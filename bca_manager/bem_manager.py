@@ -1,7 +1,8 @@
 import os
 
 from emspy import MdpManager, BcaEnv, idf_editor
-from bca import mdp_manager, _paths_config
+from bca import MDP
+from bca_manager import _paths_config
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 # OMP: Error #15: Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.
@@ -42,7 +43,7 @@ class ModelManager:
         'loss': ('Schedule:Constant', 'Schedule Value', 'Loss Tracker', 'Dimensionless'),
     }
 
-    def __init__(self, mdp_manager_file: mdp_manager, idf_file_input: str, idf_file_output: str, year: int):
+    def __init__(self, mdp_manager_file: mdp, idf_file_input: str, idf_file_output: str, year: int):
         """
         :param mdp_manager_file: Imported file that contains all MDP definitions
         :param idf_file_input: Base input EnergyPlus IDF file
