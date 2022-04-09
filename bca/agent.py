@@ -205,6 +205,7 @@ class Agent:
         # -- LEARN BATCH --
         if learn:
             if self.memory.can_provide_sample():  # must have enough interactions stored
+                print('learning')
                 for i in range(self.learning_loop):
                     if isinstance(self.memory, PrioritizedReplayMemory):
                         # Get prioritized batch
@@ -1283,6 +1284,9 @@ class Agent:
     # TODO
     def _is_terminal(self):
         """Determines whether the current state is a terminal state or not. Dictates TD update values."""
+        if self.time.day > self.bem.end_day:  # end of sim, goes to next day 0-hour
+            # Terminal state
+            return 1
         return 0
 
     def _report_daily(self):
