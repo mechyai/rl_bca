@@ -377,6 +377,13 @@ class Agent:
             list(self.meter_encoded_vals.values()),
             dtype=float)
 
+    def _is_terminal(self):
+        """Determines whether the current state is a terminal state or not. Dictates TD update values."""
+        if self.time.day > self.bem.end_day:  # end of sim, goes to next day 0-hour
+            # Terminal state
+            return 1
+        return 0
+
     def _get_aux_actuation(self):
         """
         Used to manage auxiliary actuation (likely schedule writing) in one place.
@@ -1281,22 +1288,3 @@ class Agent:
 
         return rtp_hvac_costs
 
-    # TODO
-    def _is_terminal(self):
-        """Determines whether the current state is a terminal state or not. Dictates TD update values."""
-        if self.time.day > self.bem.end_day:  # end of sim, goes to next day 0-hour
-            # Terminal state
-            return 1
-        return 0
-
-    def _report_daily(self):
-        self.time = self.sim.get_ems_data('t_datetimes')
-        if self.time.day != self.prev_day and self.time.hour == 1:
-            self.day_update = True
-            print(f'{self.time.strftime("%m/%d/%Y")} - Trial: {self.trial} - Reward Daily Sum: '
-                  f'{self.reward_sum - self.prior_reward_sum:0.4f}')
-            print(f'Elapsed Time: {(time.time() - self.tictoc) / 60:0.2f} mins')
-            # updates
-            self.prior_reward_sum = self.reward_sum
-            # update current/prev day
-            self.prev_day = self.time.day
