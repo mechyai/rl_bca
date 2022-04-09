@@ -1,3 +1,4 @@
+import math
 import time
 from typing import Union
 from datetime import datetime as dt
@@ -160,6 +161,7 @@ class Agent:
 
         # -- LEARNING --
         self.learning = True
+        self.learning_steps = 0
         self.learning_loop = learning_loop
         self.loss = 0
         self.loss_total = 0
@@ -169,6 +171,8 @@ class Agent:
         self._once = True
         self._print = False
         self._checked_action_dims = False
+
+    # ----------------------------------------------------- STATE -----------------------------------------------------
 
     def observe(self, learn=True):
         # -- FETCH/UPDATE SIMULATION DATA --
@@ -204,9 +208,12 @@ class Agent:
 
         # -- LEARN BATCH --
         if learn:
-            if self.memory.can_provide_sample():  # must have enough interactions stored
-                print('learning')
+            # Enough Memory
+            if self.memory.can_provide_sample():
+                # Learning Loop
                 for i in range(self.learning_loop):
+                    self.learning_steps += 1
+                    # If PER
                     if isinstance(self.memory, PrioritizedReplayMemory):
                         # Get prioritized batch
                         batch, sample_indices = self.memory.sample()
@@ -223,10 +230,11 @@ class Agent:
                     # Update data
                     self.loss_total += self.loss
 
-                # for i in range(len(self.bdq.policy_network.advantage_streams)):
-                #     self.TB.tb.add_histogram(f'L0/Advantage Stream {i} L0', self.bdq.policy_network.advantage_streams[i][0].weight, self.current_step)
-                #     self.TB.tb.add_histogram(f'L1/Advantage Stream {i} L1', self.bdq.policy_network.advantage_streams[i][1].weight, self.current_step)
+                # -- ANNEAL LEARNING VARS --
+                if isinstance(self.memory, PrioritizedReplayMemory):
+                    self.decay_alpha_betta_PER()
 
+            # -- ANNEAL INTERACTION VARS --
             # Adaptive Learning Rate
             # self.bdq.update_learning_rate()
 
@@ -383,6 +391,16 @@ class Agent:
             # Terminal state
             return 1
         return 0
+
+    def decay_alpha_betta_PER(self):
+        """Anneal variables of prioritization (alpha) and gradient weight adjustments (betta) with annealing."""
+
+        alpha_decay_factor = 0.001
+        betta_decay_factor = 0.01
+        self.memory.alpha = math.exp(-alpha_decay_factor * self.learning_steps)  # 1 --> 0
+        self.memory.betta = 1 - math.exp(-betta_decay_factor * self.learning_steps)  # 0 --> 1
+
+    # ------------------------------------------------- ACTUATION -------------------------------------------------
 
     def _get_aux_actuation(self):
         """
@@ -829,6 +847,7 @@ class Agent:
 
         return self.actuation_dict
 
+    # ------------------------------------------------- REWARD -------------------------------------------------
     # IN USE
     def _reward2(self):
         """Reward function - per component, per zone."""
@@ -1082,6 +1101,7 @@ class Agent:
 
         return reward_components_per_zone_dict
 
+    # ------------------------------------------------- RESULTS -------------------------------------------------
     # IN USE
     def _get_total_reward(self, aggregate_type: str):
         """Aggregates value from reward dict organized by zones and reward components"""
