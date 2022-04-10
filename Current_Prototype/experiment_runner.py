@@ -13,27 +13,30 @@ from bca_manager import _paths_config, experiment_manager
 year = MDP.year
 train_month_start = 'April'
 train_month_end = 'May'
-test_month_start = 'June'
-test_month_end = 'June'
+train_day_start = None
+train_day_end = None
+
+test_month_start = 'August'
+test_month_end = 'August'
 
 train_period = train_month_start + '_' + train_month_end
 test_period = test_month_start + '_' + test_month_end
 
-exp_name = 'Adv_ReLu_No_Wind_PER_LR_decay_act5___finish'
+exp_name = 'Adv_ReLu_No_Wind_PER_LR_decay_act5_bigger_net'
 # exp_name = 'Tester'
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 5,
+    'epochs': 3,
     'load_model': r'',
+    'skip_benchmark': True,
     'exploit_only': False,
-    'skip_benchmark': False,
     'test': True,
     'experiment_desc': 'Testing no wind reward, ReLu in adv stream, and PER + more'
 }
 
-run_modification = [1e-3, 5e-4, 5e-5]  #, 1e-5, 5e-6]  # 1e-6]
+run_modification = [5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]  #, 1e-5, 5e-6]  # 1e-6]
 # run_modification = [5e-3]
 
 # -- FILE PATHS --
@@ -68,6 +71,7 @@ if experiment_params_dict['load_model']:
 # --- Run Baseline Once ---
 
 if not experiment_params_dict['exploit_only']:
+
     if not experiment_params_dict['skip_benchmark']:
         run_type = 'benchmark'
         my_tb = TensorboardManager(
@@ -88,6 +92,8 @@ if not experiment_params_dict['exploit_only']:
             year=year,
             start_month=train_month_start,
             end_month=train_month_end,
+            start_day=train_day_start,
+            end_day=train_day_end,
             run_type=run_type,
         )
         my_tb.record_epoch_results(
@@ -120,6 +126,8 @@ if not experiment_params_dict['exploit_only']:
             year=year,
             start_month=test_month_start,
             end_month=test_month_end,
+            start_day=train_day_start,
+            end_day=train_day_end,
             run_type=run_type,
         )
         my_tb.record_epoch_results(
@@ -141,17 +149,17 @@ if not experiment_params_dict['exploit_only']:
             run = run._replace(learning_rate=param_value)
             my_bdq.change_learning_rate_discrete(param_value)
 
+        # ---- Tensor Board ----
+        param = run.learning_rate
+        my_tb = TensorboardManager(
+            run_manager,
+            name_path=os.path.join(exp_folder,
+                                   f'run_{run_num + 1}-{run_limit}_lr_{param}_TRAIN_'
+                                   f'{experiment_params_dict["epochs"]}_{train_period}')
+        )
+
         for epoch in range(experiment_params_dict['epochs']):
             print(f'\nRun {run_num + 1} of {run_limit}, Epoch {epoch + 1} of {experiment_params_dict["epochs"]}\n{run}\n')
-
-            # ---- Tensor Board ----
-            param = run.learning_rate
-            my_tb = TensorboardManager(
-                run_manager,
-                name_path=os.path.join(exp_folder,
-                                       f'run_{run_num + 1}-{run_limit}_lr_{param}_TRAIN_epoch{epoch + 1}-'
-                                       f'{experiment_params_dict["epochs"]}_{train_period}')
-            )
 
             print('\n********** Train **********\n')
             time_start = time.time()
@@ -168,6 +176,8 @@ if not experiment_params_dict['exploit_only']:
                 year=year,
                 start_month=train_month_start,
                 end_month=train_month_end,
+                start_day=train_day_start,
+                end_day=train_day_end,
                 run_type=run_type,
             )
             my_tb.record_epoch_results(
@@ -181,7 +191,6 @@ if not experiment_params_dict['exploit_only']:
             )
 
             time_train = round(time_start - time.time(), 2) / 60
-
 
         # -- Save Model --
         if experiment_params_dict['epochs'] > 0:
@@ -214,6 +223,8 @@ if not experiment_params_dict['exploit_only']:
             year=year,
             start_month=train_month_start,
             end_month=train_month_end,
+            start_day=train_day_start,
+            end_day=train_day_end,
             run_type=run_type,
         )
         my_tb.record_epoch_results(
@@ -253,6 +264,8 @@ if not experiment_params_dict['exploit_only']:
             year=year,
             start_month=test_month_start,
             end_month=test_month_end,
+            start_day=train_day_start,
+            end_day=train_day_end,
             run_type=run_type,
         )
         my_tb.record_epoch_results(
@@ -314,6 +327,8 @@ else:
             year=year,
             start_month=train_month_start,
             end_month=train_month_end,
+            start_day=train_day_start,
+            end_day=train_day_end,
             run_type=run_type,
         )
         my_tb.record_epoch_results(
@@ -345,6 +360,8 @@ else:
             year=year,
             start_month=test_month_start,
             end_month=test_month_end,
+            start_day=train_day_start,
+            end_day=train_day_end,
             run_type=run_type,
         )
         my_tb.record_epoch_results(

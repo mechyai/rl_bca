@@ -30,37 +30,39 @@ class RunManager:
         'eps_decay': 1e-3,
 
         # --- Experience Replay ---
-        'PER': True,
+        'PER': False,
         'replay_capacity': 5000,
         'batch_size': 64,
 
         # -- BDQ --
         # Fixed
-        'observation_dim': 60,
+        'observation_dim': 61,
         'action_branches': action_branches,  # n building zones
         'actuation_function': 5,  # -----------------------------------------------------------------------------------
 
         # Architecture
         'shared_network_size_l1': 128,
         'shared_network_size_l2': 96,
-        'value_stream_size': 48,
-        'advantage_streams_size': 48,
+        'value_stream_size_l1': 48,
+        'value_stream_size_l2': 36,
+        'advantage_streams_size_l1': 48,
+        'advantage_streams_size_l2': 36,
 
         # TD Update
         'reward_aggregation': 'mean',  # sum or mean
         'optimizer': 'Adagrad',
         'learning_rate': 5e-4,
-        'gamma': 0.9,
+        'gamma': 0.7,
 
         # Network mods
         'td_target': 'mean',  # (0) mean or (1) max
-        'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
+        'gradient_clip_norm': 2,  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': 1 / (action_branches),
-        'target_update_freq': 2e3,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
+        'target_update_freq': 1e3,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
 
         # RNN
         # -- Agent / Model --
-        'rnn': False,
+        'rnn': True,
         'sequence_ts_spacing': 3,
         'sequence_length': 5,
 
@@ -112,8 +114,10 @@ class RunManager:
         # Architecture
         'shared_network_size_l1': [96],
         'shared_network_size_l2': [56],
-        'value_stream_size': [48],
-        'advantage_streams_size': [48],
+        'value_stream_size_l1': [36],
+        'value_stream_size_l2': [],
+        'advantage_streams_size_l1': [48],
+        'advantage_streams_size_l2': [],
 
         # TD Update
         'reward_aggregation': ['mean'],  # sum or mean
@@ -236,7 +240,7 @@ class RunManager:
             self.experience_replay = PrioritizedReplayMemory(
                 capacity=run.replay_capacity,
                 batch_size=run.batch_size,
-                alpha_start=0.5,
+                alpha_start=1,
                 betta_start=0.25
             )
         else:
@@ -258,8 +262,8 @@ class RunManager:
                 action_branches=run.action_branches,
                 action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
                 shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
-                value_stream_size=[run.value_stream_size],
-                advantage_streams_size=[run.advantage_streams_size],
+                value_stream_size=[run.value_stream_size_l1, run.value_stream_size_l2],
+                advantage_streams_size=[run.advantage_streams_size_l1, run.advantage_streams_size_l2],
                 target_update_freq=run.target_update_freq,
                 learning_rate=run.learning_rate,
                 optimizer=run.optimizer,
@@ -274,8 +278,8 @@ class RunManager:
                 action_branches=run.action_branches,
                 action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
                 shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
-                value_stream_size=[run.value_stream_size],
-                advantage_streams_size=[run.advantage_streams_size],
+                value_stream_size=[run.value_stream_size_l1, run.value_stream_size_l2],
+                advantage_streams_size=[run.advantage_streams_size_l1, run.advantage_streams_size_l2],
                 target_update_freq=run.target_update_freq,
                 learning_rate=run.learning_rate,
                 optimizer=run.optimizer,

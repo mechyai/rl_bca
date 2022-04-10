@@ -17,23 +17,23 @@ from bca import MDP
 # -- Normalization Params --
 hvac_electricity_energy = {
     # Zn0
-    'zn0_heating_electricity_max': 688000,  # [J]
-    'zn0_cooling_electricity_max': 120000,  # [J]
-    'zn0_fan_electricity_max': 121000,  # [J]
+    # 'zn0_heating_electricity_max': 688000,  # [J]
+    'zn0_cooling_electricity_max': MDP.tc_meters['zn0_cooling_electricity'][3],  # [J]
+    'zn0_fan_electricity_max': MDP.tc_meters['zn3_fan_electricity'][3],  # [J]
     # Zn1
-    'zn1_heating_electricity_max': 22000,  # [J]
-    'zn1_cooling_electricity_max': 159000,  # [J]
-    'zn1_fan_electricity_max': 131000,  # [J]
+    # 'zn1_heating_electricity_max': 22000,  # [J]
+    'zn1_cooling_electricity_max': MDP.tc_meters['zn1_cooling_electricity'][3],  # [J]
+    'zn1_fan_electricity_max': MDP.tc_meters['zn3_fan_electricity'][3],  # [J]
     # Zn2
-    'zn2_heating_electricity_max': 128000,  # [J]
-    'zn2_cooling_electricity_max': 93000,  # [J]
-    'zn2_fan_electricity_max': 18000,  # [J]
+    # 'zn2_heating_electricity_max': 128000,  # [J]
+    'zn2_cooling_electricity_max': MDP.tc_meters['zn2_cooling_electricity'][3],  # [J]
+    'zn2_fan_electricity_max': MDP.tc_meters['zn3_fan_electricity'][3],  # [J]
     # Zn3
-    'zn3_heating_electricity_max': 149000,  # [J]
-    'zn3_cooling_electricity_max': 118000,  # [J]
-    'zn3_fan_electricity_max': 21000,  # [J]
+    # 'zn3_heating_electricity_max': 149000,  # [J]
+    'zn3_cooling_electricity_max': MDP.tc_meters['zn3_cooling_electricity'][3],  # [J]
+    'zn3_fan_electricity_max': MDP.tc_meters['zn3_fan_electricity'][3],  # [J]
     # Zn4
-    'zn4_heating_electricity_max': None,
+    # 'zn4_heating_electricity_max': None,
     'zn4_cooling_electricity_max': None,
     'zn4_fan_electricity_max': None
 }
@@ -67,7 +67,7 @@ class Agent:
                  rnn: bool = False,
                  reward_aggregation: str = 'mean',
                  learning_loop: int = 1,
-                 tensorboard_manager = None  # TODO fix imports
+                 tensorboard_manager=None  # TODO fix imports
                  ):
 
         # -- SIMULATION STATES --
@@ -232,22 +232,22 @@ class Agent:
 
                 # -- ANNEAL LEARNING VARS --
                 if isinstance(self.memory, PrioritizedReplayMemory):
-                    self.decay_alpha_betta_PER()
+                    self.decay_alpha_betta()
 
             # -- ANNEAL INTERACTION VARS --
             # Adaptive Learning Rate
             # self.bdq.update_learning_rate()
 
         # -- PERFORMANCE RESULTS --
-        self.comfort_dissatisfaction = self._get_comfort_results()
-        self.hvac_rtp_costs = self._get_rtp_hvac_cost_and_wind_results()
+        # self.comfort_dissatisfaction = self._get_comfort_results()
+        # self.hvac_rtp_costs = self._get_rtp_hvac_cost_and_wind_results()
 
         # -- UPDATE DATA --
         self.state_normalized = self.next_state_normalized
         self.current_step += 1
         # Update Sum
-        self.comfort_dissatisfaction_total += self.comfort_dissatisfaction
-        self.hvac_rtp_costs_total += self.hvac_rtp_costs
+        # self.comfort_dissatisfaction_total += self.comfort_dissatisfaction
+        # self.hvac_rtp_costs_total += self.hvac_rtp_costs
         self.reward_sum += self.reward
 
         # -- TensorBoard --
@@ -279,13 +279,13 @@ class Agent:
         self.weather_encoded_vals = self.mdp.get_ems_encoded_values(self.weather_names)
 
         # -- Combine Heating & Cooling Electricity --
-        for meter_name in self.meter_encoded_vals.copy():
-            # combine heating and cooling into 1 val [-1, 0]:cooling + [0, 1]:heating, then remove individuals
-            if 'heating' in meter_name:
-                zone_n = meter_name.split('_')[0]
-                heating_val = self.meter_encoded_vals.pop(meter_name)
-                cooling_val = self.meter_encoded_vals.pop(zone_n + '_cooling_electricity')
-                self.meter_encoded_vals[zone_n + '_hvac_electricity'] = heating_val + cooling_val
+        # for meter_name in self.meter_encoded_vals.copy():
+        #     # combine heating and cooling into 1 val [-1, 0]:cooling + [0, 1]:heating, then remove individuals
+        #     if 'heating' in meter_name:
+        #         zone_n = meter_name.split('_')[0]
+        #         heating_val = self.meter_encoded_vals.pop(meter_name)
+        #         cooling_val = self.meter_encoded_vals.pop(zone_n + '_cooling_electricity')
+        #         self.meter_encoded_vals[zone_n + '_hvac_electricity'] = heating_val + cooling_val
 
         # -- RTP High-Price Signal --
         rtp = self.var_vals['rtp']
@@ -297,9 +297,9 @@ class Agent:
         else:
             rtp_alert = [0]
 
-        # -- Weather Forecast --
+        # ----------------------------------- Weather Forecast -----------------------------------
         weather_forecast_list = []
-        hours_ahead = 12
+        hours_ahead = 8
         for hour in range(1, hours_ahead + 1, 1):
             current_hour = self.time.hour
             forecast_day = 'today' if current_hour + hour < 24 else 'tomorrow'
@@ -316,16 +316,17 @@ class Agent:
                     self.sim.get_weather_forecast(['sun_up'], forecast_day, forecast_hour, zone_ts=1))
             )
 
-        # -- Timing --
+        # ----------------------------------- Timing -----------------------------------
         year = self.time.year
         month = self.time.month
         days_of_month = calendar.monthrange(self.time.year, month)[1]
         day = self.time.day
         hour = self.time.hour
         minute = self.time.minute
+
         time_list = [month / 12, day / days_of_month, hour / 24, minute / 60]
 
-        # -- Building Schedule Progress --
+        # ----------------------------------- Building Schedule Progress -----------------------------------
         hour_start = 6
         hour_end = 19
         weekend = False
@@ -366,7 +367,11 @@ class Agent:
                                           / ((24 - hour_end + hour_start) * 3600)
                 week_state_hot_encoding = [0, 1, 0]  # Of Work
         elif not weekend:
-            building_hours_progress = None  # catch any errors
+            # Catch any errors
+            building_hours_progress = None
+            week_state_hot_encoding = None
+
+        building_hours_progress = [*MDP.sin_cos_normalization(building_hours_progress)]
 
         # -- DO ONCE --
         if self._once:
@@ -378,8 +383,8 @@ class Agent:
             rtp_alert +
             time_list +
             weather_forecast_list +
-            # [building_hours_progress] +
-            # week_state_hot_encoding +
+            building_hours_progress +
+            week_state_hot_encoding +
             list(self.var_encoded_vals.values()) +
             list(self.weather_encoded_vals.values()) +
             list(self.meter_encoded_vals.values()),
@@ -392,13 +397,16 @@ class Agent:
             return 1
         return 0
 
-    def decay_alpha_betta_PER(self):
+    def decay_alpha_betta(self):
         """Anneal variables of prioritization (alpha) and gradient weight adjustments (betta) with annealing."""
 
+        alpha_start = 1
         alpha_decay_factor = 0.001
-        betta_decay_factor = 0.01
-        self.memory.alpha = math.exp(-alpha_decay_factor * self.learning_steps)  # 1 --> 0
-        self.memory.betta = 1 - math.exp(-betta_decay_factor * self.learning_steps)  # 0 --> 1
+        betta_start = 0.6
+        betta_decay_factor = 0.00001
+        # self.memory.alpha = alpha_start * math.exp(-alpha_decay_factor * self.learning_steps)  # 1 --> 0
+        self.memory.alpha = alpha_start
+        self.memory.betta = min(1 - (1 - betta_start) * math.exp(-betta_decay_factor * self.learning_steps), 1)  # 0 --> 1
 
     # ------------------------------------------------- ACTUATION -------------------------------------------------
 
@@ -427,8 +435,8 @@ class Agent:
             'rtp_tracker': self.hvac_rtp_costs,
             'rtp_cumulative': self.hvac_rtp_costs_total,
             # Wind
-            'wind_hvac_use': self.wind_energy_hvac_data[-1],
-            'total_hvac_use': self.total_energy_hvac_data[-1],
+            # 'wind_hvac_use': self.wind_energy_hvac_data[-1],
+            # 'total_hvac_use': self.total_energy_hvac_data[-1],
             # -- Learning --
             'loss': self.loss
         }
@@ -912,9 +920,9 @@ class Agent:
             timestep will be accounted for * the normalized HVAC energy usage
             """
             # Heating
-            heating_electricity_since_last_interaction = np.asarray(
-                self.sim.get_ems_data([f'{zone_i}_heating_electricity'], interaction_span)
-            ) / hvac_electricity_energy[f'{zone_i}_heating_electricity_max']
+            # heating_electricity_since_last_interaction = np.asarray(
+            #     self.sim.get_ems_data([f'{zone_i}_heating_electricity'], interaction_span)
+            # ) / hvac_electricity_energy[f'{zone_i}_heating_electricity_max']
             # heating_gas_since_last_interaction = np.asarray(
             #     self.sim.get_ems_data([f'{zone_i}_heating_gas'], interaction_span))
             # Cooling
@@ -929,7 +937,7 @@ class Agent:
             # Don't penalize for fan usage during day when it is REQUIRED for occupant ventilation, only Off-hours
             fan_electricity_off_hours = np.multiply(building_hours == 0, fan_electricity_since_last_interaction)
 
-            heating_energy = fan_electricity_off_hours + heating_electricity_since_last_interaction  # + heating_gas_since_last_interaction
+            # heating_energy = fan_electricity_off_hours + heating_electricity_since_last_interaction  # + heating_gas_since_last_interaction
             cooling_energy = fan_electricity_off_hours + cooling_energy_since_last_interaction
 
             # Timestep-wise RTP cost, not accounting for energy-usage, only that energy was used
@@ -938,9 +946,10 @@ class Agent:
 
             # Account for Cooling & Heating Costs
             cooling_timesteps_cost = - cooling_factor * np.multiply(cooling_energy, rtp_since_last_interaction)
-            heating_timesteps_cost = - heating_factor * np.multiply(heating_energy, rtp_since_last_interaction)
+            # heating_timesteps_cost = - heating_factor * np.multiply(heating_energy, rtp_since_last_interaction)
 
-            reward = (cooling_timesteps_cost + heating_timesteps_cost).sum()
+            # reward = (cooling_timesteps_cost + heating_timesteps_cost).sum()
+            reward = (cooling_timesteps_cost).sum()
             reward *= lambda_rtp
 
             reward_per_component = np.append(reward_per_component, reward)
@@ -1209,9 +1218,9 @@ class Agent:
             see how much HVAC energy uses.  
             """
 
-            heating_electricity = np.asarray(
-                self.sim.get_ems_data([f'{zone_i}_heating_electricity'], interaction_span)
-            )
+            # heating_electricity = np.asarray(
+            #     self.sim.get_ems_data([f'{zone_i}_heating_electricity'], interaction_span)
+            # )
 
             cooling_electricity = np.asarray(
                 self.sim.get_ems_data([f'{zone_i}_cooling_electricity'], interaction_span)
@@ -1225,16 +1234,18 @@ class Agent:
             fan_electricity_off_hours = np.multiply(building_hours == 0, fan_electricity_since_last_interaction)
 
             joules_to_MWh = 2.77778e-10
+            # total_hvac_electricity = joules_to_MWh * \
+            #                          (heating_electricity + cooling_electricity + fan_electricity_off_hours)
             total_hvac_electricity = joules_to_MWh * \
-                                     (heating_electricity + cooling_electricity + fan_electricity_off_hours)
+                                     (cooling_electricity + fan_electricity_off_hours)
 
             # timestep-wise RTP cost, accounting for HVAC electricity usage
             hvac_electricity_costs = np.multiply(total_hvac_electricity, rtp_since_last_interaction)
             rtp_hvac_costs += hvac_electricity_costs.sum()
 
             # -- RTP Histogram - collect rtp prices when a zone is heating/cooling
-            rtp_hvac_usage = rtp_since_last_interaction[heating_electricity != cooling_electricity]
-            self.rtp_histogram_data.extend(list(rtp_hvac_usage))  # get rid of 0s for when heat/cool OFF
+            # rtp_hvac_usage = rtp_since_last_interaction[heating_electricity != cooling_electricity]
+            # self.rtp_histogram_data.extend(list(rtp_hvac_usage))  # get rid of 0s for when heat/cool OFF
 
             # -- Renewable Energy
             # how much HVAC energy used came from wind and total

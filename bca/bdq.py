@@ -8,10 +8,8 @@ This BDQN will consist of:
 """
 
 import math
-from collections import namedtuple, deque
-import random
+from collections import namedtuple
 import numpy as np
-import scipy
 
 import torch
 import torch.nn as nn
@@ -356,7 +354,7 @@ class BranchingDQN(nn.Module):
                                      f'You entered {self.td_target}')
 
             # duplicate columns from reduction op, so current_Q size is same as next_Q for loss function
-            next_Q = torch.repeat_interleave(next_Q, current_Q.shape[1], 1)  # TODO should this be done with hooks?
+            next_Q = torch.repeat_interleave(next_Q, current_Q.shape[1], 1)
 
         expected_Q = batch_rewards + next_Q * self.gamma * (1 - batch_terminals)  # target
 
