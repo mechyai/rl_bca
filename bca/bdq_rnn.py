@@ -82,19 +82,18 @@ class SequenceReplayMemory(object):
         sample_indices = np.random.choice(range(sample_start, sample_range), self.batch_size, replace=False)
 
         # Get full range of sequence indices for each random sample starting point
-        sequence_indices = np.copy(sample_indices)
+        sequence_indices = np.expand_dims(sample_indices, axis=1)
         for _ in range(self.sequence_length - 1):
-            sequence_indices = \
-                np.concatenate((sequence_indices, sequence_indices[-self.batch_size:] - self.sequence_ts_spacing))
+            prior_sequence = np.expand_dims(sequence_indices.T[0] - self.sequence_ts_spacing, axis=1)
+            # maintain relative order of seq
+            sequence_indices = np.concatenate((prior_sequence, sequence_indices), axis=1)
 
         # Sequence sampling
-        # RNN input shape: batch size, sequence len, input size
+        # {RNN input shape: batch size, sequence len, input size}
         state_batch = self.state_memory[sequence_indices]
-        state_batch = torch.reshape(state_batch, (self.batch_size, self.sequence_length, -1)).to(self.device)
         next_state_batch = self.next_state_memory[sequence_indices]
-        next_state_batch = torch.reshape(next_state_batch, (self.batch_size, self.sequence_length, -1)).to(self.device)
 
-        # No sequence sampling needed
+        # No sequence sampling needed, end of sequence
         action_batch = self.action_memory[sample_indices].long().to(self.device)
         reward_batch = self.reward_memory[sample_indices].to(self.device)
         terminal_batch = self.terminal_memory[sample_indices].to(self.device)
@@ -174,10 +173,10 @@ class BranchingQNetwork_RNN(nn.Module):
             self.advantage_streams.append(nn.Sequential(*layers, final_layer))
 
     def forward(self, state_input):
-        # RNN Node
-        h0 = torch.zeros(self.rnn_num_layers, state_input.size(0), self.rnn_hidden_size).to(self.device)
-        out, _ = self.rnn(state_input, h0)  # out: batch size, seq len, hidden siz
-        out = out[:, -1, :]  # get last timestep
+        # RNN Node (num layers, batch size, hidden size)
+        h0 = torch.zeros(self.rnn_num_layers, state_input.size(0), self.rnn_hidden_size).to(self.device)  # init hidden
+        out, _ = self.rnn(state_input, h0)  # out: batch size, seq len, hidden size
+        out = out[:, -1, :]  # get last timestep output (many to one)
         # Shared Network
         if len(self.shared_model) != 0:
             out = self.shared_model(out)

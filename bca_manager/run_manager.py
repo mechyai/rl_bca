@@ -32,7 +32,7 @@ class RunManager:
         # --- Experience Replay ---
         'PER': False,
         'replay_capacity': 5000,
-        'batch_size': 64,
+        'batch_size': 32,
 
         # -- BDQ --
         # Fixed
@@ -63,12 +63,12 @@ class RunManager:
         # RNN
         # -- Agent / Model --
         'rnn': True,
-        'sequence_ts_spacing': 3,
+        'sequence_ts_spacing': 1,
         'sequence_length': 5,
 
         # -- BDQ Architecture --
         'rnn_hidden_size': 128,
-        'rnn_num_layers': 2,
+        'rnn_num_layers': 1,
     }
     Run = namedtuple('Run', selected_params.keys())
     selected_params = Run(*selected_params.values())
