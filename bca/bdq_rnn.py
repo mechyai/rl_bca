@@ -39,7 +39,7 @@ class SequenceReplayMemory(object):
 
         self.sequence_ts_spacing = sequence_ts_spacing
         self.sequence_length = sequence_length
-        self.sequence_span = sequence_length * sequence_ts_spacing
+        self.sequence_span = (sequence_length - 1) * sequence_ts_spacing
 
         self.state_memory = None
         self.action_memory = None
@@ -104,8 +104,8 @@ class SequenceReplayMemory(object):
         """Returns most recent sequence from replay."""
 
         # TODO get dynamic sequence len at beginning when not enough samples available?
-        start = (self.interaction_count - 1) % self.capacity
-        prior_sequence_indices = range(start, start - self.sequence_span, -self.sequence_ts_spacing)
+        start = (self.interaction_count - 1) % self.capacity  # remove prior count update
+        prior_sequence_indices = range(start, start - self.sequence_span - 1, -self.sequence_ts_spacing)
         # RNN input shape: batch size, sequence len, input size
         state_sequence = self.state_memory[prior_sequence_indices].unsqueeze(0)
 
@@ -115,7 +115,7 @@ class SequenceReplayMemory(object):
         """Check if replay memory has enough experience tuples to sample batch from"""
 
         # Such that n sequences of span k can be sampled from batch, interaction > n + k (no negative indices)
-        return self.interaction_count > self.batch_size + self.sequence_span
+        return self.interaction_count >= self.batch_size + self.sequence_span
 
 
 class BranchingQNetwork_RNN(nn.Module):
@@ -301,8 +301,15 @@ class BranchingDQN_RNN(nn.Module):
 
         loss = F.mse_loss(expected_Q, current_Q)  # minimize TD error with Mean-Squared-Error
 
+        # loss_old = F.mse_loss(expected_Q, current_Q)  # minimize TD error with Mean-Squared-Error
+
+        loss_fn = nn.MSELoss(reduction='none')  # Get no mean reduction
+        loss_each = loss_fn(expected_Q, current_Q)  # Capture each individual loss component
+
+        loss_total = torch.mean(loss_each)
+
         self.optimizer.zero_grad()
-        loss.backward()
+        loss_total.backward()
 
         # -- Modify Gradients --
         if self.gradient_clip_norm != 0:
@@ -321,7 +328,7 @@ class BranchingDQN_RNN(nn.Module):
         self.update_target_net()
         self.step_count += 1
 
-        return loss.detach().cpu()
+        return float(loss_total.detach().cpu()), loss_each.detach().mean(dim=1).cpu()
 
     def import_model(self, model_path: str):
         """

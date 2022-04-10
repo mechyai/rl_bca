@@ -195,7 +195,8 @@ class Agent:
         self.reward_component_sum = np.array(list(zip(self.reward_component_sum, reward_component_sums))).sum(axis=1)
 
         # -- STORE INTERACTIONS --
-        if learn and self.action is not None:  # after first action, enough data available
+        # Must store regardless for RNN to work
+        if (learn or self.rnn) and self.action is not None:  # after first action, enough data available
             # <S, A, S', R, t> - push experience to Replay Memory
             self.memory.push(
                 self.state_normalized,
@@ -447,7 +448,7 @@ class Agent:
         if self.rnn:
             # Need to have full sequence
             # TODO make more robust, need offline learning in the beginning, or ignore early days results
-            if self.memory.interaction_count >= self.memory.sequence_span:
+            if self.memory.interaction_count > self.memory.sequence_span:
                 self.action = self.bdq.get_greedy_action(self.memory.get_single_sequence())
             else:
                 self.action = np.random.randint(0, self.bdq.action_dim, self.bdq.action_branches)

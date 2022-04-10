@@ -41,12 +41,12 @@ class RunManager:
         'actuation_function': 5,  # -----------------------------------------------------------------------------------
 
         # Architecture
-        'shared_network_size_l1': 128,
+        'shared_network_size_l1': 96,
         'shared_network_size_l2': 96,
-        'value_stream_size_l1': 48,
-        'value_stream_size_l2': 36,
+        'value_stream_size_l1': 64,
+        'value_stream_size_l2': 64,
         'advantage_streams_size_l1': 48,
-        'advantage_streams_size_l2': 36,
+        'advantage_streams_size_l2': 0,
 
         # TD Update
         'reward_aggregation': 'mean',  # sum or mean
@@ -63,12 +63,12 @@ class RunManager:
         # RNN
         # -- Agent / Model --
         'rnn': True,
-        'sequence_ts_spacing': 1,
-        'sequence_length': 5,
+        'sequence_ts_spacing': 6,
+        'sequence_length': 6,
 
         # -- BDQ Architecture --
-        'rnn_hidden_size': 128,
-        'rnn_num_layers': 1,
+        'rnn_hidden_size': 64,
+        'rnn_num_layers': 2,
     }
     Run = namedtuple('Run', selected_params.keys())
     selected_params = Run(*selected_params.values())

@@ -11,7 +11,7 @@ from bca_manager import RunManager, TensorboardManager
 from bca_manager import _paths_config, experiment_manager
 
 year = MDP.year
-train_month_start = 'April'
+train_month_start = 'May'
 train_month_end = 'May'
 train_day_start = None
 train_day_end = None
@@ -22,18 +22,18 @@ test_month_end = 'August'
 train_period = train_month_start + '_' + train_month_end
 test_period = test_month_start + '_' + test_month_end
 
-exp_name = 'Adv_ReLu_No_Wind_PER_LR_decay_act5_bigger_net'
+exp_name = 'RNN_trial_1_____'
 # exp_name = 'Tester'
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 3,
-    'load_model': r'',
     'skip_benchmark': True,
-    'exploit_only': False,
+    'exploit_only': True,
     'test': True,
-    'experiment_desc': 'Testing no wind reward, ReLu in adv stream, and PER + more'
+    'load_model': r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Experiments\220410-1557_RNN_trial_1\bdq_runs_1_epochs_3_lr_0.005',
+    'experiment_desc': 'Testing no wind reward, ReLu in adv stream, + working RNN'
 }
 
 run_modification = [5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]  #, 1e-5, 5e-6]  # 1e-6]
@@ -340,6 +340,13 @@ else:
             epoch=0,
             run_type=run_type
         )
+
+        # Save SQL
+        shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype\out\eplusout.sql'), exp_folder)
+        time.sleep(1)
+        os.rename(os.path.join(exp_folder, 'eplusout.sql'),
+                  os.path.join(exp_folder, f'manual_{train_month_start}_{train_month_end}_EXPLOIT_SQL.sql'))
+
     else:
         print('\n********** Test **********\n')
 
@@ -373,3 +380,9 @@ else:
             epoch=0,
             run_type=run_type
         )
+
+        # Save SQL
+        shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype\out\eplusout.sql'), exp_folder)
+        time.sleep(1)
+        os.rename(os.path.join(exp_folder, 'eplusout.sql'),
+                  os.path.join(exp_folder, f'manual_{test_month_start}_TEST_SQL.sql'))
