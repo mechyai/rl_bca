@@ -158,6 +158,7 @@ if not experiment_params_dict['exploit_only']:
                                    f'{experiment_params_dict["epochs"]}_{train_period}')
         )
 
+        start_step = 0
         for epoch in range(experiment_params_dict['epochs']):
             print(f'\nRun {run_num + 1} of {run_limit}, Epoch {epoch + 1} of {experiment_params_dict["epochs"]}\n{run}\n')
 
@@ -179,6 +180,7 @@ if not experiment_params_dict['exploit_only']:
                 start_day=train_day_start,
                 end_day=train_day_end,
                 run_type=run_type,
+                current_step=start_step
             )
             my_tb.record_epoch_results(
                 agent=my_agent,
@@ -189,6 +191,8 @@ if not experiment_params_dict['exploit_only']:
                 epoch=0,
                 run_type=run_type
             )
+
+            start_step += my_agent.current_step
 
             time_train = round(time_start - time.time(), 2) / 60
 

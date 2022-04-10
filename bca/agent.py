@@ -67,7 +67,8 @@ class Agent:
                  rnn: bool = False,
                  reward_aggregation: str = 'mean',
                  learning_loop: int = 1,
-                 tensorboard_manager=None  # TODO fix imports
+                 tensorboard_manager=None,  # TODO fix imports
+                 current_step: int = 0
                  ):
 
         # -- SIMULATION STATES --
@@ -127,7 +128,7 @@ class Agent:
         self.weekend_days = ['Friday', 'Saturday', 'Sunday', 'Monday']
         self.week_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
         self.n_ts = 0
-        self.current_step = 0
+        self.current_step = current_step
         self.friday_date = 0
 
         # -- INTERACTION FREQUENCIES --
@@ -862,7 +863,7 @@ class Agent:
         """Reward function - per component, per zone."""
 
         lambda_comfort = 1
-        lambda_rtp = 0.03
+        lambda_rtp = 0.03 * 1
         lambda_intermittent = 1
 
         n_zones = self.bdq.action_branches

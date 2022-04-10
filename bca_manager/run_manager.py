@@ -194,7 +194,8 @@ class RunManager:
 
         return runs
 
-    def create_agent(self, run, mdp: MdpManager, sim: BcaEnv, model: ModelManager, tensorboard_manager: TensorboardManager):
+    def create_agent(self, run, mdp: MdpManager, sim: BcaEnv, model: ModelManager,
+                     tensorboard_manager: TensorboardManager, current_step: int = 0):
         """Creates and returns new RL Agent from defined parameters."""
 
         self.agent = Agent(
@@ -210,7 +211,8 @@ class RunManager:
             actuation_dimension=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
             reward_aggregation=run.reward_aggregation,
             learning_loop=run.learning_loops,
-            tensorboard_manager=tensorboard_manager
+            tensorboard_manager=tensorboard_manager,
+            current_step=current_step
         )
 
         return self.agent
