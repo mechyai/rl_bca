@@ -29,6 +29,149 @@ Repos-
 """
 
 
+class PrioritizedSequenceReplayMemory(object):
+    """Manages a sequential replay memory with prioritization, where data is stored as numpy arrays."""
+
+    def __init__(self, capacity: int, batch_size: int, sequence_length: int, sequence_ts_spacing: int = 1,
+                 alpha_start: float = 1, betta_start: float = 1):
+
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.interaction_count = 0
+        self.capacity = capacity
+        self.batch_size = batch_size
+
+        self.sequence_ts_spacing = sequence_ts_spacing
+        self.sequence_length = sequence_length
+        self.sequence_span = (sequence_length - 1) * sequence_ts_spacing
+
+        self.state_memory = None
+        self.action_memory = None
+        self.next_state_memory = None
+        self.reward_memory = None
+        self.terminal_memory = None
+
+        self.first_sample = True
+        self.priorities = None
+        self.loss_memory = None
+        self.max_loss = 0.0001
+        self.first_sample = True
+        self.alpha = alpha_start
+        self.betta = betta_start
+
+    def push(self, state, action, next_state, reward, terminal_flag):
+        """Save a transition to replay memory"""
+
+        if self.first_sample:
+            self.first_sample = False
+
+            # Replay Memory
+            self.state_memory = torch.zeros([self.capacity, len(state)]).to(self.device)
+            self.action_memory = torch.zeros([self.capacity, len(action)]).to(self.device)
+            self.next_state_memory = torch.zeros([self.capacity, len(next_state)]).to(self.device)
+            self.reward_memory = torch.zeros([self.capacity, 1]).to(self.device)
+            self.terminal_memory = torch.zeros([self.capacity, 1]).to(self.device)
+
+            # Prioritization
+            self.priorities = torch.zeros([self.capacity]).to(self.device)
+            self.loss_memory = torch.ones([self.capacity]).to(self.device)
+
+        # Loop through indices based on size of memory
+        index = self.interaction_count % self.capacity
+
+        self.state_memory[index] = torch.Tensor(state).to(self.device)
+        self.action_memory[index] = torch.Tensor(action).to(self.device)
+        self.next_state_memory[index] = torch.Tensor(next_state).to(self.device)
+        self.reward_memory[index] = torch.Tensor([reward]).to(self.device)
+        self.terminal_memory[index] = torch.Tensor([terminal_flag]).to(self.device)
+
+        # Update priorities
+        self.loss_memory[index] = self.max_loss
+
+        self.interaction_count += 1
+
+    def update_td_losses(self, sample_indices, loss_each):
+        """Update the tracked losses (TD error) of the batch."""
+
+        # Update max priority for added samples
+        max_loss = max(loss_each)  # Doing Max over batch to be quicker, instead of whole buffer everytime
+        if max_loss > self.max_loss:
+            self.max_loss = max_loss
+
+        # Add new loss values to memory
+        self.loss_memory[sample_indices] = loss_each
+
+    def get_gradient_weights(self, sample_indices, betta=None):
+        """Return weights for given sample indices from batch for backpropagation to remove bias form priorities."""
+
+        if betta is None:
+            betta = self.betta
+
+        N = self.sampling_width  # current replay size
+        sample_priorities = self.priorities[sample_indices]
+
+        return torch.pow((1 / sample_priorities) / N, betta)
+
+    def get_priority_probabilities(self, alpha=None):
+        """Convert scalar probability values per sample to probability distribution = 100%"""
+
+        if alpha is None:
+            alpha = self.alpha
+
+        # Get priorities from TD loss proxy
+        losses = self.loss_memory[:self.sampling_width]
+        sum_priorities = torch.pow(losses, alpha).sum()
+        self.priorities = torch.pow(losses, alpha) / sum_priorities
+
+        return self.priorities
+
+    def sample(self):
+        """Sample a sequence of transitions randomly"""
+
+        # Get appropriate indices to sample from replay
+        self.sampling_width = self.interaction_count if self.interaction_count < self.capacity else self.capacity
+        sample_start = self.sequence_span
+        probabilities = np.array(self.get_priority_probabilities())  # get priority probability for entire buffer
+
+        # Prioritized sampling
+        sample_indices = np.random.choice(range(self.sampling_width), self.batch_size, replace=False, p=probabilities)
+
+        # Get full range of sequence indices for each random sample starting point
+        sequence_indices = np.expand_dims(sample_indices, axis=1)
+        for _ in range(self.sequence_length - 1):
+            prior_sequence = np.expand_dims(sequence_indices.T[0] - self.sequence_ts_spacing, axis=1)
+            # maintain relative order of seq
+            sequence_indices = np.concatenate((prior_sequence, sequence_indices), axis=1)
+
+        # Sequence sampling
+        # {RNN input shape: batch size, sequence len, input size}
+        state_batch = self.state_memory[sequence_indices]
+        next_state_batch = self.next_state_memory[sequence_indices]
+
+        # No sequence sampling needed, end of sequence
+        action_batch = self.action_memory[sample_indices].long().to(self.device)
+        reward_batch = self.reward_memory[sample_indices].to(self.device)
+        terminal_batch = self.terminal_memory[sample_indices].to(self.device)
+
+        return (state_batch, action_batch, next_state_batch, reward_batch, terminal_batch), sample_indices
+
+    def get_single_sequence(self):
+        """Returns most recent sequence from replay."""
+
+        # TODO get dynamic sequence len at beginning when not enough samples available?
+        start = (self.interaction_count - 1) % self.capacity  # remove prior count update
+        prior_sequence_indices = range(start, start - self.sequence_span - 1, -self.sequence_ts_spacing)
+        # RNN input shape: batch size, sequence len, input size
+        state_sequence = self.state_memory[prior_sequence_indices].unsqueeze(0)
+
+        return state_sequence
+
+    def can_provide_sample(self):
+        """Check if replay memory has enough experience tuples to sample batch from"""
+
+        # Such that n sequences of span k can be sampled from batch, interaction > n + k (no negative indices)
+        return self.interaction_count >= self.batch_size + self.sequence_span
+
+
 class SequenceReplayMemory(object):
     """Manages a sequential replay memory, where data is stored as numpy arrays."""
 
@@ -273,11 +416,11 @@ class BranchingDQN_RNN(nn.Module):
             self.update_count = 0
             self.target_network.load_state_dict(self.policy_network.state_dict())
 
-    def update_policy(self, interaction_batch):
+    def update_policy(self, batch, gradient_weights=None):
         """Learn from batch of interaction tuples. Optimizes learned policy DQN."""
 
         # Get converted batch of tensors
-        batch_states, batch_actions, batch_next_states, batch_rewards, batch_terminals = interaction_batch
+        batch_states, batch_actions, batch_next_states, batch_rewards, batch_terminals = batch
 
         # Bellman TD update
         current_Q = self.get_current_qval(self.policy_network, batch_states, batch_actions)
@@ -299,14 +442,17 @@ class BranchingDQN_RNN(nn.Module):
 
         expected_Q = batch_rewards + next_Q * self.gamma * (1 - batch_terminals)  # target
 
-        loss = F.mse_loss(expected_Q, current_Q)  # minimize TD error with Mean-Squared-Error
-
         # loss_old = F.mse_loss(expected_Q, current_Q)  # minimize TD error with Mean-Squared-Error
 
         loss_fn = nn.MSELoss(reduction='none')  # Get no mean reduction
         loss_each = loss_fn(expected_Q, current_Q)  # Capture each individual loss component
 
-        loss_total = torch.mean(loss_each)
+        # For PER
+        if gradient_weights is not None:
+            # Re-weight gradients through each samples loss
+            loss_total = torch.mean(loss_each * gradient_weights.unsqueeze(dim=1))
+        else:
+            loss_total = torch.mean(loss_each)
 
         self.optimizer.zero_grad()
         loss_total.backward()

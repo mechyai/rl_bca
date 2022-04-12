@@ -12,10 +12,10 @@ from bca_manager import _paths_config, experiment_manager
 
 
 year = MDP.year
-month_start = 'April'
-month_end = 'April'
+month_start = 'June'
+month_end = 'June'
 day_start = 1
-day_end = 2
+day_end = 3
 
 exp_name = 'testing'
 test_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}'
@@ -31,7 +31,7 @@ run_modification = [5e-3]  #, 5e-5, 1e-5, 5e-6, 1e-6]
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/BEM')
-osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Testbed.osm')
+osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Testbed_no_ventilation.osm')
 idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')

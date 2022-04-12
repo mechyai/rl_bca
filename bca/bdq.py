@@ -108,7 +108,7 @@ class PrioritizedReplayMemory:
 
         self.priorities = None
         self.loss_memory = None
-        self.max_loss = 0.001
+        self.max_loss = 0.0001
         self.first_sample = True
         self.alpha = alpha_start
         self.betta = betta_start

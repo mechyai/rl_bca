@@ -6,8 +6,8 @@ from itertools import product
 from emspy import BcaEnv, MdpManager
 
 from bca import Agent
-from bca import BranchingDQN, BranchingDQN_RNN
-from bca import ReplayMemory, PrioritizedReplayMemory, SequenceReplayMemory, EpsilonGreedyStrategy
+from bca import BranchingDQN, ReplayMemory, PrioritizedReplayMemory, EpsilonGreedyStrategy
+from bca import BranchingDQN_RNN, SequenceReplayMemory, PrioritizedSequenceReplayMemory
 
 from bca_manager import ModelManager, TensorboardManager
 
@@ -25,12 +25,12 @@ class RunManager:
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
-        'eps_start': 0.1,
-        'eps_end': 0.01,
-        'eps_decay': 1e-3,
+        'eps_start': 0.2,
+        'eps_end': 0.005,
+        'eps_decay': 1e-4,
 
         # --- Experience Replay ---
-        'PER': False,
+        'PER': True,
         'replay_capacity': 5000,
         'batch_size': 32,
 
@@ -42,7 +42,7 @@ class RunManager:
 
         # Architecture
         'shared_network_size_l1': 96,
-        'shared_network_size_l2': 96,
+        'shared_network_size_l2': 0,
         'value_stream_size_l1': 64,
         'value_stream_size_l2': 64,
         'advantage_streams_size_l1': 48,
@@ -52,7 +52,7 @@ class RunManager:
         'reward_aggregation': 'mean',  # sum or mean
         'optimizer': 'Adagrad',
         'learning_rate': 5e-4,
-        'gamma': 0.7,
+        'gamma': 0.8,
 
         # Network mods
         'td_target': 'mean',  # (0) mean or (1) max
@@ -64,7 +64,7 @@ class RunManager:
         # -- Agent / Model --
         'rnn': True,
         'sequence_ts_spacing': 6,
-        'sequence_length': 6,
+        'sequence_length': 12,
 
         # -- BDQ Architecture --
         'rnn_hidden_size': 64,
@@ -232,18 +232,28 @@ class RunManager:
         """Creates and returns new Experience Replay from defined parameters."""
 
         if run.rnn:
-            self.experience_replay = SequenceReplayMemory(
-                capacity=run.replay_capacity,
-                batch_size=run.batch_size,
-                sequence_length=run.sequence_length,
-                sequence_ts_spacing=run.sequence_ts_spacing
-            )
+            if run.PER:
+                self.experience_replay = PrioritizedSequenceReplayMemory(
+                    capacity=run.replay_capacity,
+                    batch_size=run.batch_size,
+                    sequence_length=run.sequence_length,
+                    sequence_ts_spacing=run.sequence_ts_spacing,
+                    alpha_start=1,
+                    betta_start=0.4
+                )
+            else:
+                self.experience_replay = SequenceReplayMemory(
+                    capacity=run.replay_capacity,
+                    batch_size=run.batch_size,
+                    sequence_length=run.sequence_length,
+                    sequence_ts_spacing=run.sequence_ts_spacing
+                )
         elif run.PER:
             self.experience_replay = PrioritizedReplayMemory(
                 capacity=run.replay_capacity,
                 batch_size=run.batch_size,
                 alpha_start=1,
-                betta_start=0.25
+                betta_start=0.4
             )
         else:
             self.experience_replay = ReplayMemory(

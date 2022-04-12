@@ -11,38 +11,38 @@ from bca_manager import RunManager, TensorboardManager
 from bca_manager import _paths_config, experiment_manager
 
 year = MDP.year
-train_month_start = 'May'
-train_month_end = 'May'
+train_month_start = 'April'
+train_month_end = 'June'
 train_day_start = None
 train_day_end = None
 
-test_month_start = 'August'
-test_month_end = 'August'
+test_month_start = 'July'
+test_month_end = 'July'
 
 train_period = train_month_start + '_' + train_month_end
 test_period = test_month_start + '_' + test_month_end
 
-exp_name = 'RNN_trial_1_____'
+exp_name = 'RNN_PER_1'
 # exp_name = 'Tester'
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 3,
-    'skip_benchmark': True,
-    'exploit_only': True,
+    'epochs': 5,
+    'skip_benchmark': False,
+    'exploit_only': False,
     'test': True,
-    'load_model': r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Experiments\220410-1557_RNN_trial_1\bdq_runs_1_epochs_3_lr_0.005',
+    'load_model': r'',
     'experiment_desc': 'Testing no wind reward, ReLu in adv stream, + working RNN'
 }
 
-run_modification = [5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]  #, 1e-5, 5e-6]  # 1e-6]
+run_modification = [1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]  #, 1e-5, 5e-6]  # 1e-6]
 # run_modification = [5e-3]
 
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/BEM')
-osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Testbed.osm')
+osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Testbed_no_ventilation.osm')
 idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')

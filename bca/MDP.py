@@ -151,28 +151,28 @@ tc_meters = {
     # -- Zn0 (custom meters) --
     # 'zn0_heating_electricity': ['Zn0 HVAC Heating Electricity', normalize_min_max_saturate, 0, 141000, 0, 1],
     # 'zn0_heating_gas': ['Zn0 HVAC Heating Natural Gas'],
-    'zn0_cooling_electricity': ['Zn0 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 140000, -1, 0],
+    'zn0_cooling_electricity': ['Zn0 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 140000, -1, 1],
     'zn0_fan_electricity': ['Zn0 HVAC Fan Electricity', normalize_min_max_saturate, 0, 26000],
     # 'zn0_hvac_electricity': ['Zn0 HVAC Electricity', normalize_min_max_saturate, 0, 150000],
 
     # -- Zn1 (custom meters) --
     # 'zn1_heating_electricity': ['Zn1 HVAC Heating Electricity', normalize_min_max_saturate, 0, 182000, 0, 1],
     # 'zn1_heating_gas': ['Zn1 HVAC Heating Natural Gas'],
-    'zn1_cooling_electricity': ['Zn1 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 166000, -1, 0],
+    'zn1_cooling_electricity': ['Zn1 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 166000, -1, 1],
     'zn1_fan_electricity': ['Zn1 HVAC Fan Electricity', normalize_min_max_saturate, 0, 31000],
     # 'zn1_hvac_electricity': ['Zn1 HVAC Electricity', normalize_min_max_saturate, 0, 190000],
 
     # -- Zn2 (custom meters) --
     # 'zn2_heating_electricity': ['Zn2 HVAC Heating Electricity', normalize_min_max_saturate, 0, 146000, 0, 1],
     # 'zn2_heating_gas': ['Zn2 HVAC Heating Natural Gas'],
-    'zn2_cooling_electricity': ['Zn2 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 120000, -1, 0],
+    'zn2_cooling_electricity': ['Zn2 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 120000, -1, 1],
     'zn2_fan_electricity': ['Zn2 HVAC Fan Electricity', normalize_min_max_saturate, 0, 23000],
     # 'zn2_hvac_electricity': ['Zn2 HVAC Electricity', normalize_min_max_saturate, 0, 150000],
 
     # -- Zn3 (custom meters) --
     # 'zn3_heating_electricity': ['Zn3 HVAC Heating Electricity', normalize_min_max_saturate, 0, 169000, 0, 1],
     # 'zn3_heating_gas': ['Zn3 HVAC Heating Natural Gas'],
-    'zn3_cooling_electricity': ['Zn3 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 153000, -1, 0],
+    'zn3_cooling_electricity': ['Zn3 HVAC Cooling Electricity', normalize_min_max_saturate, 0, 153000, -1, 1],
     'zn3_fan_electricity': ['Zn3 HVAC Fan Electricity', normalize_min_max_saturate, 0, 29000],
     # 'zn3_hvac_electricity': ['Zn3 HVAC Electricity', normalize_min_max_saturate, 0, 170000],
 
