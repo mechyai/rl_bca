@@ -29,10 +29,10 @@ exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 5,
-    'skip_benchmark': False,
-    'exploit_only': False,
+    'skip_benchmark': True,
+    'exploit_only': True,
     'test': True,
-    'load_model': r'',
+    'load_model': r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Experiments\Temp_Model\bdq_runs_3_epochs_5_lr_1e-06',
     'experiment_desc': 'Testing no wind reward, ReLu in adv stream, + working RNN'
 }
 
@@ -192,7 +192,7 @@ if not experiment_params_dict['exploit_only']:
                 run_type=run_type
             )
 
-            start_step += my_agent.current_step
+            start_step = my_agent.current_step
 
             time_train = round(time_start - time.time(), 2) / 60
 
@@ -245,7 +245,7 @@ if not experiment_params_dict['exploit_only']:
         shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype\out\eplusout.sql'), exp_folder)
         time.sleep(1)
         os.rename(os.path.join(exp_folder, 'eplusout.sql'),
-                  os.path.join(exp_folder, f'{train_period}_run_{run_num}-{run_limit}_ep{epoch + 1}_EXPLOIT_SQL.sql'))
+                  os.path.join(exp_folder, f'{train_period}_run_{run_num + 1}-{run_limit}_ep{epoch + 1}_EXPLOIT_SQL.sql'))
 
         print('\n********** Test **********\n')
 
@@ -286,7 +286,7 @@ if not experiment_params_dict['exploit_only']:
         shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype\out\eplusout.sql'), exp_folder)
         time.sleep(1)
         os.rename(os.path.join(exp_folder, 'eplusout.sql'),
-                  os.path.join(exp_folder, f'{test_period}_run_{run_num}-{run_limit}_ep{epoch + 1}_TEST_SQL.sql'))
+                  os.path.join(exp_folder, f'{test_period}_run_{run_num + 1}-{run_limit}_ep{epoch + 1}_TEST_SQL.sql'))
 
         exp_file = os.path.join(exp_folder, '_exp_results_log.txt')
         # -- Save / Write Data --

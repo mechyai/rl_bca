@@ -20,8 +20,8 @@ class RunManager:
 
     selected_params = {
         # -- Agent Params --
-        'observation_ts_frequency': 5,  # * [5, 10, 15],
-        'actuation_ts_frequency': 5,  # * [5, 10, 15],
+        'observation_ts_frequency': 15,  # * [5, 10, 15],
+        'actuation_ts_frequency': 15,  # * [5, 10, 15],
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
@@ -42,7 +42,7 @@ class RunManager:
 
         # Architecture
         'shared_network_size_l1': 96,
-        'shared_network_size_l2': 0,
+        'shared_network_size_l2': 72,
         'value_stream_size_l1': 64,
         'value_stream_size_l2': 64,
         'advantage_streams_size_l1': 48,
@@ -63,11 +63,11 @@ class RunManager:
         # RNN
         # -- Agent / Model --
         'rnn': True,
-        'sequence_ts_spacing': 6,
-        'sequence_length': 12,
+        'sequence_ts_spacing': 1,
+        'sequence_length': 24,
 
         # -- BDQ Architecture --
-        'rnn_hidden_size': 64,
+        'rnn_hidden_size': 72,
         'rnn_num_layers': 2,
     }
     Run = namedtuple('Run', selected_params.keys())

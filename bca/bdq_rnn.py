@@ -43,6 +43,7 @@ class PrioritizedSequenceReplayMemory(object):
         self.sequence_ts_spacing = sequence_ts_spacing
         self.sequence_length = sequence_length
         self.sequence_span = (sequence_length - 1) * sequence_ts_spacing
+        self.sampling_width = None
 
         self.state_memory = None
         self.action_memory = None
@@ -106,7 +107,7 @@ class PrioritizedSequenceReplayMemory(object):
         if betta is None:
             betta = self.betta
 
-        N = self.sampling_width  # current replay size
+        N = self.sampling_width - self.sequence_span  # current replay size, need to exclude indices that can't be selected
         sample_priorities = self.priorities[sample_indices]
 
         return torch.pow((1 / sample_priorities) / N, betta)
@@ -129,11 +130,13 @@ class PrioritizedSequenceReplayMemory(object):
 
         # Get appropriate indices to sample from replay
         self.sampling_width = self.interaction_count if self.interaction_count < self.capacity else self.capacity
+        self.sampling_width -= self.sequence_span  # must exclude unreachable indices in replay b/c of sequence
         sample_start = self.sequence_span
         probabilities = np.array(self.get_priority_probabilities())  # get priority probability for entire buffer
 
         # Prioritized sampling
-        sample_indices = np.random.choice(range(self.sampling_width), self.batch_size, replace=False, p=probabilities)
+        sample_indices = np.random.choice(range(sample_start, self.sampling_width), self.batch_size, replace=False,
+                                          p=probabilities)
 
         # Get full range of sequence indices for each random sample starting point
         sequence_indices = np.expand_dims(sample_indices, axis=1)

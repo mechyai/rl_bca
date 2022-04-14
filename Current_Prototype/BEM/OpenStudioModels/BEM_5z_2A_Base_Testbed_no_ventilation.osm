@@ -3522,12 +3522,12 @@ OS:AirLoopHVAC:UnitarySystem,
   Load,                                   !- Control Type
   {ae7b6f12-a22e-46cb-a965-3e016477f782}, !- Controlling Zone or Thermostat Location
   None,                                   !- Dehumidification Control Type
-  {05d895d8-8f7c-4b76-8be6-7842ab8fd7ac}, !- Availability Schedule Name
+  {fbb8a908-7511-400e-a6f3-2d07f7a7eeb0}, !- Availability Schedule Name
   {8fc883b0-39ed-46ca-81a4-8d039f1c6321}, !- Air Inlet Node Name
   {99dc3b28-ee36-467d-8f31-53f0f15b6148}, !- Air Outlet Node Name
   {152fe012-0efd-4cbe-81b1-43099554dd67}, !- Supply Fan Name
   BlowThrough,                            !- Fan Placement
-  {7b342fed-2623-43ee-8b14-b37bc2d4bbc1}, !- Supply Air Fan Operating Mode Schedule Name
+  {05d895d8-8f7c-4b76-8be6-7842ab8fd7ac}, !- Supply Air Fan Operating Mode Schedule Name
   {9c367f5b-847f-4225-8606-27da9fcebafd}, !- Heating Coil Name
   1,                                      !- DX Heating Coil Sizing Ratio
   {40ef9dee-5875-4922-b1fb-2a8b8f489169}, !- Cooling Coil Name
