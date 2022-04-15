@@ -31,7 +31,7 @@ exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 5,
-    'skip_benchmark': False,
+    'skip_benchmark': True,
     'exploit_only': False,
     'test': True,
     'load_model': r'',

@@ -31,6 +31,7 @@ experiment_params_dict = {
     'run_index_start': 0,
     'run_index_limit': 2,
     'load_model': r'',
+    'skip_baseline': True,
     'experiment_desc': 'testing PER'
 }
 
@@ -76,65 +77,66 @@ my_tb = TensorboardManager(
     name_path=os.path.join(exp_folder, f'_{train_period}_BASELINE')
 )
 
-print('\n********** Baseline **********\n')
+if not experiment_params_dict['skip_baseline']:
+    print('\n********** Baseline **********\n')
 
-baseline_agent = experiment_manager.run_experiment(
-    run=run,
-    run_manager=run_manager,
-    bdq=my_bdq,
-    tensorboard_manager=my_tb,
-    osm_file=osm_base,
-    idf_file_final=idf_final_file,
-    epw_file=epw_file,
-    year=year,
-    start_month=train_month_start,
-    end_month=train_month_end,
-    start_day=train_day_start,
-    end_day=train_day_end,
-    run_type=run_type,
-)
-my_tb.record_epoch_results(
-    agent=baseline_agent,
-    experimental_params=experiment_params_dict,
-    run=run,
-    run_count=0,
-    run_limit=run_limit,
-    epoch=0,
-    run_type=run_type
-)
+    baseline_agent = experiment_manager.run_experiment(
+        run=run,
+        run_manager=run_manager,
+        bdq=my_bdq,
+        tensorboard_manager=my_tb,
+        osm_file=osm_base,
+        idf_file_final=idf_final_file,
+        epw_file=epw_file,
+        year=year,
+        start_month=train_month_start,
+        end_month=train_month_end,
+        start_day=train_day_start,
+        end_day=train_day_end,
+        run_type=run_type,
+    )
+    my_tb.record_epoch_results(
+        agent=baseline_agent,
+        experimental_params=experiment_params_dict,
+        run=run,
+        run_count=0,
+        run_limit=run_limit,
+        epoch=0,
+        run_type=run_type
+    )
 
-# Testing Month
-my_tb = TensorboardManager(
-    run_manager,
-    name_path=os.path.join(exp_folder, f'_{test_period}_TEST_BASELINE')
-)
+    # Testing Month
+    my_tb = TensorboardManager(
+        run_manager,
+        name_path=os.path.join(exp_folder, f'_{test_period}_TEST_BASELINE')
+    )
 
-print('\n********** Testing Baseline **********\n')
+    print('\n********** Testing Baseline **********\n')
 
-baseline_agent = experiment_manager.run_experiment(
-    run=run,
-    run_manager=run_manager,
-    bdq=my_bdq,
-    tensorboard_manager=my_tb,
-    osm_file=osm_base,
-    idf_file_final=idf_final_file,
-    epw_file=epw_file,
-    year=year,
-    start_month=test_month_start,
-    end_month=test_month_end,
-    start_day=test_day_start,
-    end_day=test_day_end,
-    run_type=run_type,
-)
-my_tb.record_epoch_results(
-    agent=baseline_agent,
-    experimental_params=experiment_params_dict,
-    run=run,
-    run_count=0,
-    run_limit=run_limit,
-    epoch=0,
-    run_type=run_type
-)
+    baseline_agent = experiment_manager.run_experiment(
+        run=run,
+        run_manager=run_manager,
+        bdq=my_bdq,
+        tensorboard_manager=my_tb,
+        osm_file=osm_base,
+        idf_file_final=idf_final_file,
+        epw_file=epw_file,
+        year=year,
+        start_month=test_month_start,
+        end_month=test_month_end,
+        start_day=test_day_start,
+        end_day=test_day_end,
+        run_type=run_type,
+    )
+    my_tb.record_epoch_results(
+        agent=baseline_agent,
+        experimental_params=experiment_params_dict,
+        run=run,
+        run_count=0,
+        run_limit=run_limit,
+        epoch=0,
+        run_type=run_type
+    )
 
 # ---------------------------------------------------- Run Training ----------------------------------------------------
 

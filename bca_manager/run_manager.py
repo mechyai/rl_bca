@@ -32,7 +32,7 @@ class RunManager:
         # --- Experience Replay ---
         'PER': True,
         'replay_capacity': 2000,
-        'batch_size': 32,
+        'batch_size': 8,
 
         # -- BDQ --
         # Fixed

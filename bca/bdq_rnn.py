@@ -168,6 +168,7 @@ class PrioritizedSequenceReplayMemory(object):
             prior_sequence = np.expand_dims(sequence_indices.T[0] - self.sequence_ts_spacing, axis=1)
             # Maintain relative order of seq
             sequence_indices = np.concatenate((prior_sequence, sequence_indices), axis=1)
+        sequence_indices = torch.tensor(sequence_indices).long().to(self.device)
 
         # Sequence sampling
         # {RNN input shape: batch size, sequence len, input size}
@@ -277,6 +278,7 @@ class SequenceReplayMemory(object):
             prior_sequence = np.expand_dims(sequence_indices.T[0] - self.sequence_ts_spacing, axis=1)
             # Maintain relative order of seq
             sequence_indices = np.concatenate((prior_sequence, sequence_indices), axis=1)
+        sequence_indices = torch.tensor(sequence_indices).long().to(self.device)
 
         # Sequence sampling
         # {RNN input shape: batch size, sequence len, input size}
