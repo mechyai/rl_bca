@@ -19,16 +19,22 @@ class TensorboardManager:
     def record_timestep_results(self, agent):
         """Record data for each timestep from agent state."""
 
+        # -- Learning --
         self.tb.add_scalar('Loss', agent.loss, agent.current_step)
         self.tb.add_scalar('Reward/All', agent.reward, agent.current_step)
         self.tb.add_scalar('Reward/Cumulative', agent.reward_sum, agent.current_step)
         self.tb.add_scalar('Reward/Comfort', agent.reward_component_sum[0], agent.current_step)
         self.tb.add_scalar('Reward/RTP', agent.reward_component_sum[1], agent.current_step)
         # self.tb.add_scalar('Reward/Wind', agent.reward_component_sum[2], agent.current_step)
-        # Sim Data
+
+        # -- Sim Data --
         self.tb.add_scalar('_SimData/RTP', agent.mdp.get_mdp_element('rtp').value, agent.current_step)
-        # self.tb.add_scalar('_SimData/PER_Betta', agent.memory.betta, agent.current_step)
-        # Sim Results
+        # Hyperparam Data
+        self.tb.add_scalar('_SimData/PER_Betta', agent.memory.betta, agent.current_step)
+        self.tb.add_scalar('_SimData/PER_Alpha', agent.memory.alpha, agent.current_step)
+        self.tb.add_scalar('_SimData/Epsilon', agent.epsilon, agent.current_step)
+
+        # -- Sim Results --
         # self.tb.add_scalar('_Results/Comfort Dissatisfied Total', agent.comfort_dissatisfaction_total, agent.current_step)
         # self.tb.add_scalar('_Results/HVAC RTP Cost Total', agent.hvac_rtp_costs_total, agent.current_step)
 

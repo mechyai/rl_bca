@@ -18,22 +18,24 @@ train_day_end = None
 
 test_month_start = 'July'
 test_month_end = 'July'
+test_day_start = None
+test_day_end = None
 
 train_period = train_month_start + '_' + train_month_end
 test_period = test_month_start + '_' + test_month_end
 
-exp_name = 'RNN_PER_1'
+exp_name = 'new_RNN_PER_1'
 # exp_name = 'Tester'
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 5,
-    'skip_benchmark': True,
-    'exploit_only': True,
+    'skip_benchmark': False,
+    'exploit_only': False,
     'test': True,
-    'load_model': r'A:\Files\PycharmProjects\rl_bca\Current_Prototype\Experiments\Temp_Model\bdq_runs_3_epochs_5_lr_1e-06',
-    'experiment_desc': 'Testing no wind reward, ReLu in adv stream, + working RNN'
+    'load_model': r'',
+    'experiment_desc': 'Testing new PER RNN'
 }
 
 run_modification = [1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]  #, 1e-5, 5e-6]  # 1e-6]
@@ -42,7 +44,7 @@ run_modification = [1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]  #, 1e-5, 5e-6]  # 1e-6]
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/BEM')
-osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Testbed_no_ventilation.osm')
+osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Test.osm')
 idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')
@@ -51,6 +53,9 @@ if experiment_params_dict['exploit_only']:
     exp_folder = f'Experiments/{exp_name}_EXPLOIT'
 else:
     exp_folder = f'Experiments/{exp_name}'
+
+if not os.path.exists(os.path.join(exp_folder)):
+    os.makedirs(exp_folder)
 
 # -- Simulation Params --
 cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
@@ -126,8 +131,8 @@ if not experiment_params_dict['exploit_only']:
             year=year,
             start_month=test_month_start,
             end_month=test_month_end,
-            start_day=train_day_start,
-            end_day=train_day_end,
+            start_day=test_day_start,
+            end_day=test_day_end,
             run_type=run_type,
         )
         my_tb.record_epoch_results(
@@ -242,7 +247,7 @@ if not experiment_params_dict['exploit_only']:
         )
 
         # Save SQL
-        shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype\out\eplusout.sql'), exp_folder)
+        shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype/out/eplusout.sql'), exp_folder)
         time.sleep(1)
         os.rename(os.path.join(exp_folder, 'eplusout.sql'),
                   os.path.join(exp_folder, f'{train_period}_run_{run_num + 1}-{run_limit}_ep{epoch + 1}_EXPLOIT_SQL.sql'))
@@ -268,8 +273,8 @@ if not experiment_params_dict['exploit_only']:
             year=year,
             start_month=test_month_start,
             end_month=test_month_end,
-            start_day=train_day_start,
-            end_day=train_day_end,
+            start_day=test_day_start,
+            end_day=test_day_end,
             run_type=run_type,
         )
         my_tb.record_epoch_results(
@@ -283,7 +288,7 @@ if not experiment_params_dict['exploit_only']:
         )
 
         # Save SQL
-        shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype\out\eplusout.sql'), exp_folder)
+        shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype/out/eplusout.sql'), exp_folder)
         time.sleep(1)
         os.rename(os.path.join(exp_folder, 'eplusout.sql'),
                   os.path.join(exp_folder, f'{test_period}_run_{run_num + 1}-{run_limit}_ep{epoch + 1}_TEST_SQL.sql'))
@@ -371,8 +376,8 @@ else:
             year=year,
             start_month=test_month_start,
             end_month=test_month_end,
-            start_day=train_day_start,
-            end_day=train_day_end,
+            start_day=test_day_start,
+            end_day=test_day_end,
             run_type=run_type,
         )
         my_tb.record_epoch_results(
