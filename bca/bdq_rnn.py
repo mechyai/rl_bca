@@ -150,7 +150,7 @@ class PrioritizedSequenceReplayMemory(object):
             self.sampling_index_end = self.capacity - 1
 
         # Get priority probability for entire filled buffer
-        probabilities = np.array(self.get_priority_probabilities())
+        probabilities = np.array(self.get_priority_probabilities().cpu())
         sampling_range = list(range(self.sampling_index_start, self.sampling_index_end + 1))
 
         # Prioritized sampling
@@ -168,6 +168,7 @@ class PrioritizedSequenceReplayMemory(object):
             prior_sequence = np.expand_dims(sequence_indices.T[0] - self.sequence_ts_spacing, axis=1)
             # Maintain relative order of seq
             sequence_indices = np.concatenate((prior_sequence, sequence_indices), axis=1)
+        sequence_indices = torch.tensor(sequence_indices).long().to(self.device)
 
         # Sequence sampling
         # {RNN input shape: batch size, sequence len, input size}
@@ -277,6 +278,7 @@ class SequenceReplayMemory(object):
             prior_sequence = np.expand_dims(sequence_indices.T[0] - self.sequence_ts_spacing, axis=1)
             # Maintain relative order of seq
             sequence_indices = np.concatenate((prior_sequence, sequence_indices), axis=1)
+        sequence_indices = torch.tensor(sequence_indices).long().to(self.device)
 
         # Sequence sampling
         # {RNN input shape: batch size, sequence len, input size}
@@ -523,7 +525,7 @@ class BranchingDQN_RNN(nn.Module):
         self.update_target_net()
         self.step_count += 1
 
-        return float(loss_total.detach().cpu()), loss_each.detach().mean(dim=1).cpu()
+        return float(loss_total.detach().cpu()), loss_each.detach().mean(dim=1)
 
     def import_model(self, model_path: str):
         """
