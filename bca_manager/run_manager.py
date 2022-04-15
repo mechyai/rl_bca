@@ -62,7 +62,7 @@ class RunManager:
 
         # RNN
         # -- Agent / Model --
-        'rnn': False,
+        'rnn': True,
         'sequence_ts_spacing': 6,
         'sequence_length': 6,
 
