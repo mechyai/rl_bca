@@ -41,13 +41,14 @@ class ReplayMemory(object):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         self.interaction_count = 0
+        self.first_sample = True
+
         self.state_memory = None
         self.action_memory = None
         self.next_state_memory = None
         self.reward_memory = None
         self.terminal_memory = None
 
-        self.first_sample = True
 
     def push(self, state, action, next_state, reward, terminal_flag):
         """Save a transition to replay memory"""
@@ -60,7 +61,8 @@ class ReplayMemory(object):
             self.terminal_memory = torch.zeros([self.capacity, 1]).to(self.device)
             self.first_sample = False
 
-        index = self.interaction_count % self.capacity  # rolling index
+        # Loop through indices based on size of memory
+        index = self.interaction_count % self.capacity
 
         self.state_memory[index] = torch.Tensor(state).to(self.device)
         self.action_memory[index] = torch.Tensor(action).to(self.device)
@@ -86,6 +88,7 @@ class ReplayMemory(object):
 
     def can_provide_sample(self):
         """Check if replay memory has enough experience tuples to sample batch from"""
+
         return self.interaction_count >= self.batch_size
 
 
@@ -93,10 +96,12 @@ class PrioritizedReplayMemory:
     """Manages a replay memory, where data is stored as numpy arrays in a named tuple."""
 
     def __init__(self, capacity: int, batch_size: int, alpha_start: float, betta_start: float):
-        self.interaction_count = 0
         self.capacity = capacity
         self.batch_size = batch_size
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+        self.interaction_count = 0
+        self.first_sample = True
 
         self.state_memory = None
         self.action_memory = None
@@ -106,10 +111,12 @@ class PrioritizedReplayMemory:
 
         self.sampling_width = 0
 
-        self.priorities = None
+        # PER
+        self.priorities_memory = None
+        self.weights_memory = None
         self.loss_memory = None
+
         self.max_loss = 0.0001
-        self.first_sample = True
         self.alpha = alpha_start
         self.betta = betta_start
 
@@ -126,10 +133,13 @@ class PrioritizedReplayMemory:
             self.terminal_memory = torch.zeros([self.capacity, 1]).to(self.device)
 
             # Prioritization
-            self.priorities = torch.zeros([self.capacity]).to(self.device)
+            self.priorities_memory = torch.zeros([self.capacity]).to(self.device)
+            self.weights_memory = torch.zeros([self.capacity]).to(self.device)
             self.loss_memory = torch.ones([self.capacity]).to(self.device)
 
-        index = self.interaction_count % self.capacity  # rolling index
+        # Loop through indices based on size of memory
+        index = self.interaction_count % self.capacity
+        self.current_index = index
 
         # Update replay memory
         self.state_memory[index] = torch.Tensor(state).to(self.device)
@@ -159,10 +169,11 @@ class PrioritizedReplayMemory:
         if betta is None:
             betta = self.betta
 
-        N = self.sampling_width  # current replay size
-        sample_priorities = self.priorities[sample_indices]
+        # Current number of available memory
+        n = 1 + self.sampling_index_end
+        self.weights_memory = torch.pow((1 / self.priorities_memory) / n, betta)
 
-        return torch.pow((1 / sample_priorities) / N, betta)
+        return self.weights_memory[sample_indices]
 
     def get_priority_probabilities(self, alpha=None):
         """Convert scalar probability values per sample to probability distribution = 100%"""
@@ -170,23 +181,37 @@ class PrioritizedReplayMemory:
             alpha = self.alpha
 
         # Get priorities from TD loss proxy
-        losses = self.loss_memory[:self.sampling_width]
+        losses = self.loss_memory[:self.sampling_index_end + 1]
         sum_priorities = torch.pow(losses, alpha).sum()
-        self.priorities = torch.pow(losses, alpha) / sum_priorities
 
-        return self.priorities
+        self.priorities_memory[:self.sampling_index_end + 1] = torch.pow(losses, alpha) / sum_priorities
+
+        return self.priorities_memory[:self.sampling_index_end + 1]
 
     def sample(self):
         """Sample transitions with weighted priority probabilities. Return batch with each index of interaction."""
 
-        # Get width of replay memory available, until full
-        self.sampling_width = self.interaction_count if self.interaction_count < self.capacity else self.capacity
+        # Get appropriate indices to sample from replay
+        # Limited by number of interactions thus far, until memory is full
+        if self.interaction_count <= self.capacity:
+            # Until replay buffer has been filled to capacity first
+            self.sampling_index_end = self.current_index
+        else:
+            # Memory has been 'over-filled'
+            self.sampling_index_end = self.capacity - 1
 
-        # (Note: have to move to numpy for precision errors with tensors)
-        probabilities = np.array(self.get_priority_probabilities())  # get priority probability for entire buffer
-        # probabilities[-1] = 1 - probabilities.sum() + probabilities[-1]  # account for precs. error, probabilities = 1
+        # Get priority probability for entire filled buffer
+        probabilities = np.array(self.get_priority_probabilities())
+        sampling_range = list(range(self.sampling_index_end + 1))
+
         # Prioritized sampling
-        sample_indices = np.random.choice(range(self.sampling_width), self.batch_size, replace=False, p=probabilities)
+        # Get sampling indices
+        sample_indices = np.random.choice(
+            a=sampling_range,
+            size=self.batch_size,
+            replace=False,
+            p=probabilities
+        )
 
         # Sample batch from PER
         state_batch = self.state_memory[sample_indices].to(self.device)
