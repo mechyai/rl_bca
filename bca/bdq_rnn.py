@@ -43,7 +43,7 @@ class PrioritizedSequenceReplayMemory(object):
         self.sequence_ts_spacing = sequence_ts_spacing
         self.sequence_length = sequence_length
         self.sequence_span = (sequence_length - 1) * sequence_ts_spacing
-        self.sampling_width = None
+        self.sampling_extent = None
 
         self.state_memory = None
         self.action_memory = None
@@ -107,8 +107,8 @@ class PrioritizedSequenceReplayMemory(object):
         if betta is None:
             betta = self.betta
 
-        N = self.sampling_width - self.sequence_span  # current replay size, need to exclude indices that can't be selected
-        sample_priorities = self.priorities[sample_indices]
+        N = self.sampling_extent - self.sequence_span  # current replay size, need to exclude indices that can't be selected
+        sample_priorities = self.priorities[sample_indices - self.sequence_span]
 
         return torch.pow((1 / sample_priorities) / N, betta)
 
@@ -119,7 +119,7 @@ class PrioritizedSequenceReplayMemory(object):
             alpha = self.alpha
 
         # Get priorities from TD loss proxy
-        losses = self.loss_memory[:self.sampling_width]
+        losses = self.loss_memory[self.sequence_span:self.sampling_extent]
         sum_priorities = torch.pow(losses, alpha).sum()
         self.priorities = torch.pow(losses, alpha) / sum_priorities
 
@@ -129,13 +129,12 @@ class PrioritizedSequenceReplayMemory(object):
         """Sample a sequence of transitions randomly"""
 
         # Get appropriate indices to sample from replay
-        self.sampling_width = self.interaction_count if self.interaction_count < self.capacity else self.capacity
-        self.sampling_width -= self.sequence_span  # must exclude unreachable indices in replay b/c of sequence
+        self.sampling_extent = self.interaction_count if self.interaction_count < self.capacity else self.capacity
         sample_start = self.sequence_span
         probabilities = np.array(self.get_priority_probabilities())  # get priority probability for entire buffer
 
         # Prioritized sampling
-        sample_indices = np.random.choice(range(sample_start, self.sampling_width), self.batch_size, replace=False,
+        sample_indices = np.random.choice(range(sample_start, self.sampling_extent), self.batch_size, replace=False,
                                           p=probabilities)
 
         # Get full range of sequence indices for each random sample starting point
@@ -163,6 +162,7 @@ class PrioritizedSequenceReplayMemory(object):
         # TODO get dynamic sequence len at beginning when not enough samples available?
         start = (self.interaction_count - 1) % self.capacity  # remove prior count update
         prior_sequence_indices = range(start, start - self.sequence_span - 1, -self.sequence_ts_spacing)
+
         # RNN input shape: batch size, sequence len, input size
         state_sequence = self.state_memory[prior_sequence_indices].unsqueeze(0)
 
@@ -179,13 +179,17 @@ class SequenceReplayMemory(object):
     """Manages a sequential replay memory, where data is stored as numpy arrays."""
 
     def __init__(self, capacity: int, batch_size: int, sequence_length: int, sequence_ts_spacing: int = 1):
-
         self.capacity = capacity
         self.batch_size = batch_size
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         self.sequence_ts_spacing = sequence_ts_spacing
         self.sequence_length = sequence_length
-        self.sequence_span = (sequence_length - 1) * sequence_ts_spacing
+        self.sequence_span = sequence_length * sequence_ts_spacing
+
+        self.current_index = 0
+        self.interaction_count = 0
+        self.first_sample = True
 
         self.state_memory = None
         self.action_memory = None
@@ -193,9 +197,8 @@ class SequenceReplayMemory(object):
         self.reward_memory = None
         self.terminal_memory = None
 
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.interaction_count = 0
-        self.first_sample = True
+        self.sampling_end = None
+        self.sampling_start = None
 
     def push(self, state, action, next_state, reward, terminal_flag):
         """Save a transition to replay memory"""
@@ -210,6 +213,7 @@ class SequenceReplayMemory(object):
 
         # Loop through indices based on size of memory
         index = self.interaction_count % self.capacity
+        self.current_index = index
 
         self.state_memory[index] = torch.Tensor(state).to(self.device)
         self.action_memory[index] = torch.Tensor(action).to(self.device)
@@ -223,11 +227,25 @@ class SequenceReplayMemory(object):
         """Sample a sequence of transitions randomly"""
 
         # Get appropriate indices to sample from replay
-        sample_range = self.interaction_count if self.interaction_count < self.capacity else self.capacity
-        sample_start = self.sequence_span
-        sample_indices = np.random.choice(range(sample_start, sample_range), self.batch_size, replace=False)
+        # Limited by number of interactions thus far, until memory is full
+        self.sampling_end = self.current_index if self.interaction_count < self.capacity else self.capacity - 1
+
+        if self.interaction_count <= self.capacity:
+            # Until replay buffer has been filled to capacity first
+            self.sampling_start = self.sequence_span - self.sequence_ts_spacing
+        else:
+            # Memory has been 'over-filled'
+            self.sampling_start = 0
+
+        # Get sampling indices
+        sample_indices = np.random.choice(
+            a=range(self.sampling_start, self.sampling_end + 1),
+            size=self.batch_size,
+            replace=False
+        )
 
         # Get full range of sequence indices for each random sample starting point
+        sample_indices.sort()
         sequence_indices = np.expand_dims(sample_indices, axis=1)
         for _ in range(self.sequence_length - 1):
             prior_sequence = np.expand_dims(sequence_indices.T[0] - self.sequence_ts_spacing, axis=1)
@@ -247,11 +265,12 @@ class SequenceReplayMemory(object):
         return state_batch, action_batch, next_state_batch, reward_batch, terminal_batch
 
     def get_single_sequence(self):
-        """Returns most recent sequence from replay."""
+        """Returns most recent sequence from replay, corresponding to current state."""
 
-        # TODO get dynamic sequence len at beginning when not enough samples available?
-        start = (self.interaction_count - 1) % self.capacity  # remove prior count update
-        prior_sequence_indices = range(start, start - self.sequence_span - 1, -self.sequence_ts_spacing)
+        # Get most recent state, remove prior push count update & index offset
+        start_index = self.current_index - self.sequence_span + self.sequence_ts_spacing
+        prior_sequence_indices = range(start_index, self.current_index + 1, self.sequence_ts_spacing)
+
         # RNN input shape: batch size, sequence len, input size
         state_sequence = self.state_memory[prior_sequence_indices].unsqueeze(0)
 
@@ -260,7 +279,8 @@ class SequenceReplayMemory(object):
     def can_provide_sample(self):
         """Check if replay memory has enough experience tuples to sample batch from"""
 
-        # Such that n sequences of span k can be sampled from batch, interaction > n + k (no negative indices)
+        # Such that n sequences of span k can be sampled from batch
+        # Interaction > n + k (no negative indices until replay 'over-filled')
         return self.interaction_count >= self.batch_size + self.sequence_span
 
 
@@ -360,9 +380,11 @@ class BranchingDQN_RNN(nn.Module):
         self.rescale_shared_grad_factor = rescale_shared_grad_factor
 
         self.policy_network = BranchingQNetwork_RNN(observation_dim, rnn_hidden_size, rnn_num_layers, action_branches,
-                                                    action_dim, shared_network_size, value_stream_size, advantage_streams_size)
+                                                    action_dim, shared_network_size, value_stream_size,
+                                                    advantage_streams_size)
         self.target_network = BranchingQNetwork_RNN(observation_dim, rnn_hidden_size, rnn_num_layers, action_branches,
-                                                    action_dim, shared_network_size, value_stream_size, advantage_streams_size)
+                                                    action_dim, shared_network_size, value_stream_size,
+                                                    advantage_streams_size)
         self.target_network.load_state_dict(self.policy_network.state_dict())  # copy params
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

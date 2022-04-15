@@ -210,7 +210,7 @@ class Agent:
 
         # -- LEARN BATCH --
         if learn:
-            # Enough Memory
+            # Enough memory for batch
             if self.memory.can_provide_sample():
                 # Learning Loop
                 for i in range(self.learning_loop):
@@ -449,13 +449,17 @@ class Agent:
         if self.rnn:
             # Need to have full sequence
             # TODO make more robust, need offline learning in the beginning, or ignore early days results
-            if self.memory.interaction_count > self.memory.sequence_span:
+            if self.memory.interaction_count > self.memory.sequence_span - self.memory.sequence_ts_spacing:
                 self.action = self.bdq.get_greedy_action(self.memory.get_single_sequence())
+
+                return 'Exploit'
             else:
                 self.action = np.random.randint(0, self.bdq.action_dim, self.bdq.action_branches)
+
                 return 'Explore'
         else:
             self.action = self.bdq.get_greedy_action(torch.Tensor(self.state_normalized).unsqueeze(1))
+
             return 'Exploit'
 
     def _explore_exploit_process(self, exploit: bool):
@@ -862,7 +866,7 @@ class Agent:
         """Reward function - per component, per zone."""
 
         lambda_comfort = 1
-        lambda_rtp = 0.03 * 3
+        lambda_rtp = 0.03 * 2
         lambda_intermittent = 1
 
         n_zones = self.bdq.action_branches

@@ -36,11 +36,11 @@ Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'reward'
 class ReplayMemory(object):
     """Manages a replay memory, where data is stored as numpy arrays in a named tuple."""
     def __init__(self, capacity, batch_size):
-        self.interaction_count = 0
         self.capacity = capacity
         self.batch_size = batch_size
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+        self.interaction_count = 0
         self.state_memory = None
         self.action_memory = None
         self.next_state_memory = None
