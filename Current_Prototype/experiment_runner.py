@@ -18,8 +18,8 @@ train_day_end = None
 
 test_month_start = 'July'
 test_month_end = 'July'
-test_day_start = 0
-test_day_end = 2
+test_day_start = None
+test_day_end = None
 
 train_period = train_month_start + '_' + train_month_end
 test_period = test_month_start + '_' + test_month_end
