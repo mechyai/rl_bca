@@ -20,8 +20,8 @@ class RunManager:
 
     selected_params = {
         # -- Agent Params --
-        'observation_ts_frequency': 15,  # * [5, 10, 15],
-        'actuation_ts_frequency': 15,  # * [5, 10, 15],
+        'observation_ts_frequency': 5,  # * [5, 10, 15],
+        'actuation_ts_frequency': 5,  # * [5, 10, 15],
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
@@ -31,8 +31,8 @@ class RunManager:
 
         # --- Experience Replay ---
         'PER': True,
-        'replay_capacity': 100,
-        'batch_size': 50,
+        'replay_capacity': 2000,
+        'batch_size': 32,
 
         # -- BDQ --
         # Fixed
@@ -62,78 +62,69 @@ class RunManager:
 
         # RNN
         # -- Agent / Model --
-        'rnn': True,
-        'sequence_ts_spacing': 4,
-        'sequence_length': 4,
+        'rnn': False,
+        'sequence_ts_spacing': 6,
+        'sequence_length': 6,
 
         # -- BDQ Architecture --
-        'rnn_hidden_size': 72,
+        'rnn_hidden_size': 48,
         'rnn_num_layers': 2,
     }
     Run = namedtuple('Run', selected_params.keys())
     selected_params = Run(*selected_params.values())
 
-    rnn_params = {
-        # -- Agent / Model --
-
-        'rnn': [False],
-
-        # -- Replay Memory --
-        'PER': [False, True],
-        'sequence_ts_spacing': [3],
-        'sequence_length': [5],
-
-        # -- BDQ Architecture --
-        'rnn_hidden_size': [64],
-        'rnn_num_layers': [1],
-    }
-
-    agent_params = {
+    hyperparameter_dict = {
+        # -- Agent Params --
         'observation_ts_frequency': [5],  # * [5, 10, 15],
         'actuation_ts_frequency': [5],  # * [5, 10, 15],
-        'learning_loops': [10],
+        'learning_loops': [5],
 
         # --- Behavioral Policy ---
-        'eps_start': [0.1],
-        'eps_end': [0.01],
-        'eps_decay': [1e-5],
+        'eps_start': [0.2, 0.05],
+        'eps_end': [0.005],
+        'eps_decay': [1e-4],
 
         # --- Experience Replay ---
-        'replay_capacity': [5000],
-        'batch_size': [32],
-    }
+        'PER': [True],
+        'replay_capacity': [500, 2000],
+        'batch_size': [8, 32, 96],
 
-    bdq_fixed_params = {
-        'observation_dim': [60],
+        # -- BDQ --
+        # Fixed
+        'observation_dim': [61],
         'action_branches': [action_branches],  # n building zones
-        'actuation_function': [5],
-    }
+        'actuation_function': [5],  # -----------------------------------------------------------------------------------
 
-    bdq_params = {
-        # --- BDQ ---
         # Architecture
         'shared_network_size_l1': [96],
-        'shared_network_size_l2': [56],
-        'value_stream_size_l1': [36],
-        'value_stream_size_l2': [],
+        'shared_network_size_l2': [72],
+        'value_stream_size_l1': [64],
+        'value_stream_size_l2': [64],
         'advantage_streams_size_l1': [48],
-        'advantage_streams_size_l2': [],
+        'advantage_streams_size_l2': [0],
 
         # TD Update
         'reward_aggregation': ['mean'],  # sum or mean
-        'optimizer': ['Adam'],
+        'optimizer': ['Adagrad'],
         'learning_rate': [5e-4],
-        'gamma': [0.7],
+        'gamma': [0.8],
 
         # Network mods
-        'td_target': ['mean'],  # mean or max
-        'gradient_clip_norm': [1],  # [0, 1, 5, 10],  # 0 is nothing
-        'rescale_shared_grad_factor': [1 / (1 + action_branches)],
-        'target_update_freq': [3e3]  # [50, 150, 500, 1e3, 1e4],
-    }
+        'td_target': ['mean'],  # (0) mean or (1) max
+        'gradient_clip_norm': [2],  # [0, 1, 5, 10],  # 0 is nothing
+        'rescale_shared_grad_factor': [1 / (action_branches)],
+        'target_update_freq': [5e2, 5e3],  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
 
-    # hyperparameter_dict = {**agent_params, **bdq_fixed_params, **bdq_params}
-    hyperparameter_dict = {**agent_params, **bdq_fixed_params, **bdq_params, **rnn_params}
+        # RNN
+        # -- Agent / Model --
+        'rnn': [True],
+        'sequence_ts_spacing': [6, 12],
+        'sequence_length': [1, 6],
+
+        # -- BDQ Architecture --
+        'rnn_hidden_size': [48, 96],
+        'rnn_num_layers': [1, 2],
+    }
 
     # The hyperparameters that vary throughout a study
     hyperparameter_study = {}
