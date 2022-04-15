@@ -118,8 +118,8 @@ class RunManager:
         # RNN
         # -- Agent / Model --
         'rnn': [True],
-        'sequence_ts_spacing': [6, 12],
-        'sequence_length': [1, 6],
+        'sequence_ts_spacing': [1, 6],
+        'sequence_length': [6, 12],
 
         # -- BDQ Architecture --
         'rnn_hidden_size': [48, 96],
