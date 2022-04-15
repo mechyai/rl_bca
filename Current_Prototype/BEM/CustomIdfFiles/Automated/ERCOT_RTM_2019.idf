@@ -3,7 +3,7 @@
 Schedule:File,
 	ERCOT RTM 2019,
 	Any Number,
-	A:/Files/PycharmProjects/rl_bca/Current_Prototype/BEM/ScheduleFiles/ERCOT_RTM_2019.csv,
+	/home/ceubel/Documents/research/rl_bca/Current_Prototype/BEM/ScheduleFiles/ERCOT_RTM_2019.csv,
 	2,
 	1,
 	,

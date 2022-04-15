@@ -13,7 +13,7 @@ import ErcotDAM_fromCSV as dam
 import ErcotFuelMix_fromCSV as fmix
 
 from emspy import idf_editor
-from bca import _paths_config
+from bca_manager import _paths_config
 
 # -- OUTPUT PARAMS --
 # metadata
@@ -162,8 +162,8 @@ def fuel_mix_file_dst():
 
 
 if __name__ == "__main__":
-    # rtm_df = rtm_schedule_file()
-    # dam_df = dam_schedule_file()
-    # dam_forecast_df = dam_forecast_schedule_file()
+    rtm_df = rtm_schedule_file()
+    dam_df = dam_schedule_file()
+    dam_forecast_df = dam_forecast_schedule_file()
     # fmix_df = fuel_mix_file()  # dont use
     fmix_df = fuel_mix_file_dst()  # handles the DST data

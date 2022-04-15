@@ -25,7 +25,7 @@ class RunManager:
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
-        'eps_start': 0.2,
+        'eps_start': 0.15,
         'eps_end': 0.005,
         'eps_decay': 1e-4,
 

@@ -38,13 +38,13 @@ experiment_params_dict = {
     'experiment_desc': 'Testing new PER RNN'
 }
 
-run_modification = [1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]  #, 1e-5, 5e-6]  # 1e-6]
+run_modification = [1e-3, 5e-4, 5e-5]  #, 1e-5, 5e-6]  # 1e-6]
 # run_modification = [5e-3]
 
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/BEM')
-osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Test.osm')
+osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Testbed_no_ventilation.osm')
 idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')
@@ -351,7 +351,7 @@ else:
         )
 
         # Save SQL
-        shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype\out\eplusout.sql'), exp_folder)
+        shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype/out/eplusout.sql'), exp_folder)
         time.sleep(1)
         os.rename(os.path.join(exp_folder, 'eplusout.sql'),
                   os.path.join(exp_folder, f'manual_{train_month_start}_{train_month_end}_EXPLOIT_SQL.sql'))
@@ -391,7 +391,7 @@ else:
         )
 
         # Save SQL
-        shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype\out\eplusout.sql'), exp_folder)
+        shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype/out/eplusout.sql'), exp_folder)
         time.sleep(1)
         os.rename(os.path.join(exp_folder, 'eplusout.sql'),
                   os.path.join(exp_folder, f'manual_{test_month_start}_TEST_SQL.sql'))

@@ -3,7 +3,7 @@
 Schedule:File,
 	ERCOT FMIX 2019 - Gas,
 	Any Number,
-	A:/Files/PycharmProjects/rl_bca/Current_Prototype/BEM/ScheduleFiles/ERCOT_FMIX_2019.csv,
+	/home/ceubel/Documents/research/rl_bca/Current_Prototype/BEM/ScheduleFiles/ERCOT_FMIX_2019.csv,
 	5,
 	1,
 	,
