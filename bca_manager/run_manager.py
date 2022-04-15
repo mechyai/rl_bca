@@ -31,8 +31,8 @@ class RunManager:
 
         # --- Experience Replay ---
         'PER': True,
-        'replay_capacity': 5000,
-        'batch_size': 32,
+        'replay_capacity': 100,
+        'batch_size': 50,
 
         # -- BDQ --
         # Fixed
@@ -63,8 +63,8 @@ class RunManager:
         # RNN
         # -- Agent / Model --
         'rnn': True,
-        'sequence_ts_spacing': 1,
-        'sequence_length': 24,
+        'sequence_ts_spacing': 4,
+        'sequence_length': 4,
 
         # -- BDQ Architecture --
         'rnn_hidden_size': 72,
