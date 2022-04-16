@@ -12,26 +12,26 @@ from bca_manager import _paths_config, experiment_manager
 
 year = MDP.year
 train_month_start = 'April'
-train_month_end = 'June'
+train_month_end = 'April'
 train_day_start = None
 train_day_end = None
 
-test_month_start = 'July'
-test_month_end = 'July'
+test_month_start = 'May'
+test_month_end = 'May'
 test_day_start = None
 test_day_end = None
 
 train_period = train_month_start + '_' + train_month_end
 test_period = test_month_start + '_' + test_month_end
 
-exp_name = 'new_RNN_PER_1'
+exp_name = 'non_hourly_Reward_BDQ'
 # exp_name = 'Tester'
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 5,
-    'skip_benchmark': True,
+    'skip_benchmark': False,
     'exploit_only': False,
     'test': True,
     'load_model': r'',
@@ -44,7 +44,7 @@ run_modification = [1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]  #, 1e-5, 5e-6]  # 1e-6]
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/BEM')
-osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Test.osm')
+osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Testbed_no_ventilation.osm')
 idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')

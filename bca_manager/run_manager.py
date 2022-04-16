@@ -30,9 +30,14 @@ class RunManager:
         'eps_decay': 1e-4,
 
         # --- Experience Replay ---
-        'PER': True,
         'replay_capacity': 2000,
         'batch_size': 8,
+        # PER
+        'PER': True,
+        'alpha_start': 1,
+        'alpha_decay_factor': None,
+        'betta_start': 0.5,
+        'betta_decay_factor': 1e-5,
 
         # -- BDQ --
         # Fixed
@@ -49,10 +54,15 @@ class RunManager:
         'advantage_streams_size_l2': 0,
 
         # TD Update
-        'reward_aggregation': 'mean',  # sum or mean
         'optimizer': 'Adagrad',
         'learning_rate': 5e-4,
         'gamma': 0.8,
+
+        # Reward
+        'reward_aggregation': 'sum',  # sum or mean
+        'reward_sparsity_ts': 1,
+        'reward_scale': 0.01,
+        'lambda_rtp': 0.3 * 4,
 
         # Network mods
         'td_target': 'mean',  # (0) mean or (1) max
@@ -62,7 +72,7 @@ class RunManager:
 
         # RNN
         # -- Agent / Model --
-        'rnn': True,
+        'rnn': False,
         'sequence_ts_spacing': 6,
         'sequence_length': 6,
 
@@ -85,15 +95,20 @@ class RunManager:
         'eps_decay': [1e-4],
 
         # --- Experience Replay ---
-        'PER': [True],
         'replay_capacity': [500, 2000],
         'batch_size': [8, 32, 96],
+        # PER
+        'PER': [True],
+        'alpha_start': [1],
+        'alpha_decay_factor': [None],
+        'betta_start': [0.5],
+        'betta_decay_factor': [1e-5],
 
         # -- BDQ --
         # Fixed
         'observation_dim': [61],
         'action_branches': [action_branches],  # n building zones
-        'actuation_function': [5],  # -----------------------------------------------------------------------------------
+        'actuation_function': [5],  # ----------------------------------------------------------------------------------
 
         # Architecture
         'shared_network_size_l1': [96],
@@ -104,10 +119,15 @@ class RunManager:
         'advantage_streams_size_l2': [0],
 
         # TD Update
-        'reward_aggregation': ['mean'],  # sum or mean
         'optimizer': ['Adagrad'],
         'learning_rate': [5e-4],
         'gamma': [0.8],
+
+        # Reward
+        'reward_aggregation': ['sum'],  # sum or mean
+        'reward_sparsity_ts': [1],
+        'lambda_rtp': [0.3 * 3],
+        'reward_scale': [0.01],
 
         # Network mods
         'td_target': ['mean'],  # (0) mean or (1) max
@@ -196,6 +216,7 @@ class RunManager:
             dqn_model=self.dqn,
             policy=self.policy,
             replay_memory=self.experience_replay,
+            run_parameters=run,
             rnn=run.rnn,
             observation_frequency=run.observation_ts_frequency,
             actuation_frequency=run.actuation_ts_frequency,
