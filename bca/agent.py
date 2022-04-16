@@ -453,8 +453,7 @@ class Agent:
 
         if self.rnn:
             # Need to have full sequence
-            if (self.memory.total_interaction_count - self.memory.episode_start_interaction_count) \
-                    > (self.memory.sequence_span - self.memory.sequence_ts_spacing):
+            if self.memory.current_interaction_count > self.memory.sequence_index_span:
                 self.action = self.bdq.get_greedy_action(self.memory.get_single_sequence())
 
                 return 'Exploit'

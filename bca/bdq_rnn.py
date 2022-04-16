@@ -209,6 +209,7 @@ class SequenceReplayMemory(object):
         self.batch_size = batch_size
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+        # -- Sequence Management --
         self.sequence_index_span = (sequence_length - 1) * sequence_ts_spacing
         self.sequence_ts_spacing = sequence_ts_spacing
         self.sequence_length = sequence_length
@@ -216,84 +217,119 @@ class SequenceReplayMemory(object):
         self.current_index = 0
         self.episode_start_index = 0
         self.episode_start_interaction_count = 0
+
+        self.first_sample = True
         self.total_interaction_count = 0
         self.current_interaction_count = 0
-        self.first_sample = True
 
         self.current_sampling_index_end = None
         self.current_sampling_index_start = None
+        self.previous_sampling_index_end = None
+        self.previous_sampling_index_start = None
+        self.current_sampling_indices = None
 
+        # -- Replay Buffer --
         self.state_memory = None
         self.action_memory = None
         self.next_state_memory = None
         self.reward_memory = None
         self.terminal_memory = None
 
-    def _get_sample_indices(self):
-        """Gets the proper indices to sample from replay - built around sampling sequence and reuse between episodes."""
-
-        # Get appropriate indices to sample from replay
-        # Limited by number of interactions thus far, until memory is full
-        if self.total_interaction_count <= self.capacity:
-            # Until replay buffer has been filled to capacity first
-            self.current_sampling_index_start = self.sequence_index_span
-            self.current_sampling_index_end = self.current_index
-        else:
-            # Memory has been 'over-filled'
-            self.current_sampling_index_start = 0
-            self.current_sampling_index_end = self.capacity - 1
-
-        # Get sampling indices
-        sample_indices = np.random.choice(
-            a=range(self.current_sampling_index_start, self.current_sampling_index_end + 1),
-            size=self.batch_size,
-            replace=False
-        )
-
-        return sample_indices
-
     def _get_replay_index(self, unwrapped_index):
         """Returns true, wrapped index based on replay capacity"""
 
-        return unwrapped_index % self.capacity
+        if hasattr(unwrapped_index, '__iter__'):
+            # Handle sequence input
+            for i, replay_index in enumerate(unwrapped_index):
+                unwrapped_index[i] = replay_index % self.capacity
+            return unwrapped_index
+        else:
+            return unwrapped_index % self.capacity
 
     def _get_sample_indices(self):
         """Gets the proper indices to sample from replay - built around sampling sequence and reuse between episodes."""
 
+        # -- Mixed Episodes in Buffer --
         # Limited by number of interactions thus far, until memory is full or fully overwritten
         # Until replay buffer has been filled to capacity first
         if self.current_interaction_count <= self.capacity:
             # -- Current Episode --
             # Note: replay can provide sample from very start of new episode
             # Need more than sequence span of interactions collected since starting new episode
-            if self.current_interaction_count >= (self.sequence_span - self.sequence_ts_spacing):
+            if self.current_interaction_count >= self.sequence_index_span:
                 # Start based on end of last episode
-                self.current_sampling_index_start = self._get_replay_index(
-                    self.episode_start_index + (self.sequence_span - self.sequence_ts_spacing)
-                )
+                self.current_sampling_index_start = self.episode_start_index + self.sequence_index_span
+
                 self.current_sampling_index_end = self.current_index
-
-                # -- Previous Episode --
-                self.previous_sampling_index_start =
-                self.previous_sampling_index_end =
-
-                else:
-                # Memory has been 'over-filled', overwritten entire previous episode
-                # Sample from entire memory as normal
+                # Managing wrapping for interpolation
+                if self.current_sampling_index_end < self.current_sampling_index_start:
+                    self.current_sampling_index_end += self.capacity
+            else:
                 self.current_sampling_index_start = 0
-                self.current_sampling_index_end = self.capacity - 1
+                self.current_sampling_index_end = 0
 
-                # Get sampling indices
-                sample_indices = np.random.choice(
-                    a=range(self.current_sampling_index_start, self.current_sampling_index_end + 1),
-                    size=self.batch_size,
-                    replace=False
+            current_sampling_range = self._get_replay_index(
+                np.arange(
+                    start=self.current_sampling_index_start,
+                    stop=self.current_sampling_index_end + 1,
+                    step=self.sequence_ts_spacing
                 )
+            )
+
+            # -- Previous Episode --
+            # If at least 1 full sequence span from prior episode
+            if self._get_replay_index(self.episode_start_index - 1 - self.sequence_index_span) > self.current_index:
+                # Need 1 sequence spacing from current episode
+                self.previous_sampling_index_start = self.current_index + self.sequence_index_span
+
+                self.previous_sampling_index_end = self.episode_start_index - 1
+                # Managing wrapping for interpolation
+                if self.previous_sampling_index_end < self.previous_sampling_index_start:
+                    self.previous_sampling_index_end += self.capacity
+            else:
+                self.previous_sampling_index_start = 0
+                self.previous_sampling_index_end = 0
+
+            # Get sampling range from current and prior episode
+            previous_sampling_range = self._get_replay_index(
+                np.arange(
+                    start=self.previous_sampling_index_start,
+                    stop=self.previous_sampling_index_end + 1,
+                    step=self.sequence_ts_spacing
+                )
+            )
+
+            self.current_sampling_indices = np.append(previous_sampling_range, current_sampling_range)
+
+        # -- Current Episode ONLY in Buffer --
+        else:
+            # Memory has been 'over-filled', overwritten entire previous episode
+            # Sample from entire memory as normal
+            self.current_sampling_index_start = 0
+            self.current_sampling_index_end = self.capacity - 1
+
+            current_sampling_range = self._get_replay_index(
+                np.arange(
+                    start=self.current_sampling_index_start,
+                    stop=self.current_sampling_index_end + 1,
+                    step=self.sequence_ts_spacing
+                )
+            )
+
+            self.current_sampling_indices = current_sampling_range
+
+        # Get sampling indices
+        sample_indices = np.random.choice(
+            a=self.current_sampling_indices,
+            size=self.batch_size,
+            replace=False
+        )
 
         return sample_indices
 
     def reset_between_episode(self):
         """Manages resetting of specific attributes to manage the replay between episodes."""
+
         self.current_interaction_count = 0
         self.episode_start_index = self.current_index
         self.episode_start_interaction_count = self.total_interaction_count
@@ -356,7 +392,9 @@ class SequenceReplayMemory(object):
 
         # Get most recent state, remove prior push count update & index offset
         start_index = self.current_index - self.sequence_index_span
-        prior_sequence_indices = range(start_index, self.current_index + 1, self.sequence_ts_spacing)
+        prior_sequence_indices = torch.arange(start_index, self.current_index + 1, self.sequence_ts_spacing,
+                                              device=self.device)
+        prior_sequence_indices = self._get_replay_index(prior_sequence_indices)
 
         # RNN input shape: batch size, sequence len, input size
         return self.state_memory[prior_sequence_indices].unsqueeze(0)
@@ -366,7 +404,6 @@ class SequenceReplayMemory(object):
 
         # Such that n sequences of span k can be sampled from batch
         return self.total_interaction_count >= self.batch_size + self.sequence_index_span
-
 
 
 class BranchingQNetwork_RNN(nn.Module):
