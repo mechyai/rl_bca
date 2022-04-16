@@ -218,7 +218,8 @@ class Agent:
                 for i in range(self.learning_loop):
                     self.learning_steps += 1
                     # If PER
-                    if isinstance(self.memory, PrioritizedReplayMemory) or isinstance(self.memory, PrioritizedSequenceReplayMemory):
+                    if isinstance(self.memory, PrioritizedReplayMemory) or isinstance(self.memory,
+                                                                                      PrioritizedSequenceReplayMemory):
                         # Get prioritized batch
                         batch, sample_indices = self.memory.sample()
                         # Learn from prioritized batch
@@ -411,7 +412,8 @@ class Agent:
 
         # self.memory.alpha = alpha_start * math.exp(-alpha_decay_factor * self.learning_steps)  # 1 --> 0
         self.memory.alpha = alpha_start
-        self.memory.betta = min(1 - (1 - betta_start) * math.exp(-betta_decay_factor * self.learning_steps), 1)  # 0 --> 1
+        self.memory.betta = min(1 - (1 - betta_start) * math.exp(-betta_decay_factor * self.learning_steps),
+                                1)  # 0 --> 1
 
     # ------------------------------------------------- ACTUATION -------------------------------------------------
 
@@ -451,8 +453,8 @@ class Agent:
 
         if self.rnn:
             # Need to have full sequence
-            # TODO make more robust, need offline learning in the beginning, or ignore early days results
-            if self.memory.interaction_count > self.memory.sequence_span - self.memory.sequence_ts_spacing:
+            if (self.memory.interaction_count - self.memory.episode_start_interaction_count) \
+                    > (self.memory.sequence_span - self.memory.sequence_ts_spacing):
                 self.action = self.bdq.get_greedy_action(self.memory.get_single_sequence())
 
                 return 'Exploit'
@@ -622,7 +624,6 @@ class Agent:
             }
 
             for zone_i, action in enumerate(self.action):
-
                 self.actuation_dict[f'zn{zone_i}_heating_sp'] = 15.56
                 self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_setpoints[action]
 
@@ -635,7 +636,7 @@ class Agent:
         self.actuation_dict.update(aux_actuation)
 
         return self.actuation_dict
-    
+
     def act_default_adjustments_4(self, actuate=True, exploit=False):
         """
         Action callback function:
@@ -643,7 +644,7 @@ class Agent:
 
         :return: actuation dictionary - EMS variable name (key): actuation value (value)
         """
-        
+
         # Check action space dim aligns with created BDQ
         self._action_dimension_check(this_actuation_functions_dims=6)
 
@@ -700,7 +701,7 @@ class Agent:
         """
         # Check action space dim aligns with created BDQ
         self._action_dimension_check(this_actuation_functions_dims=3)
-        
+
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
             self._explore_exploit_process(exploit)
@@ -762,7 +763,7 @@ class Agent:
         """
         # Check action space dim aligns with created BDQ
         self._action_dimension_check(this_actuation_functions_dims=6)
-        
+
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
             self._explore_exploit_process(exploit)
@@ -1518,4 +1519,3 @@ class Agent:
             f'\tRTP: ${round(rtp_hvac_costs, 2)}, Cumulative: ${round(self.hvac_rtp_costs_total + rtp_hvac_costs, 2)}')
 
         return rtp_hvac_costs
-

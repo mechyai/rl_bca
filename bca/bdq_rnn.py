@@ -213,6 +213,8 @@ class SequenceReplayMemory(object):
         self.sequence_length = sequence_length
 
         self.current_index = 0
+        self.episode_start_index = 0
+        self.episode_start_interaction_count = 0
         self.interaction_count = 0
         self.first_sample = True
 
@@ -224,6 +226,34 @@ class SequenceReplayMemory(object):
         self.next_state_memory = None
         self.reward_memory = None
         self.terminal_memory = None
+
+    def _get_sample_indices(self):
+        """Gets the proper indices to sample from replay - built around sampling sequence and reuse between episodes."""
+
+        # Get appropriate indices to sample from replay
+        # Limited by number of interactions thus far, until memory is full
+        if self.interaction_count <= self.capacity:
+            # Until replay buffer has been filled to capacity first
+            self.sampling_index_start = self.sequence_span - self.sequence_ts_spacing
+            self.sampling_index_end = self.current_index
+        else:
+            # Memory has been 'over-filled'
+            self.sampling_index_start = 0
+            self.sampling_index_end = self.capacity - 1
+
+        # Get sampling indices
+        sample_indices = np.random.choice(
+            a=range(self.sampling_index_start, self.sampling_index_end + 1),
+            size=self.batch_size,
+            replace=False
+        )
+
+        return sample_indices
+
+    def reset_episode(self):
+        """Manages resetting of specific attributes to manage the replay between episodes."""
+        self.episode_start_index = self.current_index
+        self.episode_start_interaction_count = self.interaction_count
 
     def push(self, state, action, next_state, reward, terminal_flag):
         """Save a transition to replay memory"""
@@ -254,22 +284,7 @@ class SequenceReplayMemory(object):
         """Sample a sequence of transitions randomly"""
 
         # Get appropriate indices to sample from replay
-        # Limited by number of interactions thus far, until memory is full
-        if self.interaction_count <= self.capacity:
-            # Until replay buffer has been filled to capacity first
-            self.sampling_index_start = self.sequence_span - self.sequence_ts_spacing
-            self.sampling_index_end = self.current_index
-        else:
-            # Memory has been 'over-filled'
-            self.sampling_index_start = 0
-            self.sampling_index_end = self.capacity - 1
-
-        # Get sampling indices
-        sample_indices = np.random.choice(
-            a=range(self.sampling_index_start, self.sampling_index_end + 1),
-            size=self.batch_size,
-            replace=False
-        )
+        sample_indices = self._get_sample_indices()
 
         # Get full range of sequence indices for each random sample starting point
         sample_indices.sort()
@@ -303,7 +318,7 @@ class SequenceReplayMemory(object):
         return self.state_memory[prior_sequence_indices].unsqueeze(0)
 
     def can_provide_sample(self):
-        """Check if replay memory has enough experience tuples to sample batch from"""
+        """Check if replay memory has enough experience tuples to sample batch from."""
 
         # Such that n sequences of span k can be sampled from batch
         # Interaction > n + k (no negative indices until replay 'over-filled')
