@@ -43,6 +43,8 @@ class PrioritizedSequenceReplayMemory(object):
         self.sequence_length = sequence_length
 
         self.current_index = 0
+        self.episode_start_index = 0
+        self.episode_start_interaction_count = 0
         self.interaction_count = 0
         self.first_sample = True
 
@@ -196,8 +198,7 @@ class PrioritizedSequenceReplayMemory(object):
         """Check if replay memory has enough experience tuples to sample batch from"""
 
         # Such that n sequences of span k can be sampled from batch
-        # Interaction > n + k (no negative indices until replay 'over-filled')
-        return self.interaction_count >= self.batch_size + self.sequence_span
+        return self.interaction_count >= self.batch_size + self.sequence_span - self.sequence_ts_spacing
 
 
 class SequenceReplayMemory(object):
@@ -321,8 +322,7 @@ class SequenceReplayMemory(object):
         """Check if replay memory has enough experience tuples to sample batch from."""
 
         # Such that n sequences of span k can be sampled from batch
-        # Interaction > n + k (no negative indices until replay 'over-filled')
-        return self.interaction_count >= self.batch_size + self.sequence_span
+        return self.interaction_count >= self.batch_size + self.sequence_span - self.sequence_ts_spacing
 
 
 class BranchingQNetwork_RNN(nn.Module):
