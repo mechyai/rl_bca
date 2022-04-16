@@ -266,19 +266,19 @@ class SequenceReplayMemory(object):
                     self.current_sampling_index_end += self.capacity
             else:
                 self.current_sampling_index_start = 0
-                self.current_sampling_index_end = 0
+                self.current_sampling_index_end = -1
 
             current_sampling_range = self._get_replay_index(
                 np.arange(
                     start=self.current_sampling_index_start,
                     stop=self.current_sampling_index_end + 1,
-                    step=self.sequence_ts_spacing
                 )
             )
 
             # -- Previous Episode --
             # If at least 1 full sequence span from prior episode
-            if self._get_replay_index(self.episode_start_index - 1 - self.sequence_index_span) > self.current_index:
+            if self._get_replay_index(self.episode_start_index - 1 - self.sequence_index_span) > self.current_index \
+                    and self.episode_start_interaction_count != 0:
                 # Need 1 sequence spacing from current episode
                 self.previous_sampling_index_start = self.current_index + self.sequence_index_span
 
@@ -288,14 +288,13 @@ class SequenceReplayMemory(object):
                     self.previous_sampling_index_end += self.capacity
             else:
                 self.previous_sampling_index_start = 0
-                self.previous_sampling_index_end = 0
+                self.previous_sampling_index_end = -1
 
             # Get sampling range from current and prior episode
             previous_sampling_range = self._get_replay_index(
                 np.arange(
                     start=self.previous_sampling_index_start,
                     stop=self.previous_sampling_index_end + 1,
-                    step=self.sequence_ts_spacing
                 )
             )
 
@@ -312,7 +311,6 @@ class SequenceReplayMemory(object):
                 np.arange(
                     start=self.current_sampling_index_start,
                     stop=self.current_sampling_index_end + 1,
-                    step=self.sequence_ts_spacing
                 )
             )
 
