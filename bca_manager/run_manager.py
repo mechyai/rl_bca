@@ -20,8 +20,8 @@ class RunManager:
 
     selected_params = {
         # -- Agent Params --
-        'observation_ts_frequency': 5,  # * [5, 10, 15],
-        'actuation_ts_frequency': 5,  # * [5, 10, 15],
+        'observation_ts_frequency': 15,  # * [5, 10, 15],
+        'actuation_ts_frequency': 15,  # * [5, 10, 15],
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
@@ -33,7 +33,7 @@ class RunManager:
         'replay_capacity': 2000,
         'batch_size': 8,
         # PER
-        'PER': True,
+        'PER': False,
         'alpha_start': 1,
         'alpha_decay_factor': None,
         'betta_start': 0.5,
@@ -72,8 +72,8 @@ class RunManager:
 
         # RNN
         # -- Agent / Model --
-        'rnn': False,
-        'sequence_ts_spacing': 6,
+        'rnn': True,
+        'sequence_ts_spacing': 4,
         'sequence_length': 6,
 
         # -- BDQ Architecture --

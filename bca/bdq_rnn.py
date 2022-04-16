@@ -38,11 +38,13 @@ class PrioritizedSequenceReplayMemory(object):
         self.batch_size = batch_size
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        self.sequence_span = sequence_length * sequence_ts_spacing
+        self.sequence_index_span = (sequence_length - 1) * sequence_ts_spacing
         self.sequence_ts_spacing = sequence_ts_spacing
         self.sequence_length = sequence_length
 
         self.current_index = 0
+        self.episode_start_index = 0
+        self.episode_start_interaction_count = 0
         self.interaction_count = 0
         self.first_sample = True
 
@@ -142,7 +144,7 @@ class PrioritizedSequenceReplayMemory(object):
         # Limited by number of interactions thus far, until memory is full
         if self.interaction_count <= self.capacity:
             # Until replay buffer has been filled to capacity first
-            self.sampling_index_start = self.sequence_span - self.sequence_ts_spacing
+            self.sampling_index_start = self.sequence_index_span
             self.sampling_index_end = self.current_index
         else:
             # Memory has been 'over-filled'
@@ -183,21 +185,20 @@ class PrioritizedSequenceReplayMemory(object):
         return (state_batch, action_batch, next_state_batch, reward_batch, terminal_batch), sample_indices
 
     def get_single_sequence(self):
-        """Returns most recent sequence from replay."""
+        """Returns most recent sequence from replay, corresponding to current state."""
 
         # Get most recent state, remove prior push count update & index offset
-        start_index = self.current_index - self.sequence_span + self.sequence_ts_spacing
+        start_index = self.current_index - self.sequence_index_span
         prior_sequence_indices = range(start_index, self.current_index + 1, self.sequence_ts_spacing)
 
         # RNN input shape: batch size, sequence len, input size
         return self.state_memory[prior_sequence_indices].unsqueeze(0)
 
     def can_provide_sample(self):
-        """Check if replay memory has enough experience tuples to sample batch from"""
+        """Check if replay memory has enough experience tuples to sample batch from."""
 
         # Such that n sequences of span k can be sampled from batch
-        # Interaction > n + k (no negative indices until replay 'over-filled')
-        return self.interaction_count >= self.batch_size + self.sequence_span
+        return self.interaction_count >= self.batch_size + self.sequence_index_span
 
 
 class SequenceReplayMemory(object):
@@ -208,7 +209,7 @@ class SequenceReplayMemory(object):
         self.batch_size = batch_size
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        self.sequence_span = sequence_length * sequence_ts_spacing
+        self.sequence_index_span = (sequence_length - 1) * sequence_ts_spacing
         self.sequence_ts_spacing = sequence_ts_spacing
         self.sequence_length = sequence_length
 
@@ -235,7 +236,7 @@ class SequenceReplayMemory(object):
         # Limited by number of interactions thus far, until memory is full
         if self.total_interaction_count <= self.capacity:
             # Until replay buffer has been filled to capacity first
-            self.current_sampling_index_start = self.sequence_span - self.sequence_ts_spacing
+            self.current_sampling_index_start = self.sequence_index_span
             self.current_sampling_index_end = self.current_index
         else:
             # Memory has been 'over-filled'
@@ -354,7 +355,7 @@ class SequenceReplayMemory(object):
         """Returns most recent sequence from replay, corresponding to current state."""
 
         # Get most recent state, remove prior push count update & index offset
-        start_index = self.current_index - self.sequence_span + self.sequence_ts_spacing
+        start_index = self.current_index - self.sequence_index_span
         prior_sequence_indices = range(start_index, self.current_index + 1, self.sequence_ts_spacing)
 
         # RNN input shape: batch size, sequence len, input size
@@ -364,8 +365,8 @@ class SequenceReplayMemory(object):
         """Check if replay memory has enough experience tuples to sample batch from."""
 
         # Such that n sequences of span k can be sampled from batch
-        # Interaction > n + k (no negative indices until replay 'over-filled')
-        return self.total_interaction_count >= self.batch_size + self.sequence_span
+        return self.total_interaction_count >= self.batch_size + self.sequence_index_span
+
 
 
 class BranchingQNetwork_RNN(nn.Module):
