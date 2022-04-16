@@ -352,11 +352,14 @@ class BranchingDQN(nn.Module):
             argmax = torch.argmax(self.policy_network(next_states), dim=2)
             return self.target_network(next_states).gather(2, argmax.unsqueeze(2)).squeeze(-1)
 
-    def update_target_net(self):
+    def target_hard_update(self):
         self.update_count += 1
         if self.update_count % self.target_update_freq == 0:
             self.update_count = 0
             self.target_network.load_state_dict(self.policy_network.state_dict())
+
+    def target_soft_update(self):
+        pass
 
     def update_policy(self, batch, gradient_weights=None):
         # get converted batch of tensors
@@ -414,7 +417,7 @@ class BranchingDQN(nn.Module):
         self.optimizer.step()
 
         # -- Update --
-        self.update_target_net()
+        self.target_hard_update()
         self.step_count += 1
 
         return float(loss_total.detach().cpu()), loss_each.detach().mean(dim=1).cpu()
