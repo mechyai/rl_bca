@@ -201,7 +201,7 @@ class PrioritizedReplayMemory:
             self.sampling_index_end = self.capacity - 1
 
         # Get priority probability for entire filled buffer
-        probabilities = np.array(self.get_priority_probabilities())
+        probabilities = np.array(self.get_priority_probabilities().cpu())
         sampling_range = list(range(self.sampling_index_end + 1))
 
         # Prioritized sampling
@@ -417,7 +417,7 @@ class BranchingDQN(nn.Module):
         self.update_target_net()
         self.step_count += 1
 
-        return float(loss_total.detach().cpu()), loss_each.detach().mean(dim=1).cpu()
+        return float(loss_total.detach().cpu()), loss_each.detach().mean(dim=1)
 
     def import_model(self, model_path: str):
         """

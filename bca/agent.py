@@ -866,7 +866,7 @@ class Agent:
         """Reward function - per component, per zone."""
 
         lambda_comfort = 1
-        lambda_rtp = 0.03 * 2
+        lambda_rtp = 0.03 * 3
         lambda_intermittent = 1
 
         n_zones = self.bdq.action_branches

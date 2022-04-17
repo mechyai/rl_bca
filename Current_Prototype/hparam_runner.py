@@ -10,27 +10,28 @@ from bca import MDP
 from bca_manager import RunManager, TensorboardManager, _paths_config, experiment_manager
 
 year = MDP.year
-train_month_start = 'April'
-train_month_end = 'April'
-train_day_start = 0
-train_day_end = 2
+train_month_start = 'May'
+train_month_end = 'May'
+train_day_start = None
+train_day_end = None
 
-test_month_start = 'July'
-test_month_end = 'July'
-test_day_start = 0
-test_day_end = 2
+test_month_start = 'June'
+test_month_end = 'June'
+test_day_start = None
+test_day_end = None
 
-exp_name = 'new_RNN_PER_hparam'
+exp_name = 'finally_RNN_PER_hparam'
 # exp_name = 'Tester'
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 prepend_tb = 'PER'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 2,
+    'epochs': 5,
     'run_index_start': 0,
-    'run_index_limit': 2,
+    'run_index_limit': 50,
     'load_model': r'',
+    'skip_benchmark': False,
     'experiment_desc': 'testing PER'
 }
 
@@ -58,8 +59,8 @@ cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 # --- Study Parameters ---
 run_manager = RunManager()
 runs = run_manager.runs
-run_limit = experiment_params_dict['run_index_limit']
-run_start = experiment_params_dict['run_index_start']
+runs_limit = experiment_params_dict['run_index_limit']
+runs_start = experiment_params_dict['run_index_start']
 
 # -- Create DQN Model --
 run = runs[0]
@@ -69,76 +70,78 @@ my_bdq = run_manager.create_bdq(run)
 if experiment_params_dict['load_model']:
     my_bdq.import_model(experiment_params_dict['load_model'])
 
-# --- Run Baseline Once ---
-run_type = 'benchmark'
-my_tb = TensorboardManager(
-    run_manager,
-    name_path=os.path.join(exp_folder, f'_{train_period}_BASELINE')
-)
 
-print('\n********** Baseline **********\n')
+if not experiment_params_dict['skip_benchmark']:
+    # --- Run Baseline Once ---
+    run_type = 'benchmark'
+    my_tb = TensorboardManager(
+        run_manager,
+        name_path=os.path.join(exp_folder, f'_{train_period}_BASELINE')
+    )
 
-baseline_agent = experiment_manager.run_experiment(
-    run=run,
-    run_manager=run_manager,
-    bdq=my_bdq,
-    tensorboard_manager=my_tb,
-    osm_file=osm_base,
-    idf_file_final=idf_final_file,
-    epw_file=epw_file,
-    year=year,
-    start_month=train_month_start,
-    end_month=train_month_end,
-    start_day=train_day_start,
-    end_day=train_day_end,
-    run_type=run_type,
-)
-my_tb.record_epoch_results(
-    agent=baseline_agent,
-    experimental_params=experiment_params_dict,
-    run=run,
-    run_count=0,
-    run_limit=run_limit,
-    epoch=0,
-    run_type=run_type
-)
+    print('\n********** Baseline **********\n')
 
-# Testing Month
-my_tb = TensorboardManager(
-    run_manager,
-    name_path=os.path.join(exp_folder, f'_{test_period}_TEST_BASELINE')
-)
+    baseline_agent = experiment_manager.run_experiment(
+        run=run,
+        run_manager=run_manager,
+        bdq=my_bdq,
+        tensorboard_manager=my_tb,
+        osm_file=osm_base,
+        idf_file_final=idf_final_file,
+        epw_file=epw_file,
+        year=year,
+        start_month=train_month_start,
+        end_month=train_month_end,
+        start_day=train_day_start,
+        end_day=train_day_end,
+        run_type=run_type,
+    )
+    my_tb.record_epoch_results(
+        agent=baseline_agent,
+        experimental_params=experiment_params_dict,
+        run=run,
+        run_count=0,
+        run_limit=runs_limit,
+        epoch=0,
+        run_type=run_type
+    )
 
-print('\n********** Testing Baseline **********\n')
+    # Testing Month
+    my_tb = TensorboardManager(
+        run_manager,
+        name_path=os.path.join(exp_folder, f'_{test_period}_TEST_BASELINE')
+    )
 
-baseline_agent = experiment_manager.run_experiment(
-    run=run,
-    run_manager=run_manager,
-    bdq=my_bdq,
-    tensorboard_manager=my_tb,
-    osm_file=osm_base,
-    idf_file_final=idf_final_file,
-    epw_file=epw_file,
-    year=year,
-    start_month=test_month_start,
-    end_month=test_month_end,
-    start_day=test_day_start,
-    end_day=test_day_end,
-    run_type=run_type,
-)
-my_tb.record_epoch_results(
-    agent=baseline_agent,
-    experimental_params=experiment_params_dict,
-    run=run,
-    run_count=0,
-    run_limit=run_limit,
-    epoch=0,
-    run_type=run_type
-)
+    print('\n********** Testing Baseline **********\n')
+
+    baseline_agent = experiment_manager.run_experiment(
+        run=run,
+        run_manager=run_manager,
+        bdq=my_bdq,
+        tensorboard_manager=my_tb,
+        osm_file=osm_base,
+        idf_file_final=idf_final_file,
+        epw_file=epw_file,
+        year=year,
+        start_month=test_month_start,
+        end_month=test_month_end,
+        start_day=test_day_start,
+        end_day=test_day_end,
+        run_type=run_type,
+    )
+    my_tb.record_epoch_results(
+        agent=baseline_agent,
+        experimental_params=experiment_params_dict,
+        run=run,
+        run_count=0,
+        run_limit=runs_limit,
+        epoch=0,
+        run_type=run_type
+    )
 
 # ---------------------------------------------------- Run Training ----------------------------------------------------
 
-for run_num, run in enumerate(runs):
+for run_num, run in enumerate(runs[runs_start:runs_limit]):
 
     # Create new BDQ model
     my_bdq = run_manager.create_bdq(run)
@@ -146,13 +149,13 @@ for run_num, run in enumerate(runs):
     start_step = 0
     for epoch in range(experiment_params_dict['epochs']):
 
-        print(f'\nRun {run_num + 1} of {run_limit}, Epoch {epoch + 1} of {experiment_params_dict["epochs"]}\n{run}\n')
+        print(f'\nRun {run_num + 1} of {runs_limit}, Epoch {epoch + 1} of {experiment_params_dict["epochs"]}\n{run}\n')
 
         # ---- Tensor Board ----
         my_tb = TensorboardManager(
             run_manager,
             name_path=os.path.join(exp_folder,
-                                   f'run_{run_num + 1}-{run_limit}_TRAIN_'
+                                   f'run_{run_num + 1}-{runs_limit}_TRAIN_'
                                    f'{experiment_params_dict["epochs"]}_{train_period}')
         )
 
@@ -181,7 +184,7 @@ for run_num, run in enumerate(runs):
             experimental_params=experiment_params_dict,
             run=run,
             run_count=0,
-            run_limit=run_limit,
+            run_limit=runs_limit,
             epoch=0,
             run_type=run_type
         )
@@ -190,12 +193,12 @@ for run_num, run in enumerate(runs):
 
         time_train = round(time_start - time.time(), 2) / 60
 
-        # -- Save Model --
-        if experiment_params_dict['epochs'] > 0:
-            print('\n********** Saved Model ************\n')
-            model_name = f'bdq_runs_{run_num + 1}_epochs_{experiment_params_dict["epochs"]}'
-            torch.save(my_bdq.policy_network.state_dict(),
-                       os.path.join(exp_folder, model_name))
+    # -- Save Model --
+    if experiment_params_dict['epochs'] > 0:
+        print('\n********** Saved Model ************\n')
+        model_name = f'bdq_runs_{run_num + 1}_epochs_{experiment_params_dict["epochs"]}'
+        torch.save(my_bdq.policy_network.state_dict(),
+                   os.path.join(exp_folder, model_name))
 
     # ------------------------------------------------- Run Testing ------------------------------------------------
 
@@ -203,7 +206,7 @@ for run_num, run in enumerate(runs):
     my_tb = TensorboardManager(
         run_manager,
         name_path=os.path.join(exp_folder,
-                               f'run_{run_num + 1}-{run_limit}_EXPLOIT_epoch{epoch + 1}-'
+                               f'run_{run_num + 1}-{runs_limit}_EXPLOIT_epoch{epoch + 1}-'
                                f'{experiment_params_dict["epochs"]}_{train_period}')
     )
 
@@ -230,7 +233,7 @@ for run_num, run in enumerate(runs):
         experimental_params=experiment_params_dict,
         run=run,
         run_count=0,
-        run_limit=run_limit,
+        run_limit=runs_limit,
         epoch=0,
         run_type=run_type
     )
@@ -241,7 +244,7 @@ for run_num, run in enumerate(runs):
     my_tb = TensorboardManager(
         run_manager,
         name_path=os.path.join(exp_folder,
-                               f'run_{run_num + 1}-{run_limit}_TEST_epoch{epoch + 1}-'
+                               f'run_{run_num + 1}-{runs_limit}_TEST_epoch{epoch + 1}-'
                                f'{experiment_params_dict["epochs"]}_{test_period}')
     )
 
@@ -266,7 +269,7 @@ for run_num, run in enumerate(runs):
         experimental_params=experiment_params_dict,
         run=run,
         run_count=0,
-        run_limit=run_limit,
+        run_limit=runs_limit,
         epoch=0,
         run_type=run_type
     )
@@ -278,7 +281,7 @@ for run_num, run in enumerate(runs):
         file.write(f'\n\n Experiment Descp: {experiment_params_dict["experiment_desc"]}')
         file.write(f'\n\n Model Name: {model_name}')
         file.write(f'\n\tTime Train = {time_train} mins')
-        file.write(f'\n\t*Epochs trained = Run {run_num}-{run_limit}, Epoch: {epoch + 1}')
+        file.write(f'\n\t*Epochs trained = Run {run_num}-{runs_limit}, Epoch: {epoch + 1}')
         file.write(f'\n\t******* Cumulative Reward = {my_agent.reward_sum}')
         file.write(f'\n\t*Performance Metrics:')
         file.write(f'\n\t\tDiscomfort Metric = {my_agent.comfort_dissatisfaction_total}')
