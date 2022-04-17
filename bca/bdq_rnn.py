@@ -201,7 +201,7 @@ class PrioritizedSequenceReplayMemory(object):
         return self.interaction_count >= self.batch_size + self.sequence_index_span
 
 
-class SequenceReplayMemory(object):
+class SequenceReplayMemory:
     """Manages a sequential replay memory, where data is stored as numpy arrays."""
 
     def __init__(self, capacity: int, batch_size: int, sequence_length: int, sequence_ts_spacing: int = 1):
@@ -226,7 +226,8 @@ class SequenceReplayMemory(object):
         self.current_sampling_index_start = None
         self.previous_sampling_index_end = None
         self.previous_sampling_index_start = None
-        self.current_sampling_indices = None
+        self.current_available_indices = None
+        self.current_sample_indices = None
 
         # -- Replay Buffer --
         self.state_memory = None
@@ -246,7 +247,7 @@ class SequenceReplayMemory(object):
         else:
             return unwrapped_index % self.capacity
 
-    def _get_sample_indices(self):
+    def _get_available_sample_indices(self):
         """Gets the proper indices to sample from replay - built around sampling sequence and reuse between episodes."""
 
         # -- Mixed Episodes in Buffer --
@@ -276,11 +277,20 @@ class SequenceReplayMemory(object):
             )
 
             # -- Previous Episode --
-            # If at least 1 full sequence span from prior episode
-            if self._get_replay_index(self.episode_start_index - 1 - self.sequence_index_span) > self.current_index \
-                    and self.episode_start_interaction_count != 0:
+            # Make sure current index outside last sequence available from prior episode
+            previous_sequence_limit_index = self.episode_start_index - 1 - self.sequence_index_span
+            if previous_sequence_limit_index < 0:
+                # Previous sequence limit IS looped
+                previous_episode_sequence_limit_condition = self.current_index \
+                                                            < self._get_replay_index(previous_sequence_limit_index)
+            else:
+                # Previous sequence limit NOT looped
+                previous_episode_sequence_limit_condition = not \
+                    previous_sequence_limit_index < self.current_index <= self.episode_start_index - 1
+
+            if previous_episode_sequence_limit_condition and self.episode_start_interaction_count != 0:
                 # Need 1 sequence spacing from current episode
-                self.previous_sampling_index_start = self.current_index + self.sequence_index_span
+                self.previous_sampling_index_start = self.current_index + self.sequence_index_span + 1
 
                 self.previous_sampling_index_end = self.episode_start_index - 1
                 # Managing wrapping for interpolation
@@ -298,7 +308,7 @@ class SequenceReplayMemory(object):
                 )
             )
 
-            self.current_sampling_indices = np.append(previous_sampling_range, current_sampling_range)
+            self.current_available_indices = np.append(previous_sampling_range, current_sampling_range)
 
         # -- Current Episode ONLY in Buffer --
         else:
@@ -314,11 +324,15 @@ class SequenceReplayMemory(object):
                 )
             )
 
-            self.current_sampling_indices = current_sampling_range
+            self.current_available_indices = current_sampling_range
+
+    def _get_sample_indices(self):
+        # Update available sample indices from replay
+        self._get_available_sample_indices()
 
         # Get sampling indices
         sample_indices = np.random.choice(
-            a=self.current_sampling_indices,
+            a=self.current_available_indices,
             size=self.batch_size,
             replace=False
         )
@@ -362,11 +376,11 @@ class SequenceReplayMemory(object):
         """Sample a sequence of transitions randomly"""
 
         # Get appropriate indices to sample from replay
-        sample_indices = self._get_sample_indices()
+        self.current_sample_indices = self._get_sample_indices()
 
         # Get full range of sequence indices for each random sample starting point
-        sample_indices.sort()
-        sequence_indices = np.expand_dims(sample_indices, axis=1)
+        self.current_sample_indices.sort()
+        sequence_indices = np.expand_dims(self.current_sample_indices, axis=1)
         for _ in range(self.sequence_length - 1):
             prior_sequence = np.expand_dims(sequence_indices.T[0] - self.sequence_ts_spacing, axis=1)
             # Maintain relative order of seq
@@ -379,9 +393,9 @@ class SequenceReplayMemory(object):
         next_state_batch = self.next_state_memory[sequence_indices]
 
         # No sequence sampling needed, end of sequence
-        action_batch = self.action_memory[sample_indices].long().to(self.device)
-        reward_batch = self.reward_memory[sample_indices].to(self.device)
-        terminal_batch = self.terminal_memory[sample_indices].to(self.device)
+        action_batch = self.action_memory[self.current_sample_indices].long().to(self.device)
+        reward_batch = self.reward_memory[self.current_sample_indices].to(self.device)
+        terminal_batch = self.terminal_memory[self.current_sample_indices].to(self.device)
 
         return state_batch, action_batch, next_state_batch, reward_batch, terminal_batch
 
@@ -402,6 +416,105 @@ class SequenceReplayMemory(object):
 
         # Such that n sequences of span k can be sampled from batch
         return self.total_interaction_count >= self.batch_size + self.sequence_index_span
+
+
+class PrioritizedSequenceReplayMemory(SequenceReplayMemory):
+    def __init__(self, capacity: int, batch_size: int, sequence_length: int, sequence_ts_spacing: int = 1):
+        super().__init__(capacity, batch_size, sequence_length, sequence_ts_spacing)
+
+        self.priorities_memory = None
+        self.weights_memory = None
+        self.loss_memory = None
+
+    def push(self, state, action, next_state, reward, terminal_flag):
+        """Save a transition to replay memory"""
+
+        if self.first_sample:
+            self.first_sample = False
+
+            # Replay Memory
+            self.state_memory = torch.zeros([self.capacity, len(state)]).to(self.device)
+            self.action_memory = torch.zeros([self.capacity, len(action)]).to(self.device)
+            self.next_state_memory = torch.zeros([self.capacity, len(next_state)]).to(self.device)
+            self.reward_memory = torch.zeros([self.capacity, 1]).to(self.device)
+            self.terminal_memory = torch.zeros([self.capacity, 1]).to(self.device)
+
+            # Prioritization
+            self.priorities_memory = torch.zeros([self.capacity]).to(self.device)
+            self.weights_memory = torch.zeros([self.capacity]).to(self.device)
+            self.loss_memory = torch.ones([self.capacity]).to(self.device)
+
+        # Loop through indices based on size of memory
+        index = self.total_interaction_count % self.capacity
+        self.current_index = index
+
+        self.state_memory[index] = torch.Tensor(state).to(self.device)
+        self.action_memory[index] = torch.Tensor(action).to(self.device)
+        self.next_state_memory[index] = torch.Tensor(next_state).to(self.device)
+        self.reward_memory[index] = torch.Tensor([reward]).to(self.device)
+        self.terminal_memory[index] = torch.Tensor([terminal_flag]).to(self.device)
+
+        # Update priorities
+        self.loss_memory[index] = self.max_loss
+
+        self.total_interaction_count += 1
+        self.current_interaction_count = self.total_interaction_count - self.episode_start_interaction_count
+
+    def update_td_losses(self, sample_indices, loss_each):
+        """Update the tracked losses (TD error) of the batch."""
+
+        # Update max priority for added samples
+        max_loss = max(loss_each)  # Doing Max over batch to be quicker, instead of whole buffer everytime
+        if max_loss > self.max_loss:
+            self.max_loss = max_loss
+
+        # Add new loss values to memory
+        self.loss_memory[sample_indices] = loss_each
+
+    def get_gradient_weights(self, sample_indices, betta=None):
+        """Return weights for given sample indices from batch for backpropagation to remove bias form priorities."""
+
+        if betta is None:
+            betta = self.betta
+
+        # Current number of available memory
+        n = 1 + len(self.current_available_indices)
+        self.weights_memory = torch.pow((1 / self.priorities_memory[self.current_available_indices]) / n, betta)
+
+        return self.weights_memory[self.current_available_indices]
+
+    def get_priority_probabilities(self, alpha=1):
+        """Convert scalar probability values per sample to probability distribution = 100%"""
+
+        if alpha is None:
+            alpha = self.alpha
+
+        # Get priorities from TD loss proxy
+        losses = self.loss_memory[self.current_available_indices]
+        sum_priorities = torch.pow(losses, alpha).sum()
+
+        self.priorities_memory[self.current_available_indices] = torch.pow(losses, alpha) / sum_priorities
+
+        return self.priorities_memory[self.current_available_indices]
+
+    def _get_sample_indices(self):
+        # Update available sample indices from replay
+        self._get_available_sample_indices()
+
+        # Get sampling indices
+        sample_indices = np.random.choice(
+            a=self.current_available_indices,
+            size=self.batch_size,
+            replace=False,
+            p=self.get_priority_probabilities()
+        )
+
+        return sample_indices
+
+    def sample(self):
+        """Sample a sequence of transitions with PER probabilities."""
+
+        return super(SequenceReplayMemory).sample(), self.current_sample_indices
 
 
 class BranchingQNetwork_RNN(nn.Module):
