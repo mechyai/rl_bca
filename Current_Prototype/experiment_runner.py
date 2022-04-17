@@ -13,13 +13,13 @@ from bca_manager import _paths_config, experiment_manager
 year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
-train_day_start = 1
-train_day_end = 2
+train_day_start = None
+train_day_end = None
 
 test_month_start = 'May'
 test_month_end = 'May'
-test_day_start = 1
-test_day_end = 2
+test_day_start = None
+test_day_end = None
 
 train_period = train_month_start + '_' + train_month_end
 test_period = test_month_start + '_' + test_month_end
