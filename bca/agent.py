@@ -139,6 +139,9 @@ class Agent:
 
         # -- REPLAY MEMORY --
         self.memory = replay_memory
+        # PER
+        self.alpha_start = None
+        self.betta_start = None
 
         # -- BDQ --
         self.bdq = dqn_model
@@ -179,6 +182,9 @@ class Agent:
         # -- Parameter Tracking --
         self.continued_parameters = continued_parameters
         self._set_continued_params()
+        self.decay_alpha_betta()  # PER, do once in beginning
+
+
 
     # ----------------------------------------------------- STATE -----------------------------------------------------
 
@@ -431,9 +437,9 @@ class Agent:
     def decay_alpha_betta(self):
         """Anneal variables of prioritization (alpha) and gradient weight adjustments (betta) with annealing."""
 
-        alpha_start = self.run.alpha_start
+        alpha_start = self.alpha_start
         # alpha_growth_factor = self.run.alpha_decay_factor
-        betta_start = self.run.betta_start
+        betta_start = self.betta_start
         betta_decay_factor = self.run.betta_decay_factor
 
         # self.memory.alpha = alpha_start * math.exp(-alpha_decay_factor * self.learning_steps)  # 1 --> 0

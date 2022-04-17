@@ -20,18 +20,18 @@ class RunManager:
 
     selected_params = {
         # -- Agent Params --
-        'observation_ts_frequency': 15,  # * [5, 10, 15],
-        'actuation_ts_frequency': 15,  # * [5, 10, 15],
-        'learning_loops': 2,
+        'observation_ts_frequency': 5,  # * [5, 10, 15],
+        'actuation_ts_frequency': 55,  # * [5, 10, 15],
+        'learning_loops': 10,
 
         # --- Behavioral Policy ---
-        'eps_start': 0.2,
-        'eps_end': 0.005,
+        'eps_start': 0.25,
+        'eps_end': 0.001,
         'eps_decay': 1e-4,
 
         # --- Experience Replay ---
-        'replay_capacity': 100,
-        'batch_size': 10,
+        'replay_capacity': 2056,
+        'batch_size': 32,
         # PER
         'PER': True,
         'alpha_start': 1,
@@ -46,10 +46,10 @@ class RunManager:
         'actuation_function': 5,  # -----------------------------------------------------------------------------------
 
         # Architecture
-        'shared_network_size_l1': 96,
-        'shared_network_size_l2': 0,
+        'shared_network_size_l1': 128,
+        'shared_network_size_l2': 128,
         'value_stream_size_l1': 64,
-        'value_stream_size_l2': 0,
+        'value_stream_size_l2': 64,
         'advantage_streams_size_l1': 48,
         'advantage_streams_size_l2': 0,
 
@@ -62,7 +62,7 @@ class RunManager:
         'reward_aggregation': 'sum',  # sum or mean
         'reward_sparsity_ts': 1,
         'reward_scale': 0.01,
-        'lambda_rtp': 0.3 * 4,
+        'lambda_rtp': 0.3 * 3,
 
         # Network mods
         'td_target': 'mean',  # (0) mean or (1) max
@@ -73,11 +73,11 @@ class RunManager:
         # RNN
         # -- Agent / Model --
         'rnn': True,
-        'sequence_ts_spacing': 4,
+        'sequence_ts_spacing': 6,
         'sequence_length': 6,
 
         # -- BDQ Architecture --
-        'rnn_hidden_size': 12,
+        'rnn_hidden_size': 48,
         'rnn_num_layers': 1,
     }
     Run = namedtuple('Run', selected_params.keys())
@@ -91,17 +91,17 @@ class RunManager:
 
         # --- Behavioral Policy ---
         'eps_start': [0.2, 0.05],
-        'eps_end': [0.005],
+        'eps_end': [0.001],
         'eps_decay': [1e-4],
 
         # --- Experience Replay ---
         'replay_capacity': [500, 2000],
         'batch_size': [8, 32, 96],
         # PER
-        'PER': [True],
+        'PER': [True, False],
         'alpha_start': [1],
         'alpha_decay_factor': [None],
-        'betta_start': [0.5],
+        'betta_start': [0.4],
         'betta_decay_factor': [1e-5],
 
         # -- BDQ --
@@ -112,7 +112,7 @@ class RunManager:
 
         # Architecture
         'shared_network_size_l1': [96],
-        'shared_network_size_l2': [72],
+        'shared_network_size_l2': [96],
         'value_stream_size_l1': [64],
         'value_stream_size_l2': [64],
         'advantage_streams_size_l1': [48],

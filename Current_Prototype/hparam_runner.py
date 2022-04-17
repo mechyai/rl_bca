@@ -12,13 +12,13 @@ from bca_manager import RunManager, TensorboardManager, _paths_config, experimen
 year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
-train_day_start = 0
-train_day_end = 2
+train_day_start = None
+train_day_end = None
 
-test_month_start = 'July'
-test_month_end = 'July'
-test_day_start = 0
-test_day_end = 2
+test_month_start = 'May'
+test_month_end = 'May'
+test_day_start = None
+test_day_end = None
 
 exp_name = 'new_RNN_PER_hparam'
 # exp_name = 'Tester'
@@ -27,12 +27,12 @@ prepend_tb = 'PER'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 2,
+    'epochs': 10,
     'run_index_start': 0,
-    'run_index_limit': 2,
+    'run_index_limit': 100,
     'load_model': r'',
-    'skip_baseline': True,
-    'experiment_desc': 'testing PER'
+    'skip_baseline': False,
+    'experiment_desc': ''
 }
 
 # -- FILE PATHS --
@@ -58,7 +58,7 @@ cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 
 # --- Study Parameters ---
 run_manager = RunManager()
-runs = run_manager.runs
+runs = run_manager.shuffle_runs()
 run_limit = experiment_params_dict['run_index_limit']
 run_start = experiment_params_dict['run_index_start']
 

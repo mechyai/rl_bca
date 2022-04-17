@@ -24,7 +24,7 @@ test_day_end = 2
 train_period = train_month_start + '_' + train_month_end
 test_period = test_month_start + '_' + test_month_end
 
-exp_name = 'non_hourly_Reward_BDQ'
+exp_name = 'non_hourly_Reward_RNN_PER_working'
 # exp_name = 'Tester'
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 
