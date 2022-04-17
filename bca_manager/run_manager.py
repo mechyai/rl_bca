@@ -194,7 +194,7 @@ class RunManager:
 
         return self.get_runs(selected_params)
 
-    def shuffle_runs(self, runs: None):
+    def shuffle_runs(self, runs=None):
         """Returns list of shuffled runs"""
 
         if runs is None:

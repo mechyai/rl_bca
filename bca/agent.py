@@ -437,15 +437,16 @@ class Agent:
     def decay_alpha_betta(self):
         """Anneal variables of prioritization (alpha) and gradient weight adjustments (betta) with annealing."""
 
-        alpha_start = self.alpha_start
-        # alpha_growth_factor = self.run.alpha_decay_factor
-        betta_start = self.betta_start
-        betta_decay_factor = self.run.betta_decay_factor
+        if self.run.PER:
+            alpha_start = self.alpha_start
+            # alpha_growth_factor = self.run.alpha_decay_factor
+            betta_start = self.betta_start
+            betta_decay_factor = self.run.betta_decay_factor
 
-        # self.memory.alpha = alpha_start * math.exp(-alpha_decay_factor * self.learning_steps)  # 1 --> 0
-        self.memory.alpha = alpha_start
-        self.memory.betta = min(1 - (1 - betta_start) * math.exp(-betta_decay_factor * self.learning_steps),
-                                1)  # 0 --> 1
+            # self.memory.alpha = alpha_start * math.exp(-alpha_decay_factor * self.learning_steps)  # 1 --> 0
+            self.memory.alpha = alpha_start
+            self.memory.betta = min(1 - (1 - betta_start) * math.exp(-betta_decay_factor * self.learning_steps),
+                                    1)  # 0 --> 1
 
     # ------------------------------------------------- ACTUATION -------------------------------------------------
 
