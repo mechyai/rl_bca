@@ -19,7 +19,8 @@ def run_experiment(run: RunManager.Run,
                    start_day: int = None,
                    end_day: int = None,
                    run_type: str = 'train',
-                   current_step: int = 0
+                   current_step: int = 0,
+                   continued_parameters: dict = None
                    ):
     """This runs an entire simulation for given parameters and objects."""
 
@@ -61,8 +62,10 @@ def run_experiment(run: RunManager.Run,
 
     # -- Instantiate RL Agent --
     my_policy = run_manager.create_policy(run)
-    my_memory = run_manager.create_replay_memory(run)
-    my_agent = run_manager.create_agent(run, my_mdp, my_sim, my_model, tensorboard_manager, current_step=current_step)
+    # my_memory = run_manager.create_replay_memory(run)
+    my_agent = run_manager.create_agent(run, my_mdp, my_sim, my_model, tensorboard_manager,
+                                        current_step=current_step,
+                                        continued_parameters=continued_parameters)
 
     # -- Set Sim Calling Point(s) & Callback Function(s) --
     my_sim.set_calling_point_and_callback_function(

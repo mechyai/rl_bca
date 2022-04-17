@@ -69,7 +69,8 @@ class Agent:
                  reward_aggregation: str = 'mean',
                  learning_loop: int = 1,
                  tensorboard_manager=None,  # TODO fix imports
-                 current_step: int = 0
+                 current_step: int = 0,
+                 continued_parameters: dict = None
                  ):
 
         # -- SIMULATION STATES --
@@ -175,6 +176,10 @@ class Agent:
         self._print = False
         self._checked_action_dims = False
 
+        # -- Parameter Tracking --
+        self.continued_parameters = continued_parameters
+        self._set_continued_params()
+
     # ----------------------------------------------------- STATE -----------------------------------------------------
 
     def observe(self, learn=True):
@@ -218,8 +223,8 @@ class Agent:
                 for i in range(self.learning_loop):
                     self.learning_steps += 1
                     # If PER
-                    if isinstance(self.memory, PrioritizedReplayMemory) or isinstance(self.memory,
-                                                                                      PrioritizedSequenceReplayMemory):
+                    if isinstance(self.memory, PrioritizedReplayMemory) \
+                            or isinstance(self.memory, PrioritizedSequenceReplayMemory):
                         # Get prioritized batch
                         batch, sample_indices = self.memory.sample()
                         # Learn from prioritized batch
@@ -395,6 +400,27 @@ class Agent:
             list(self.meter_encoded_vals.values()),
             dtype=float)
 
+    def _set_continued_params(self):
+        """Write saved parameters from previous episode."""
+        if self.continued_parameters is not None:
+            if self.run.PER:
+                if 'alpha_start' in self.continued_parameters:
+                    self.alpha_start = self.continued_parameters['alpha_start']
+                if 'betta_start' in self.continued_parameters:
+                    self.betta_start = self.continued_parameters['betta_start']
+            if 'epsilon_start' in self.continued_parameters:
+                self.greedy_epsilon.start = self.continued_parameters['epsilon_start']
+
+    def save_continued_params(self):
+        """Save parameters from previous episode."""
+        if self.run.PER:
+            if 'alpha_start' in self.continued_parameters:
+                self.continued_parameters['alpha_start'] = self.memory.alpha
+            if 'betta_start' in self.continued_parameters:
+                self.continued_parameters['betta_start'] = self.memory.betta
+        if 'epsilon_start' in self.continued_parameters:
+            self.continued_parameters['epsilon_start'] = self.epsilon
+
     def _is_terminal(self):
         """Determines whether the current state is a terminal state or not. Dictates TD update values."""
         if self.time.day > self.bem.end_day:  # end of sim, goes to next day 0-hour
@@ -406,7 +432,7 @@ class Agent:
         """Anneal variables of prioritization (alpha) and gradient weight adjustments (betta) with annealing."""
 
         alpha_start = self.run.alpha_start
-        alpha_decay_factor = self.run.alpha_decay_factor
+        # alpha_growth_factor = self.run.alpha_decay_factor
         betta_start = self.run.betta_start
         betta_decay_factor = self.run.betta_decay_factor
 

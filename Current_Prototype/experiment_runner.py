@@ -13,13 +13,13 @@ from bca_manager import _paths_config, experiment_manager
 year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
-train_day_start = None
-train_day_end = None
+train_day_start = 1
+train_day_end = 2
 
 test_month_start = 'May'
 test_month_end = 'May'
-test_day_start = None
-test_day_end = None
+test_day_start = 1
+test_day_end = 2
 
 train_period = train_month_start + '_' + train_month_end
 test_period = test_month_start + '_' + test_month_end
@@ -31,14 +31,14 @@ exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 5,
-    'skip_benchmark': False,
+    'skip_benchmark': True,
     'exploit_only': False,
     'test': True,
     'load_model': r'',
     'experiment_desc': 'Testing new PER RNN'
 }
 
-run_modification = [1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]  #, 1e-5, 5e-6]  # 1e-6]
+run_modification = [1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]  # , 1e-5, 5e-6]  # 1e-6]
 # run_modification = [5e-3]
 
 # -- FILE PATHS --
@@ -69,6 +69,8 @@ run_limit = len(run_modification)
 
 # -- Create DQN Model --
 my_bdq = run_manager.create_bdq(run)
+my_memory = run_manager.create_replay_memory(run)
+
 # Load model, if desired
 if experiment_params_dict['load_model']:
     my_bdq.import_model(experiment_params_dict['load_model'])
@@ -165,11 +167,17 @@ if not experiment_params_dict['exploit_only']:
 
         start_step = 0
         for epoch in range(experiment_params_dict['epochs']):
-            print(f'\nRun {run_num + 1} of {run_limit}, Epoch {epoch + 1} of {experiment_params_dict["epochs"]}\n{run}\n')
+            print(
+                f'\nRun {run_num + 1} of {run_limit}, Epoch {epoch + 1} of {experiment_params_dict["epochs"]}\n{run}\n')
 
             print('\n********** Train **********\n')
             time_start = time.time()
 
+            continued_params_dict = {
+                'alpha_start': run.alpha_start,
+                'betta_start': run.betta_start,
+                'epsilon_start': run.eps_start
+            }
             run_type = 'train'
             my_agent = experiment_manager.run_experiment(
                 run=run,
@@ -185,7 +193,8 @@ if not experiment_params_dict['exploit_only']:
                 start_day=train_day_start,
                 end_day=train_day_end,
                 run_type=run_type,
-                current_step=start_step
+                current_step=start_step,
+                continued_parameters=continued_params_dict
             )
             my_tb.record_epoch_results(
                 agent=my_agent,
@@ -198,6 +207,8 @@ if not experiment_params_dict['exploit_only']:
             )
 
             start_step = my_agent.current_step
+            continued_params_dict = my_agent.save_continued_params()
+            my_memory.reset_between_episode()
 
             time_train = round(time_start - time.time(), 2) / 60
 
@@ -250,7 +261,8 @@ if not experiment_params_dict['exploit_only']:
         shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype/out/eplusout.sql'), exp_folder)
         time.sleep(1)
         os.rename(os.path.join(exp_folder, 'eplusout.sql'),
-                  os.path.join(exp_folder, f'{train_period}_run_{run_num + 1}-{run_limit}_ep{epoch + 1}_EXPLOIT_SQL.sql'))
+                  os.path.join(exp_folder,
+                               f'{train_period}_run_{run_num + 1}-{run_limit}_ep{epoch + 1}_EXPLOIT_SQL.sql'))
 
         print('\n********** Test **********\n')
 
