@@ -22,7 +22,7 @@ class RunManager:
         # -- Agent Params --
         'observation_ts_frequency': 15,  # * [5, 10, 15],
         'actuation_ts_frequency': 15,  # * [5, 10, 15],
-        'learning_loops': 10,
+        'learning_loops': 2,
 
         # --- Behavioral Policy ---
         'eps_start': 0.2,
@@ -30,10 +30,10 @@ class RunManager:
         'eps_decay': 1e-4,
 
         # --- Experience Replay ---
-        'replay_capacity': 2000,
-        'batch_size': 8,
+        'replay_capacity': 100,
+        'batch_size': 10,
         # PER
-        'PER': False,
+        'PER': True,
         'alpha_start': 1,
         'alpha_decay_factor': None,
         'betta_start': 0.5,
@@ -47,9 +47,9 @@ class RunManager:
 
         # Architecture
         'shared_network_size_l1': 96,
-        'shared_network_size_l2': 72,
+        'shared_network_size_l2': 0,
         'value_stream_size_l1': 64,
-        'value_stream_size_l2': 64,
+        'value_stream_size_l2': 0,
         'advantage_streams_size_l1': 48,
         'advantage_streams_size_l2': 0,
 
@@ -77,8 +77,8 @@ class RunManager:
         'sequence_length': 6,
 
         # -- BDQ Architecture --
-        'rnn_hidden_size': 48,
-        'rnn_num_layers': 2,
+        'rnn_hidden_size': 12,
+        'rnn_num_layers': 1,
     }
     Run = namedtuple('Run', selected_params.keys())
     selected_params = Run(*selected_params.values())
@@ -206,7 +206,7 @@ class RunManager:
         return runs
 
     def create_agent(self, run, mdp: MdpManager, sim: BcaEnv, model: ModelManager,
-                     tensorboard_manager: TensorboardManager, current_step: int = 0):
+                     tensorboard_manager: TensorboardManager, current_step: int = 0, continued_parameters: dict = None):
         """Creates and returns new RL Agent from defined parameters."""
 
         self.agent = Agent(
@@ -224,7 +224,8 @@ class RunManager:
             reward_aggregation=run.reward_aggregation,
             learning_loop=run.learning_loops,
             tensorboard_manager=tensorboard_manager,
-            current_step=current_step
+            current_step=current_step,
+            continued_parameters=continued_parameters
         )
 
         return self.agent
@@ -250,8 +251,6 @@ class RunManager:
                     batch_size=run.batch_size,
                     sequence_length=run.sequence_length,
                     sequence_ts_spacing=run.sequence_ts_spacing,
-                    alpha_start=1,
-                    betta_start=0.4
                 )
             else:
                 self.experience_replay = SequenceReplayMemory(
