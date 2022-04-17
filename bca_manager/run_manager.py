@@ -21,18 +21,23 @@ class RunManager:
     selected_params = {
         # -- Agent Params --
         'observation_ts_frequency': 5,  # * [5, 10, 15],
-        'actuation_ts_frequency': 5,  # * [5, 10, 15],
+        'actuation_ts_frequency': 55,  # * [5, 10, 15],
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
-        'eps_start': 0.15,
-        'eps_end': 0.005,
+        'eps_start': 0.25,
+        'eps_end': 0.001,
         'eps_decay': 1e-4,
 
         # --- Experience Replay ---
+        'replay_capacity': 2056,
+        'batch_size': 32,
+        # PER
         'PER': True,
-        'replay_capacity': 2000,
-        'batch_size': 8,
+        'alpha_start': 1,
+        'alpha_decay_factor': None,
+        'betta_start': 0.5,
+        'betta_decay_factor': 1e-5,
 
         # -- BDQ --
         # Fixed
@@ -41,18 +46,23 @@ class RunManager:
         'actuation_function': 5,  # -----------------------------------------------------------------------------------
 
         # Architecture
-        'shared_network_size_l1': 96,
-        'shared_network_size_l2': 72,
+        'shared_network_size_l1': 128,
+        'shared_network_size_l2': 128,
         'value_stream_size_l1': 64,
         'value_stream_size_l2': 64,
         'advantage_streams_size_l1': 48,
         'advantage_streams_size_l2': 0,
 
         # TD Update
-        'reward_aggregation': 'mean',  # sum or mean
         'optimizer': 'Adagrad',
         'learning_rate': 5e-4,
         'gamma': 0.8,
+
+        # Reward
+        'reward_aggregation': 'sum',  # sum or mean
+        'reward_sparsity_ts': 1,
+        'reward_scale': 0.01,
+        'lambda_rtp': 0.3 * 3,
 
         # Network mods
         'td_target': 'mean',  # (0) mean or (1) max
@@ -68,7 +78,7 @@ class RunManager:
 
         # -- BDQ Architecture --
         'rnn_hidden_size': 48,
-        'rnn_num_layers': 2,
+        'rnn_num_layers': 1,
     }
     Run = namedtuple('Run', selected_params.keys())
     selected_params = Run(*selected_params.values())
@@ -81,33 +91,43 @@ class RunManager:
 
         # --- Behavioral Policy ---
         'eps_start': [0.2, 0.05],
-        'eps_end': [0.005],
+        'eps_end': [0.001],
         'eps_decay': [1e-4],
 
         # --- Experience Replay ---
-        'PER': [True],
         'replay_capacity': [500, 2000],
         'batch_size': [8, 32, 96],
+        # PER
+        'PER': [True, False],
+        'alpha_start': [1],
+        'alpha_decay_factor': [None],
+        'betta_start': [0.4],
+        'betta_decay_factor': [1e-5],
 
         # -- BDQ --
         # Fixed
         'observation_dim': [61],
         'action_branches': [action_branches],  # n building zones
-        'actuation_function': [5],  # -----------------------------------------------------------------------------------
+        'actuation_function': [5],  # ----------------------------------------------------------------------------------
 
         # Architecture
         'shared_network_size_l1': [96],
-        'shared_network_size_l2': [72],
+        'shared_network_size_l2': [96],
         'value_stream_size_l1': [64],
         'value_stream_size_l2': [64],
         'advantage_streams_size_l1': [48],
         'advantage_streams_size_l2': [0],
 
         # TD Update
-        'reward_aggregation': ['mean'],  # sum or mean
         'optimizer': ['Adagrad'],
         'learning_rate': [5e-4],
         'gamma': [0.8],
+
+        # Reward
+        'reward_aggregation': ['sum'],  # sum or mean
+        'reward_sparsity_ts': [1],
+        'lambda_rtp': [0.3 * 3],
+        'reward_scale': [0.01],
 
         # Network mods
         'td_target': ['mean'],  # (0) mean or (1) max
@@ -174,7 +194,7 @@ class RunManager:
 
         return self.get_runs(selected_params)
 
-    def shuffle_runs(self, runs: None):
+    def shuffle_runs(self, runs=None):
         """Returns list of shuffled runs"""
 
         if runs is None:
@@ -186,7 +206,7 @@ class RunManager:
         return runs
 
     def create_agent(self, run, mdp: MdpManager, sim: BcaEnv, model: ModelManager,
-                     tensorboard_manager: TensorboardManager, current_step: int = 0):
+                     tensorboard_manager: TensorboardManager, current_step: int = 0, continued_parameters: dict = None):
         """Creates and returns new RL Agent from defined parameters."""
 
         self.agent = Agent(
@@ -196,6 +216,7 @@ class RunManager:
             dqn_model=self.dqn,
             policy=self.policy,
             replay_memory=self.experience_replay,
+            run_parameters=run,
             rnn=run.rnn,
             observation_frequency=run.observation_ts_frequency,
             actuation_frequency=run.actuation_ts_frequency,
@@ -203,7 +224,8 @@ class RunManager:
             reward_aggregation=run.reward_aggregation,
             learning_loop=run.learning_loops,
             tensorboard_manager=tensorboard_manager,
-            current_step=current_step
+            current_step=current_step,
+            continued_parameters=continued_parameters
         )
 
         return self.agent
@@ -229,8 +251,6 @@ class RunManager:
                     batch_size=run.batch_size,
                     sequence_length=run.sequence_length,
                     sequence_ts_spacing=run.sequence_ts_spacing,
-                    alpha_start=1,
-                    betta_start=0.4
                 )
             else:
                 self.experience_replay = SequenceReplayMemory(

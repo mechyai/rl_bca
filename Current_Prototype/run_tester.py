@@ -31,7 +31,7 @@ run_modification = [5e-3]  #, 5e-5, 1e-5, 5e-6, 1e-6]
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/BEM')
-osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Testbed.osm')
+osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Test.osm')
 idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')

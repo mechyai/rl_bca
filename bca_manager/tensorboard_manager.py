@@ -30,8 +30,8 @@ class TensorboardManager:
         # -- Sim Data --
         self.tb.add_scalar('_SimData/RTP', agent.mdp.get_mdp_element('rtp').value, agent.current_step)
         # Hyperparam Data
-        self.tb.add_scalar('_SimData/PER_Betta', agent.memory.betta, agent.current_step)
-        self.tb.add_scalar('_SimData/PER_Alpha', agent.memory.alpha, agent.current_step)
+        # self.tb.add_scalar('_SimData/PER_Betta', agent.memory.betta, agent.current_step)
+        # self.tb.add_scalar('_SimData/PER_Alpha', agent.memory.alpha, agent.current_step)
         self.tb.add_scalar('_SimData/Epsilon', agent.epsilon, agent.current_step)
 
         # -- Sim Results --

@@ -61,6 +61,7 @@ class Agent:
                  dqn_model: Union[BranchingDQN, BranchingDQN_RNN],
                  policy: EpsilonGreedyStrategy,
                  replay_memory: Union[ReplayMemory, PrioritizedReplayMemory, SequenceReplayMemory],
+                 run_parameters,
                  observation_frequency: int,
                  actuation_frequency: int,
                  actuation_dimension: int,
@@ -68,7 +69,8 @@ class Agent:
                  reward_aggregation: str = 'mean',
                  learning_loop: int = 1,
                  tensorboard_manager=None,  # TODO fix imports
-                 current_step: int = 0
+                 current_step: int = 0,
+                 continued_parameters: dict = None
                  ):
 
         # -- SIMULATION STATES --
@@ -137,6 +139,9 @@ class Agent:
 
         # -- REPLAY MEMORY --
         self.memory = replay_memory
+        # PER
+        self.alpha_start = None
+        self.betta_start = None
 
         # -- BDQ --
         self.bdq = dqn_model
@@ -168,10 +173,18 @@ class Agent:
         self.loss_total = 0
 
         # -- Misc. --
+        self.run = run_parameters
         self.bem = bem_model
         self._once = True
         self._print = False
         self._checked_action_dims = False
+
+        # -- Parameter Tracking --
+        self.continued_parameters = continued_parameters
+        self._set_continued_params()
+        self.decay_alpha_betta()  # PER, do once in beginning
+
+
 
     # ----------------------------------------------------- STATE -----------------------------------------------------
 
@@ -188,8 +201,8 @@ class Agent:
         self.termination = self._is_terminal()
 
         # -- REWARD --
-        reward_scale = 1
-        self.reward_dict = self._reward3()
+        reward_scale = self.run.reward_scale
+        self.reward_dict = self._reward4()
         self.reward = self._get_total_reward(self.reward_aggregation) * reward_scale  # aggregate 'mean' or 'sum'
         # Get total reward per component, not Zone
         reward_component_sums = np.array(list(self.reward_dict.values())).sum(axis=0)  # sum reward per component
@@ -216,7 +229,8 @@ class Agent:
                 for i in range(self.learning_loop):
                     self.learning_steps += 1
                     # If PER
-                    if isinstance(self.memory, PrioritizedReplayMemory) or isinstance(self.memory, PrioritizedSequenceReplayMemory):
+                    if isinstance(self.memory, PrioritizedReplayMemory) \
+                            or isinstance(self.memory, PrioritizedSequenceReplayMemory):
                         # Get prioritized batch
                         batch, sample_indices = self.memory.sample()
                         # Learn from prioritized batch
@@ -243,14 +257,14 @@ class Agent:
         # -- PERFORMANCE RESULTS --
         # self.comfort_dissatisfaction = self._get_comfort_results()
         # self.hvac_rtp_costs = self._get_rtp_hvac_cost_and_wind_results()
+        # # Update Results Sums
+        # self.comfort_dissatisfaction_total += self.comfort_dissatisfaction
+        # self.hvac_rtp_costs_total += self.hvac_rtp_costs
+        self.reward_sum += self.reward
 
         # -- UPDATE DATA --
         self.state_normalized = self.next_state_normalized
         self.current_step += 1
-        # Update Sum
-        # self.comfort_dissatisfaction_total += self.comfort_dissatisfaction
-        # self.hvac_rtp_costs_total += self.hvac_rtp_costs
-        self.reward_sum += self.reward
 
         # -- TensorBoard --
         self.TB.record_timestep_results(self)
@@ -261,7 +275,7 @@ class Agent:
             print(f'\n\t*Reward: {round(self.reward, 2)}, Cumulative: {round(self.reward_sum, 2)}')
 
         # -- TRACK REWARD --
-        return self.reward  # return reward for emspy pd.df tracking
+        return self.reward
 
     def _get_encoded_state(self):
         """Gets and processes state input from simulation at every timestep. Returns the current encoded state."""
@@ -392,6 +406,27 @@ class Agent:
             list(self.meter_encoded_vals.values()),
             dtype=float)
 
+    def _set_continued_params(self):
+        """Write saved parameters from previous episode."""
+        if self.continued_parameters is not None:
+            if self.run.PER:
+                if 'alpha_start' in self.continued_parameters:
+                    self.alpha_start = self.continued_parameters['alpha_start']
+                if 'betta_start' in self.continued_parameters:
+                    self.betta_start = self.continued_parameters['betta_start']
+            if 'epsilon_start' in self.continued_parameters:
+                self.greedy_epsilon.start = self.continued_parameters['epsilon_start']
+
+    def save_continued_params(self):
+        """Save parameters from previous episode."""
+        if self.run.PER:
+            if 'alpha_start' in self.continued_parameters:
+                self.continued_parameters['alpha_start'] = self.memory.alpha
+            if 'betta_start' in self.continued_parameters:
+                self.continued_parameters['betta_start'] = self.memory.betta
+        if 'epsilon_start' in self.continued_parameters:
+            self.continued_parameters['epsilon_start'] = self.epsilon
+
     def _is_terminal(self):
         """Determines whether the current state is a terminal state or not. Dictates TD update values."""
         if self.time.day > self.bem.end_day:  # end of sim, goes to next day 0-hour
@@ -402,13 +437,16 @@ class Agent:
     def decay_alpha_betta(self):
         """Anneal variables of prioritization (alpha) and gradient weight adjustments (betta) with annealing."""
 
-        alpha_start = 1
-        alpha_decay_factor = 0.001
-        betta_start = 0.5
-        betta_decay_factor = 0.00001
-        # self.memory.alpha = alpha_start * math.exp(-alpha_decay_factor * self.learning_steps)  # 1 --> 0
-        self.memory.alpha = alpha_start
-        self.memory.betta = min(1 - (1 - betta_start) * math.exp(-betta_decay_factor * self.learning_steps), 1)  # 0 --> 1
+        if self.run.PER:
+            alpha_start = self.alpha_start
+            # alpha_growth_factor = self.run.alpha_decay_factor
+            betta_start = self.betta_start
+            betta_decay_factor = self.run.betta_decay_factor
+
+            # self.memory.alpha = alpha_start * math.exp(-alpha_decay_factor * self.learning_steps)  # 1 --> 0
+            self.memory.alpha = alpha_start
+            self.memory.betta = min(1 - (1 - betta_start) * math.exp(-betta_decay_factor * self.learning_steps),
+                                    1)  # 0 --> 1
 
     # ------------------------------------------------- ACTUATION -------------------------------------------------
 
@@ -448,8 +486,7 @@ class Agent:
 
         if self.rnn:
             # Need to have full sequence
-            # TODO make more robust, need offline learning in the beginning, or ignore early days results
-            if self.memory.interaction_count > self.memory.sequence_span - self.memory.sequence_ts_spacing:
+            if self.memory.current_interaction_count > self.memory.sequence_index_span:
                 self.action = self.bdq.get_greedy_action(self.memory.get_single_sequence())
 
                 return 'Exploit'
@@ -619,7 +656,6 @@ class Agent:
             }
 
             for zone_i, action in enumerate(self.action):
-
                 self.actuation_dict[f'zn{zone_i}_heating_sp'] = 15.56
                 self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_setpoints[action]
 
@@ -632,7 +668,7 @@ class Agent:
         self.actuation_dict.update(aux_actuation)
 
         return self.actuation_dict
-    
+
     def act_default_adjustments_4(self, actuate=True, exploit=False):
         """
         Action callback function:
@@ -640,7 +676,7 @@ class Agent:
 
         :return: actuation dictionary - EMS variable name (key): actuation value (value)
         """
-        
+
         # Check action space dim aligns with created BDQ
         self._action_dimension_check(this_actuation_functions_dims=6)
 
@@ -697,7 +733,7 @@ class Agent:
         """
         # Check action space dim aligns with created BDQ
         self._action_dimension_check(this_actuation_functions_dims=3)
-        
+
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
             self._explore_exploit_process(exploit)
@@ -759,7 +795,7 @@ class Agent:
         """
         # Check action space dim aligns with created BDQ
         self._action_dimension_check(this_actuation_functions_dims=6)
-        
+
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
             self._explore_exploit_process(exploit)
@@ -862,12 +898,107 @@ class Agent:
         return self.actuation_dict
 
     # ------------------------------------------------- REWARD -------------------------------------------------
+    def _reward4(self):
+        """SPARSE Reward function - per component, per zone."""
+
+        n_zones = self.bdq.action_branches
+        reward_components_per_zone_dict = {f'zn{zone_i}': np.array([0, 0]) for zone_i in range(n_zones)}
+
+        if (self.current_step + 1) % self.run.reward_sparsity_ts == 0 and self.current_step > 0:
+            lambda_comfort = 1
+            lambda_rtp = self.run.lambda_rtp
+
+            # -- GET DATA SINCE LAST INTERACTION --
+            interaction_span = range(self.observation_frequency * self.run.reward_sparsity_ts)
+            # ALL
+            building_hours = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
+            # COMFORT
+            # Get comfortable temp bounds based on building hours - occupied vs. unoccupied
+            temp_bounds = np.asarray([self.indoor_temp_ideal_range if building_hours[i] == 1
+                                      else self.indoor_temp_unoccupied_range for i in interaction_span])
+            # $RTP
+            rtp_since_last_interaction = np.asarray(self.sim.get_ems_data(['rtp'], interaction_span))
+
+            # Per Controlled Zone
+            for zone_i, _ in reward_components_per_zone_dict.items():
+                reward_per_component = np.array([])
+
+                """
+                 -- COMFORTABLE TEMPS --
+                For each zone, and array of minute interactions, each temperature is compared with the comfortable
+                temperature bounds for the given timestep. If temperatures are out of bounds, the (-) MSE of that
+                temperature from the nearest comfortable bound will be accounted for the reward.
+                """
+                zone_temps_since_last_interaction = np.asarray(
+                    self.sim.get_ems_data([f'{zone_i}_temp'], interaction_span))
+                # Get Temps Below
+                too_cold_temps = np.multiply(zone_temps_since_last_interaction < temp_bounds[:, 0],
+                                             zone_temps_since_last_interaction)
+                temp_bounds_cold = temp_bounds[too_cold_temps != 0]  # get only lower bound temps where too cold
+                too_cold_temps = too_cold_temps[too_cold_temps != 0]  # get only too cold zone temps
+                # Get Temps Above
+                too_warm_temps = np.multiply(zone_temps_since_last_interaction > temp_bounds[:, 1],
+                                             zone_temps_since_last_interaction)
+                temp_bounds_warm = temp_bounds[too_warm_temps != 0]  # get only lower bound temps where too cold
+                too_warm_temps = too_warm_temps[too_warm_temps != 0]  # get only too cold zone temps
+
+                # MSE penalty for temps above and below comfortable bounds
+                # reward = - ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() \
+                #          - ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
+                reward = - (abs(too_cold_temps - temp_bounds_cold[:, 0])).sum() \
+                         - (abs(too_warm_temps - temp_bounds_warm[:, 1])).sum()
+                reward *= lambda_comfort
+
+                reward_per_component = np.append(reward_per_component, reward)
+
+                """
+                 -- DR, RTP $ --
+                For each zone, and array of minute interactions, heating and cooling energy will be compared to see if HVAC
+                heating, cooling, or Off actions occurred per each timestep. If heating or cooling occurs, the -$RTP for the
+                timestep will be accounted for * the normalized HVAC energy usage
+                """
+                # Cooling
+                cooling_energy_since_last_interaction = np.asarray(
+                    self.sim.get_ems_data([f'{zone_i}_cooling_electricity'], interaction_span)
+                ) / hvac_electricity_energy[f'{zone_i}_cooling_electricity_max']
+
+                fan_electricity_since_last_interaction = np.asarray(
+                    self.sim.get_ems_data([f'{zone_i}_fan_electricity'], interaction_span)
+                ) / hvac_electricity_energy[f'{zone_i}_fan_electricity_max']
+
+                # Don't penalize for fan usage during day when it is REQUIRED for occupant ventilation, only Off-hours
+                # fan_electricity_off_hours = np.multiply(building_hours == 0, fan_electricity_since_last_interaction)
+
+                # cooling_energy = fan_electricity_off_hours + cooling_energy_since_last_interaction
+                cooling_energy = fan_electricity_since_last_interaction + cooling_energy_since_last_interaction
+
+                # Timestep-wise RTP cost, not accounting for energy-usage, only that energy was used
+                cooling_factor = 1
+
+                # Account for Cooling & Heating Costs
+                cooling_timesteps_cost = - cooling_factor * np.multiply(cooling_energy, rtp_since_last_interaction)
+
+                # reward = (cooling_timesteps_cost + heating_timesteps_cost).sum()
+                reward = cooling_timesteps_cost.sum()
+                reward *= lambda_rtp
+
+                reward_per_component = np.append(reward_per_component, reward)
+
+                """
+                All Reward Components / Zone
+                """
+                reward_components_per_zone_dict[zone_i] = reward_per_component
+
+            if self._print:
+                print(f'\tReward - {zone_i}: {reward_per_component}')
+
+        return reward_components_per_zone_dict
+
     def _reward3(self):
         """Reward function - per component, per zone."""
 
         lambda_comfort = 1
-        lambda_rtp = 0.03 * 3
-        lambda_intermittent = 1
+        lambda_rtp = self.run.lambda_rtp
 
         n_zones = self.bdq.action_branches
         reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
@@ -938,7 +1069,6 @@ class Agent:
 
             # Timestep-wise RTP cost, not accounting for energy-usage, only that energy was used
             cooling_factor = 1
-            heating_factor = 1
 
             # Account for Cooling & Heating Costs
             cooling_timesteps_cost = - cooling_factor * np.multiply(cooling_energy, rtp_since_last_interaction)
@@ -1421,4 +1551,3 @@ class Agent:
             f'\tRTP: ${round(rtp_hvac_costs, 2)}, Cumulative: ${round(self.hvac_rtp_costs_total + rtp_hvac_costs, 2)}')
 
         return rtp_hvac_costs
-

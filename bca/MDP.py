@@ -10,29 +10,29 @@ def encode_none(value):
     return value
 
 
-def sin_cos_normalization(value, min: float = 0, max: float = 1):
+def sin_cos_normalization(value, min_value: float = 0, max_value: float = 1):
     # Normalize distance along [0, 2pi]
-    input = 2 * math.pi * value / (max - min)
+    input = 2 * math.pi * value / (max_value - min_value)
 
     return math.sin(input), math.cos(input)
 
 
-def normalize_min_max_strict(value, min: float, max: float):
+def normalize_min_max_strict(value, min_value: float, max_value: float):
     lower = -1
     upper = 1
-    if max < value < min:
-        raise ValueError(f'Value {value} is great than {max} OR less than {min}. Use saturated version.')
+    if max_value < value < min_value:
+        raise ValueError(f'Value {value} is great than {max_value} OR less than {min_value}. Use saturated version.')
     else:
-        return ((value - min) / (max - min))*(upper - lower) + lower
+        return ((value - min_value) / (max_value - min_value))*(upper - lower) + lower
 
 
-def normalize_min_max_saturate(value: float, min: float, max: float, lower: float = -1, upper: float = 1):
-    if value > max:
+def normalize_min_max_saturate(value: float, min_value: float, max_value: float, lower: float = -1, upper: float = 1):
+    if value > max_value:
         return upper
-    elif value < min:
+    elif value < min_value:
         return lower
     else:
-        return ((value - min) / (max - min))*(upper - lower) + lower
+        return ((value - min_value) / (max_value - min_value))*(upper - lower) + lower
 
 
 def digitize_bool(value: bool):
@@ -83,7 +83,7 @@ tc_vars = {
 
     # Schedule Files
     # $rtp
-    'rtp': [('Schedule Value', f'ERCOT RTM {year}'), normalize_min_max_saturate, 0, 250],
+    'rtp': [('Schedule Value', f'ERCOT RTM {year}'), normalize_min_max_saturate, 0, 500],
     'dap0': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 0hr Ahead'), normalize_min_max_saturate, 0, 500],
     'dap1': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 1hr Ahead'), normalize_min_max_saturate, 0, 500],
     'dap2': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 2hr Ahead'), normalize_min_max_saturate, 0, 500],

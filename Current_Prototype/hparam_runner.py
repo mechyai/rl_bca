@@ -12,13 +12,13 @@ from bca_manager import RunManager, TensorboardManager, _paths_config, experimen
 year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
-train_day_start = 0
-train_day_end = 2
+train_day_start = None
+train_day_end = None
 
-test_month_start = 'July'
-test_month_end = 'July'
-test_day_start = 0
-test_day_end = 2
+test_month_start = 'May'
+test_month_end = 'May'
+test_day_start = None
+test_day_end = None
 
 exp_name = 'new_RNN_PER_hparam'
 # exp_name = 'Tester'
@@ -27,12 +27,12 @@ prepend_tb = 'PER'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 2,
+    'epochs': 10,
     'run_index_start': 0,
-    'run_index_limit': 2,
+    'run_index_limit': 100,
     'load_model': r'',
-    'skip_baseline': True,
-    'experiment_desc': 'testing PER'
+    'skip_baseline': False,
+    'experiment_desc': ''
 }
 
 # -- FILE PATHS --
@@ -58,7 +58,7 @@ cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
 
 # --- Study Parameters ---
 run_manager = RunManager()
-runs = run_manager.runs
+runs = run_manager.shuffle_runs()
 run_limit = experiment_params_dict['run_index_limit']
 run_start = experiment_params_dict['run_index_start']
 
@@ -144,6 +144,7 @@ for run_num, run in enumerate(runs):
 
     # Create new BDQ model
     my_bdq = run_manager.create_bdq(run)
+    my_memory = run_manager.create_replay_memory(run)
 
     start_step = 0
     for epoch in range(experiment_params_dict['epochs']):
@@ -161,6 +162,11 @@ for run_num, run in enumerate(runs):
         print('\n********** Train **********\n')
         time_start = time.time()
 
+        continued_params_dict = {
+            'alpha_start': run.alpha_start,
+            'betta_start': run.betta_start,
+            'epsilon_start': run.eps_start
+        }
         run_type = 'train'
         my_agent = experiment_manager.run_experiment(
             run=run,
@@ -176,7 +182,8 @@ for run_num, run in enumerate(runs):
             start_day=train_day_start,
             end_day=train_day_end,
             run_type=run_type,
-            current_step=start_step
+            current_step=start_step,
+            continued_parameters=continued_params_dict
         )
         my_tb.record_epoch_results(
             agent=my_agent,
@@ -189,6 +196,8 @@ for run_num, run in enumerate(runs):
         )
 
         start_step = my_agent.current_step
+        continued_params_dict = my_agent.save_continued_params()
+        my_memory.reset_between_episode()
 
         time_train = round(time_start - time.time(), 2) / 60
 
