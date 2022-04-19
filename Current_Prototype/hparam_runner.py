@@ -12,22 +12,24 @@ from bca_manager import RunManager, TensorboardManager, _paths_config, experimen
 year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
-train_day_start = None
-train_day_end = None
+train_day_start = 1
+train_day_end = 14
 
 test_month_start = 'May'
 test_month_end = 'May'
 test_day_start = None
 test_day_end = None
 
-exp_name = 'new_RNN_PER_hparam'
+model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
+
+exp_name = 'working_RNN_PER_hparam'
 # exp_name = 'Tester'
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 prepend_tb = 'PER'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 10,
+    'epochs': 20,
     'run_index_start': 0,
     'run_index_limit': 100,
     'load_model': r'',
@@ -38,7 +40,7 @@ experiment_params_dict = {
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/BEM')
-osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Test.osm')
+osm_base = os.path.join(bem_folder, 'OpenStudioModels', model_name)
 idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')
@@ -147,6 +149,11 @@ for run_num, run in enumerate(runs):
     my_memory = run_manager.create_replay_memory(run)
 
     start_step = 0
+    continued_params_dict = {
+        'alpha_start': run.alpha_start,
+        'betta_start': run.betta_start,
+        'epsilon_start': run.eps_start
+    }
     for epoch in range(experiment_params_dict['epochs']):
 
         print(f'\nRun {run_num + 1} of {run_limit}, Epoch {epoch + 1} of {experiment_params_dict["epochs"]}\n{run}\n')
@@ -162,11 +169,6 @@ for run_num, run in enumerate(runs):
         print('\n********** Train **********\n')
         time_start = time.time()
 
-        continued_params_dict = {
-            'alpha_start': run.alpha_start,
-            'betta_start': run.betta_start,
-            'epsilon_start': run.eps_start
-        }
         run_type = 'train'
         my_agent = experiment_manager.run_experiment(
             run=run,

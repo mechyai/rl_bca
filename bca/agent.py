@@ -182,10 +182,7 @@ class Agent:
         # -- Parameter Tracking --
         self.continued_parameters = continued_parameters
         self._set_continued_params()
-        self.decay_alpha_betta()  # PER, do once in beginning
-
-
-
+        self.decay_alpha_betta()
     # ----------------------------------------------------- STATE -----------------------------------------------------
 
     def observe(self, learn=True):
@@ -247,7 +244,7 @@ class Agent:
                     self.loss_total += self.loss
 
                 # -- ANNEAL LEARNING VARS --
-                if isinstance(self.memory, PrioritizedReplayMemory):
+                if isinstance(self.memory, PrioritizedReplayMemory) or isinstance(self.memory, PrioritizedSequenceReplayMemory):
                     self.decay_alpha_betta()
 
             # -- ANNEAL INTERACTION VARS --
@@ -416,6 +413,9 @@ class Agent:
                     self.betta_start = self.continued_parameters['betta_start']
             if 'epsilon_start' in self.continued_parameters:
                 self.greedy_epsilon.start = self.continued_parameters['epsilon_start']
+        else:
+            self.alpha_start = self.run.alpha_start
+            self.betta_start = self.run.betta_start
 
     def save_continued_params(self):
         """Save parameters from previous episode."""
@@ -426,6 +426,9 @@ class Agent:
                 self.continued_parameters['betta_start'] = self.memory.betta
         if 'epsilon_start' in self.continued_parameters:
             self.continued_parameters['epsilon_start'] = self.epsilon
+
+        return self.continued_parameters
+
 
     def _is_terminal(self):
         """Determines whether the current state is a terminal state or not. Dictates TD update values."""

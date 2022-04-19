@@ -62,7 +62,7 @@ def run_experiment(run: RunManager.Run,
 
     # -- Instantiate RL Agent --
     my_policy = run_manager.create_policy(run)
-    # my_memory = run_manager.create_replay_memory(run)
+    my_memory = run_manager.create_replay_memory(run)
     my_agent = run_manager.create_agent(run, my_mdp, my_sim, my_model, tensorboard_manager,
                                         current_step=current_step,
                                         continued_parameters=continued_parameters)

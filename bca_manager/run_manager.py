@@ -21,7 +21,7 @@ class RunManager:
     selected_params = {
         # -- Agent Params --
         'observation_ts_frequency': 5,  # * [5, 10, 15],
-        'actuation_ts_frequency': 55,  # * [5, 10, 15],
+        'actuation_ts_frequency': 5,  # * [5, 10, 15],
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
@@ -90,13 +90,13 @@ class RunManager:
         'learning_loops': [5],
 
         # --- Behavioral Policy ---
-        'eps_start': [0.2, 0.05],
+        'eps_start': [0.25, 0.05],
         'eps_end': [0.001],
-        'eps_decay': [1e-4],
+        'eps_decay': [1e-5],
 
         # --- Experience Replay ---
-        'replay_capacity': [500, 2000],
-        'batch_size': [8, 32, 96],
+        'replay_capacity': [512, 2048],
+        'batch_size': [8, 32, 128],
         # PER
         'PER': [True, False],
         'alpha_start': [1],
@@ -126,14 +126,14 @@ class RunManager:
         # Reward
         'reward_aggregation': ['sum'],  # sum or mean
         'reward_sparsity_ts': [1],
-        'lambda_rtp': [0.3 * 3],
+        'lambda_rtp': [0.3 * 1],
         'reward_scale': [0.01],
 
         # Network mods
         'td_target': ['mean'],  # (0) mean or (1) max
         'gradient_clip_norm': [2],  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': [1 / (action_branches)],
-        'target_update_freq': [5e2, 5e3],  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
+        'target_update_freq': [5e2, 5e4],  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
 
         # RNN
         # -- Agent / Model --
