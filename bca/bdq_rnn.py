@@ -507,7 +507,7 @@ class PrioritizedSequenceReplayMemory(SequenceReplayMemory):
     def _get_sample_indices(self):
         # Update available sample indices from replay
         self._get_available_sample_indices()
-        probabilities = np.array(self.get_priority_probabilities())
+        probabilities = np.array(self.get_priority_probabilities().cpu())
 
         # Get sampling indices
         sample_indices = np.random.choice(

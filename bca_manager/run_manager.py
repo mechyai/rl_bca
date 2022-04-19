@@ -21,19 +21,19 @@ class RunManager:
     selected_params = {
         # -- Agent Params --
         'observation_ts_frequency': 5,  # * [5, 10, 15],
-        'actuation_ts_frequency': 55,  # * [5, 10, 15],
+        'actuation_ts_frequency': 5,  # * [5, 10, 15],
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
         'eps_start': 0.25,
         'eps_end': 0.001,
-        'eps_decay': 1e-4,
+        'eps_decay': 1e-6,
 
         # --- Experience Replay ---
         'replay_capacity': 2056,
-        'batch_size': 32,
+        'batch_size': 64,
         # PER
-        'PER': True,
+        'PER': False,
         'alpha_start': 1,
         'alpha_decay_factor': None,
         'betta_start': 0.5,
@@ -41,9 +41,9 @@ class RunManager:
 
         # -- BDQ --
         # Fixed
-        'observation_dim': 61,
+        'observation_dim': 51,
         'action_branches': action_branches,  # n building zones
-        'actuation_function': 5,  # -----------------------------------------------------------------------------------
+        'actuation_function': 7,  # -----------------------------------------------------------------------------------
 
         # Architecture
         'shared_network_size_l1': 128,
@@ -60,24 +60,24 @@ class RunManager:
 
         # Reward
         'reward_aggregation': 'sum',  # sum or mean
-        'reward_sparsity_ts': 1,
-        'reward_scale': 0.01,
-        'lambda_rtp': 0.3 * 3,
+        'reward_sparsity_ts': 6,
+        'reward_scale': 0.1,
+        'lambda_rtp': 0.15,
 
         # Network mods
         'td_target': 'mean',  # (0) mean or (1) max
         'gradient_clip_norm': 2,  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': 1 / (action_branches),
-        'target_update_freq': 1e3,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
+        'target_update_freq': 1e4,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
 
         # RNN
         # -- Agent / Model --
         'rnn': True,
         'sequence_ts_spacing': 6,
-        'sequence_length': 6,
+        'sequence_length': 4,
 
         # -- BDQ Architecture --
-        'rnn_hidden_size': 48,
+        'rnn_hidden_size': 64,
         'rnn_num_layers': 1,
     }
     Run = namedtuple('Run', selected_params.keys())
