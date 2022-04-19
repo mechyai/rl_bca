@@ -90,12 +90,12 @@ tc_vars = {
     'dap3': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 3hr Ahead'), normalize_min_max_saturate, 0, 500],
     'dap4': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 4hr Ahead'), normalize_min_max_saturate, 0, 500],
     'dap5': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 5hr Ahead'), normalize_min_max_saturate, 0, 500],
-    'dap6': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 6hr Ahead'), normalize_min_max_saturate, 0, 500],
-    'dap7': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 7hr Ahead'), normalize_min_max_saturate, 0, 500],
-    'dap8': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 8hr Ahead'), normalize_min_max_saturate, 0, 500],
-    'dap9': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 9hr Ahead'), normalize_min_max_saturate, 0, 500],
-    'dap10': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 10hr Ahead'), normalize_min_max_saturate, 0, 500],
-    'dap11': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 11hr Ahead'), normalize_min_max_saturate, 0, 500],
+    # 'dap6': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 6hr Ahead'), normalize_min_max_saturate, 0, 500],
+    # 'dap7': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 7hr Ahead'), normalize_min_max_saturate, 0, 500],
+    # 'dap8': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 8hr Ahead'), normalize_min_max_saturate, 0, 500],
+    # 'dap9': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 9hr Ahead'), normalize_min_max_saturate, 0, 500],
+    # 'dap10': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 10hr Ahead'), normalize_min_max_saturate, 0, 500],
+    # 'dap11': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 11hr Ahead'), normalize_min_max_saturate, 0, 500],
 
     # fuel mix
     'wind_gen': [('Schedule Value', f'ERCOT FMIX {year} - Wind'), normalize_min_max_saturate, 0, 3700],

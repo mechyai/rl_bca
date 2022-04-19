@@ -14,37 +14,39 @@ year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
 train_day_start = 1
-train_day_end = 2
+train_day_end = 14
 
 test_month_start = 'May'
 test_month_end = 'May'
-test_day_start = 1
-test_day_end = 2
+test_day_start = None
+test_day_end = None
+
+model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
 
 train_period = train_month_start + '_' + train_month_end
 test_period = test_month_start + '_' + test_month_end
 
-exp_name = 'non_hourly_Reward_RNN_PER_working'
+exp_name = 'cool_off_on_RNN_30min_reward_sparsity'
 # exp_name = 'Tester'
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 5,
-    'skip_benchmark': True,
+    'epochs': 10,
+    'skip_benchmark': False,
     'exploit_only': False,
     'test': True,
     'load_model': r'',
     'experiment_desc': 'Testing new PER RNN'
 }
 
-run_modification = [1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]  # , 1e-5, 5e-6]  # 1e-6]
+run_modification = [5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]  # , 1e-5, 5e-6]  # 1e-6]
 # run_modification = [5e-3]
 
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/BEM')
-osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Testbed_no_ventilation.osm')
+osm_base = os.path.join(bem_folder, 'OpenStudioModels', model_name)
 idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
 # Weather Path
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')
@@ -166,6 +168,11 @@ if not experiment_params_dict['exploit_only']:
         )
 
         start_step = 0
+        continued_params_dict = {
+            'alpha_start': run.alpha_start,
+            'betta_start': run.betta_start,
+            'epsilon_start': run.eps_start
+        }
         for epoch in range(experiment_params_dict['epochs']):
             print(
                 f'\nRun {run_num + 1} of {run_limit}, Epoch {epoch + 1} of {experiment_params_dict["epochs"]}\n{run}\n')
@@ -173,11 +180,6 @@ if not experiment_params_dict['exploit_only']:
             print('\n********** Train **********\n')
             time_start = time.time()
 
-            continued_params_dict = {
-                'alpha_start': run.alpha_start,
-                'betta_start': run.betta_start,
-                'epsilon_start': run.eps_start
-            }
             run_type = 'train'
             my_agent = experiment_manager.run_experiment(
                 run=run,
