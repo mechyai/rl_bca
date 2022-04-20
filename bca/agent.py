@@ -50,6 +50,7 @@ class Agent:
             4: 6,  # act_default_adjustments_4
             5: 7,  # act_cool_only_5
             6: 6,  # act_cool_only_default_adjustment_6
+            7: 2,  # act_cool_only_on_off_7
         }
 
         return action_dim_directory[actuation_function_id]
@@ -110,7 +111,7 @@ class Agent:
 
         # -- ACTION ENCODING --
         self.temp_deadband = 5  # distance between heating and cooling setpoints
-        self.temp_buffer = 5  # new setpoint distance from current temps
+        self.temp_buffer = 2  # new setpoint distance from current temps
         self.current_setpoint_windows = [3, 3, 3, 3]
 
         # -- REWARD --
@@ -183,6 +184,7 @@ class Agent:
         self.continued_parameters = continued_parameters
         self._set_continued_params()
         self.decay_alpha_betta()
+
     # ----------------------------------------------------- STATE -----------------------------------------------------
 
     def observe(self, learn=True):
@@ -303,7 +305,7 @@ class Agent:
         # -- RTP High-Price Signal --
         rtp = self.var_vals['rtp']
         # Add extra RTP pricing state signal
-        if rtp > 100:
+        if rtp > 75:
             rtp_alert = [1]
         elif rtp < 15:
             rtp_alert = [-1]
@@ -312,7 +314,7 @@ class Agent:
 
         # ----------------------------------- Weather Forecast -----------------------------------
         weather_forecast_list = []
-        hours_ahead = 8
+        hours_ahead = 6
         for hour in range(1, hours_ahead + 1, 1):
             current_hour = self.time.hour
             forecast_day = 'today' if current_hour + hour < 24 else 'tomorrow'
@@ -378,7 +380,7 @@ class Agent:
             elif self.time > workday_end:
                 building_hours_progress = (self.time - workday_end).total_seconds() \
                                           / ((24 - hour_end + hour_start) * 3600)
-                week_state_hot_encoding = [0, 1, 0]  # Of Work
+                week_state_hot_encoding = [0, 1, 0]  # Off Work
         elif not weekend:
             # Catch any errors
             building_hours_progress = None
@@ -428,7 +430,6 @@ class Agent:
             self.continued_parameters['epsilon_start'] = self.epsilon
 
         return self.continued_parameters
-
 
     def _is_terminal(self):
         """Determines whether the current state is a terminal state or not. Dictates TD update values."""
@@ -568,10 +569,64 @@ class Agent:
             3: self.act_step_strict_setpoints_3,
             4: self.act_default_adjustments_4,
             5: self.act_cool_only_5,
-            6: self.act_cool_only_default_adjustment_6
+            6: self.act_cool_only_default_adjustment_6,
+            7: self.act_cool_only_on_off_7,
         }
 
         return action_directory[action_id]
+
+    def act_cool_only_on_off_7(self, actuate=True, exploit=False):
+        """
+        Action callback function:
+        Takes action from network or exploration, then encodes into HVAC commands and passed into running simulation.
+
+        :return: actuation dictionary - EMS variable name (key): actuation value (value)
+        """
+
+        # Check action space dim aligns with created BDQ
+        self._action_dimension_check(this_actuation_functions_dims=2)
+
+        if actuate:
+            # -- EXPLOITATION vs EXPLORATION --
+            self._explore_exploit_process(exploit)
+
+            # -- ENCODE ACTIONS TO HVAC COMMAND --
+            action_cmd_print = {0: 'OFF', 1: 'COOL', None: 'Availability OFF'}
+            for zone, action in enumerate(self.action):
+                zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
+
+                # adjust thermostat setpoints accordingly
+                if action == 0:
+                    # OFF
+                    cooling_sp = zone_temp + self.temp_buffer
+                elif action == 1:
+                    # COOL
+                    cooling_sp = zone_temp - self.temp_buffer
+                    # Hold minimum cooling sepoint
+                    if cooling_sp < 19:
+                        cooling_sp = 19
+                else:
+                    # HVAC Availability OFF
+                    cooling_sp = action  # None
+
+                heating_sp = 15.56
+                self.actuation_dict[f'zn{zone}_heating_sp'] = heating_sp
+                self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
+
+                if self._print:
+                    print(f'\t\tZone{zone} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
+                          f' Heating Sp = {round(heating_sp, 2)},'
+                          f' Cooling Sp = {round(cooling_sp, 2)}')
+
+        # Offline Learning
+        else:
+            pass
+
+        # Combine system actuations with aux actions
+        aux_actuation = self._get_aux_actuation()
+        self.actuation_dict.update(aux_actuation)
+
+        return self.actuation_dict
 
     def act_cool_only_default_adjustment_6(self, actuate=True, exploit=False):
         """
@@ -946,10 +1001,10 @@ class Agent:
                 too_warm_temps = too_warm_temps[too_warm_temps != 0]  # get only too cold zone temps
 
                 # MSE penalty for temps above and below comfortable bounds
-                # reward = - ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() \
-                #          - ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
-                reward = - (abs(too_cold_temps - temp_bounds_cold[:, 0])).sum() \
-                         - (abs(too_warm_temps - temp_bounds_warm[:, 1])).sum()
+                reward = - (((too_cold_temps - temp_bounds_cold[:, 0]) * 2) ** 2).sum() \
+                         - ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
+                # reward = - (abs(too_cold_temps - temp_bounds_cold[:, 0])).sum() \
+                #          - (abs(too_warm_temps - temp_bounds_warm[:, 1])).sum()
                 reward *= lambda_comfort
 
                 reward_per_component = np.append(reward_per_component, reward)

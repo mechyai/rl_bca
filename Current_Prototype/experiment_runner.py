@@ -14,10 +14,10 @@ year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
 train_day_start = 1
-train_day_end = 14
+train_day_end = 7
 
-test_month_start = 'May'
-test_month_end = 'May'
+test_month_start = 'April'
+test_month_end = 'April'
 test_day_start = None
 test_day_end = None
 
@@ -26,13 +26,13 @@ model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
 train_period = train_month_start + '_' + train_month_end
 test_period = test_month_start + '_' + test_month_end
 
-exp_name = 'cool_off_on_RNN_30min_reward_sparsity'
+exp_name = 'cool_off_on_RNN_sqrd_comfort_1_week_overfit'
 # exp_name = 'Tester'
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 10,
+    'epochs': 20,
     'skip_benchmark': False,
     'exploit_only': False,
     'test': True,
@@ -210,7 +210,7 @@ if not experiment_params_dict['exploit_only']:
 
             start_step = my_agent.current_step
             continued_params_dict = my_agent.save_continued_params()
-            my_memory.reset_between_episode()
+            # my_memory.reset_between_episode()
 
             time_train = round(time_start - time.time(), 2) / 60
 

@@ -25,12 +25,12 @@ class RunManager:
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
-        'eps_start': 0.25,
+        'eps_start': 0.2,
         'eps_end': 0.001,
         'eps_decay': 1e-6,
 
         # --- Experience Replay ---
-        'replay_capacity': 2056,
+        'replay_capacity': 1024,
         'batch_size': 64,
         # PER
         'PER': False,
@@ -46,39 +46,39 @@ class RunManager:
         'actuation_function': 7,  # -----------------------------------------------------------------------------------
 
         # Architecture
-        'shared_network_size_l1': 128,
-        'shared_network_size_l2': 128,
-        'value_stream_size_l1': 64,
-        'value_stream_size_l2': 64,
-        'advantage_streams_size_l1': 48,
+        'shared_network_size_l1': 64,
+        'shared_network_size_l2': 64,
+        'value_stream_size_l1': 32,
+        'value_stream_size_l2': 32,
+        'advantage_streams_size_l1': 16,
         'advantage_streams_size_l2': 0,
 
         # TD Update
         'optimizer': 'Adagrad',
         'learning_rate': 5e-4,
-        'gamma': 0.8,
+        'gamma': 0.7,
 
         # Reward
         'reward_aggregation': 'sum',  # sum or mean
-        'reward_sparsity_ts': 6,
-        'reward_scale': 0.1,
-        'lambda_rtp': 0.15,
+        'reward_sparsity_ts': 1,
+        'reward_scale': 0.01,
+        'lambda_rtp': 0.05,
 
         # Network mods
         'td_target': 'mean',  # (0) mean or (1) max
         'gradient_clip_norm': 2,  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': 1 / (action_branches),
-        'target_update_freq': 1e4,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
+        'target_update_freq': 1e3,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
 
         # RNN
         # -- Agent / Model --
-        'rnn': True,
-        'sequence_ts_spacing': 6,
-        'sequence_length': 4,
+        'rnn': False,
+        'sequence_ts_spacing': 2,
+        'sequence_length': 6,
 
         # -- BDQ Architecture --
-        'rnn_hidden_size': 64,
-        'rnn_num_layers': 1,
+        'rnn_hidden_size': 32,
+        'rnn_num_layers': 3,
     }
     Run = namedtuple('Run', selected_params.keys())
     selected_params = Run(*selected_params.values())
