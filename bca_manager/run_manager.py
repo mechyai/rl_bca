@@ -7,7 +7,7 @@ from emspy import BcaEnv, MdpManager
 
 from bca import Agent
 from bca import BranchingDQN, ReplayMemory, PrioritizedReplayMemory, EpsilonGreedyStrategy
-from bca import BranchingDQN_RNN, SequenceReplayMemory, PrioritizedSequenceReplayMemory
+from bca import BranchingDQN_RNN, SequenceReplayMemory, PrioritizedSequenceReplayMemory, VariableSequenceReplayMemory
 
 from bca_manager import ModelManager, TensorboardManager
 
@@ -20,30 +20,28 @@ class RunManager:
 
     selected_params = {
         # -- Agent Params --
-        'observation_ts_frequency': 5,  # * [5, 10, 15],
-        'actuation_ts_frequency': 5,  # * [5, 10, 15],
+        'observation_ts_frequency': 5,
+        'actuation_ts_frequency': 5,
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
-        'eps_start': 0.2,
+        'eps_start': 0.15,
         'eps_end': 0.001,
         'eps_decay': 1e-6,
 
         # --- Experience Replay ---
         'replay_capacity': 1024,
-        'batch_size': 64,
+        'batch_size': 16,
+
         # PER
         'PER': False,
-        'alpha_start': 1,
-        'alpha_decay_factor': None,
-        'betta_start': 0.5,
-        'betta_decay_factor': 1e-5,
+        'rnn': True,
 
         # -- BDQ --
         # Fixed
         'observation_dim': 51,
         'action_branches': action_branches,  # n building zones
-        'actuation_function': 7,  # -----------------------------------------------------------------------------------
+        'actuation_function': 6,
 
         # Architecture
         'shared_network_size_l1': 64,
@@ -51,35 +49,48 @@ class RunManager:
         'value_stream_size_l1': 32,
         'value_stream_size_l2': 32,
         'advantage_streams_size_l1': 16,
-        'advantage_streams_size_l2': 0,
+        'advantage_streams_size_l2': 16,
 
         # TD Update
         'optimizer': 'Adagrad',
         'learning_rate': 5e-4,
-        'gamma': 0.7,
+        'gamma': 0.9,
 
         # Reward
         'reward_aggregation': 'sum',  # sum or mean
         'reward_sparsity_ts': 1,
-        'reward_scale': 0.01,
-        'lambda_rtp': 0.05,
+        'reward_scale': 0.1,
+        'lambda_rtp': 0.01,
 
         # Network mods
         'td_target': 'mean',  # (0) mean or (1) max
-        'gradient_clip_norm': 2,  # [0, 1, 5, 10],  # 0 is nothing
+        'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': 1 / (action_branches),
-        'target_update_freq': 1e3,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
-
-        # RNN
-        # -- Agent / Model --
-        'rnn': False,
-        'sequence_ts_spacing': 2,
-        'sequence_length': 6,
-
-        # -- BDQ Architecture --
-        'rnn_hidden_size': 32,
-        'rnn_num_layers': 3,
+        'target_update_freq': 0.05,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
     }
+
+    if selected_params['rnn']:
+        rnn_params = {
+            # -- State Sequence --
+            'sequence_ts_spacing': 2,
+            'sequence_length': 4,
+
+            # -- BDQ Architecture --
+            'lstm': True,
+            'rnn_hidden_size': 32,
+            'rnn_num_layers': 3,
+        }
+        selected_params = {**selected_params, **rnn_params}
+
+    if selected_params['PER']:
+        per_params = {
+            'alpha_start': 1,
+            'alpha_decay_factor': None,
+            'betta_start': 0.5,
+            'betta_decay_factor': 1e-5,
+        }
+        selected_params = {**selected_params, **per_params}
+
     Run = namedtuple('Run', selected_params.keys())
     selected_params = Run(*selected_params.values())
 
@@ -90,19 +101,18 @@ class RunManager:
         'learning_loops': [5],
 
         # --- Behavioral Policy ---
-        'eps_start': [0.25, 0.05],
+        'eps_start': [0.2, 0.05],
         'eps_end': [0.001],
-        'eps_decay': [1e-5],
+        'eps_decay': [1e-4],
 
         # --- Experience Replay ---
-        'replay_capacity': [512, 2048],
-        'batch_size': [8, 32, 128],
+        'replay_capacity': [500, 2000],
+        'batch_size': [8, 32, 96],
+
         # PER
-        'PER': [True, False],
-        'alpha_start': [1],
-        'alpha_decay_factor': [None],
-        'betta_start': [0.4],
-        'betta_decay_factor': [1e-5],
+        'PER': [False],
+        # RNN
+        'rnn': [True],
 
         # -- BDQ --
         # Fixed
@@ -126,31 +136,37 @@ class RunManager:
         # Reward
         'reward_aggregation': ['sum'],  # sum or mean
         'reward_sparsity_ts': [1],
-        'lambda_rtp': [0.3 * 1],
+        'lambda_rtp': [0.3 * 3],
         'reward_scale': [0.01],
 
         # Network mods
         'td_target': ['mean'],  # (0) mean or (1) max
         'gradient_clip_norm': [2],  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': [1 / (action_branches)],
-        'target_update_freq': [5e2, 5e4],  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
-
-        # RNN
-        # -- Agent / Model --
-        'rnn': [True],
-        'sequence_ts_spacing': [1, 6],
-        'sequence_length': [6, 12],
-
-        # -- BDQ Architecture --
-        'rnn_hidden_size': [48, 96],
-        'rnn_num_layers': [1, 2],
+        'target_update_freq': [5e2, 5e3],  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
     }
 
-    # The hyperparameters that vary throughout a study
-    hyperparameter_study = {}
-    for key, value in hyperparameter_dict.items():
-        if len(value) > 1:
-            hyperparameter_study[key] = value
+    if True in hyperparameter_dict['rnn']:
+        rnn_params = {
+            # -- State Sequence --
+            'sequence_ts_spacing': [1, 6],
+            'sequence_length': [6, 12],
+
+            # -- BDQ Architecture --
+            'lstm': [True],
+            'rnn_hidden_size': [48, 96],
+            'rnn_num_layers': [1, 2],
+        }
+        hyperparameter_dict = {**hyperparameter_dict, **rnn_params}
+
+    if True in hyperparameter_dict['PER']:
+        per_params = {
+            'alpha_start': [1],
+            'alpha_decay_factor': [None],
+            'betta_start': [0.4],
+            'betta_decay_factor': [1e-5],
+        }
+        hyperparameter_dict = {**hyperparameter_dict, **per_params}
 
     def __init__(self):
         self.mdp = None
@@ -194,7 +210,7 @@ class RunManager:
 
         return self.get_runs(selected_params)
 
-    def shuffle_runs(self, runs=None):
+    def shuffle_runs(self, runs: None):
         """Returns list of shuffled runs"""
 
         if runs is None:
@@ -253,12 +269,20 @@ class RunManager:
                     sequence_ts_spacing=run.sequence_ts_spacing,
                 )
             else:
-                self.experience_replay = SequenceReplayMemory(
-                    capacity=run.replay_capacity,
-                    batch_size=run.batch_size,
-                    sequence_length=run.sequence_length,
-                    sequence_ts_spacing=run.sequence_ts_spacing
-                )
+                if isinstance(run.sequence_length, int):
+                    self.experience_replay = SequenceReplayMemory(
+                        capacity=run.replay_capacity,
+                        batch_size=run.batch_size,
+                        sequence_length=run.sequence_length,
+                        sequence_ts_spacing=run.sequence_ts_spacing
+                    )
+                else:
+                    # Variable sequence spacing
+                    self.experience_replay = VariableSequenceReplayMemory(
+                        capacity=run.replay_capacity,
+                        batch_size=run.batch_size,
+                        sequence_length=run.sequence_length,
+                    )
         elif run.PER:
             self.experience_replay = PrioritizedReplayMemory(
                 capacity=run.replay_capacity,
@@ -293,7 +317,8 @@ class RunManager:
                 gamma=run.gamma,
                 td_target=run.td_target,
                 gradient_clip_norm=run.gradient_clip_norm,
-                rescale_shared_grad_factor=run.rescale_shared_grad_factor
+                rescale_shared_grad_factor=run.rescale_shared_grad_factor,
+                lstm=run.lstm
             )
         else:
             self.dqn = BranchingDQN(

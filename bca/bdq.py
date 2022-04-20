@@ -359,7 +359,14 @@ class BranchingDQN(nn.Module):
             self.target_network.load_state_dict(self.policy_network.state_dict())
 
     def target_soft_update(self):
-        pass
+        """
+        Soft update model parameters.
+        θ_target = τ*θ_local + (1 - τ)*θ_target
+        """
+        tau = 0.01
+        self.update_count += 1
+        for target_param, learned_param in zip(self.target_network.parameters(), self.policy_network.parameters()):
+            target_param.data.copy_(tau * learned_param.data + (1.0 - tau) * target_param.data)
 
     def update_policy(self, batch, gradient_weights=None):
         # get converted batch of tensors
@@ -417,7 +424,11 @@ class BranchingDQN(nn.Module):
         self.optimizer.step()
 
         # -- Update --
-        self.target_hard_update()
+        if self.target_update_freq > 1:
+            self.target_hard_update()
+        else:
+            self.target_soft_update()
+
         self.step_count += 1
 
         return float(loss_total.detach().cpu()), loss_each.detach().mean(dim=1)

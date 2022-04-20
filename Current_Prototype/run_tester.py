@@ -15,7 +15,7 @@ year = MDP.year
 month_start = 'June'
 month_end = 'June'
 day_start = 1
-day_end = 3
+day_end = 8
 
 exp_name = 'testing'
 test_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}'
@@ -50,6 +50,8 @@ run_limit = len(run_modification)
 
 # -- Create DQN Model --
 my_bdq = run_manager.create_bdq(run)
+my_memory = run_manager.create_replay_memory(run)
+
 # Load model, if desired
 if experiment_params_dict['load_model']:
     my_bdq.import_model(experiment_params_dict['load_model'])
