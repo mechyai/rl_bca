@@ -14,7 +14,7 @@ year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
 train_day_start = 1
-train_day_end = 14
+train_day_end = 7
 
 test_month_start = 'May'
 test_month_end = 'May'
@@ -26,13 +26,13 @@ model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
 train_period = train_month_start + '_' + train_month_end
 test_period = test_month_start + '_' + test_month_end
 
-exp_name = 'cool_off_on_RNN_30min_reward_sparsity'
+exp_name = 'cool_off_on_RNN_PER_soft_td'
 # exp_name = 'Tester'
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 10,
+    'epochs': 20,
     'skip_benchmark': False,
     'exploit_only': False,
     'test': True,

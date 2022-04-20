@@ -20,66 +20,77 @@ class RunManager:
 
     selected_params = {
         # -- Agent Params --
-        'observation_ts_frequency': 5,  # * [5, 10, 15],
-        'actuation_ts_frequency': 5,  # * [5, 10, 15],
+        'observation_ts_frequency': 5,
+        'actuation_ts_frequency': 5,
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
-        'eps_start': 0.25,
+        'eps_start': 0.15,
         'eps_end': 0.001,
         'eps_decay': 1e-6,
 
         # --- Experience Replay ---
-        'replay_capacity': 2056,
-        'batch_size': 64,
+        'replay_capacity': 1024,
+        'batch_size': 16,
+
         # PER
         'PER': False,
-        'alpha_start': 1,
-        'alpha_decay_factor': None,
-        'betta_start': 0.5,
-        'betta_decay_factor': 1e-5,
+        'rnn': True,
 
         # -- BDQ --
         # Fixed
         'observation_dim': 51,
         'action_branches': action_branches,  # n building zones
-        'actuation_function': 7,  # -----------------------------------------------------------------------------------
+        'actuation_function': 6,
 
         # Architecture
-        'shared_network_size_l1': 128,
-        'shared_network_size_l2': 128,
-        'value_stream_size_l1': 64,
-        'value_stream_size_l2': 64,
-        'advantage_streams_size_l1': 48,
-        'advantage_streams_size_l2': 0,
+        'shared_network_size_l1': 64,
+        'shared_network_size_l2': 64,
+        'value_stream_size_l1': 32,
+        'value_stream_size_l2': 32,
+        'advantage_streams_size_l1': 16,
+        'advantage_streams_size_l2': 16,
 
         # TD Update
         'optimizer': 'Adagrad',
         'learning_rate': 5e-4,
-        'gamma': 0.8,
+        'gamma': 0.9,
 
         # Reward
         'reward_aggregation': 'sum',  # sum or mean
-        'reward_sparsity_ts': 6,
+        'reward_sparsity_ts': 1,
         'reward_scale': 0.1,
-        'lambda_rtp': 0.15,
+        'lambda_rtp': 0.01,
 
         # Network mods
         'td_target': 'mean',  # (0) mean or (1) max
-        'gradient_clip_norm': 2,  # [0, 1, 5, 10],  # 0 is nothing
+        'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': 1 / (action_branches),
-        'target_update_freq': 1e4,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
-
-        # RNN
-        # -- Agent / Model --
-        'rnn': True,
-        'sequence_ts_spacing': 6,
-        'sequence_length': 4,
-
-        # -- BDQ Architecture --
-        'rnn_hidden_size': 64,
-        'rnn_num_layers': 1,
+        'target_update_freq': 0.05,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
     }
+
+    if selected_params['rnn']:
+        rnn_params = {
+            # -- State Sequence --
+            'sequence_ts_spacing': 2,
+            'sequence_length': 4,
+
+            # -- BDQ Architecture --
+            'lstm': True,
+            'rnn_hidden_size': 32,
+            'rnn_num_layers': 3,
+        }
+        selected_params = {**selected_params, **rnn_params}
+
+    if selected_params['PER']:
+        per_params = {
+            'alpha_start': 1,
+            'alpha_decay_factor': None,
+            'betta_start': 0.5,
+            'betta_decay_factor': 1e-5,
+        }
+        selected_params = {**selected_params, **per_params}
+
     Run = namedtuple('Run', selected_params.keys())
     selected_params = Run(*selected_params.values())
 
@@ -97,12 +108,11 @@ class RunManager:
         # --- Experience Replay ---
         'replay_capacity': [500, 2000],
         'batch_size': [8, 32, 96],
+
         # PER
-        'PER': [True, False],
-        'alpha_start': [1],
-        'alpha_decay_factor': [None],
-        'betta_start': [0.4],
-        'betta_decay_factor': [1e-5],
+        'PER': [False],
+        # RNN
+        'rnn': [True],
 
         # -- BDQ --
         # Fixed
@@ -134,23 +144,29 @@ class RunManager:
         'gradient_clip_norm': [2],  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': [1 / (action_branches)],
         'target_update_freq': [5e2, 5e3],  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
-
-        # RNN
-        # -- Agent / Model --
-        'rnn': [True],
-        'sequence_ts_spacing': [1, 6],
-        'sequence_length': [6, 12],
-
-        # -- BDQ Architecture --
-        'rnn_hidden_size': [48, 96],
-        'rnn_num_layers': [1, 2],
     }
 
-    # The hyperparameters that vary throughout a study
-    hyperparameter_study = {}
-    for key, value in hyperparameter_dict.items():
-        if len(value) > 1:
-            hyperparameter_study[key] = value
+    if True in hyperparameter_dict['rnn']:
+        rnn_params = {
+            # -- State Sequence --
+            'sequence_ts_spacing': [1, 6],
+            'sequence_length': [6, 12],
+
+            # -- BDQ Architecture --
+            'lstm': [True],
+            'rnn_hidden_size': [48, 96],
+            'rnn_num_layers': [1, 2],
+        }
+        hyperparameter_dict = {**hyperparameter_dict, **rnn_params}
+
+    if True in hyperparameter_dict['PER']:
+        per_params = {
+            'alpha_start': [1],
+            'alpha_decay_factor': [None],
+            'betta_start': [0.4],
+            'betta_decay_factor': [1e-5],
+        }
+        hyperparameter_dict = {**hyperparameter_dict, **per_params}
 
     def __init__(self):
         self.mdp = None

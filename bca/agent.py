@@ -194,7 +194,7 @@ class Agent:
         if self._print:
             print(f'\n\n{str(self.time)}\n')
             # print(f'\n\n\tVars: {vars}\n\tMeters: {meters}\n\tWeather: {weather}')
-            # print(f'\n\t{self.next_state_normalized}\n')
+            print(f'\n\t{self.next_state_normalized}\n')
 
         # -- TERMINAL STATE --
         self.termination = self._is_terminal()
@@ -416,8 +416,8 @@ class Agent:
             if 'epsilon_start' in self.continued_parameters:
                 self.greedy_epsilon.start = self.continued_parameters['epsilon_start']
         else:
-            self.alpha_start = self.run.alpha_start
-            self.betta_start = self.run.betta_start
+            self.alpha_start = None
+            self.betta_start = None
 
     def save_continued_params(self):
         """Save parameters from previous episode."""

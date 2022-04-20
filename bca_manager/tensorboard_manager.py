@@ -34,6 +34,8 @@ class TensorboardManager:
             self.tb.add_scalar('_SimData/PER_Betta', agent.memory.betta, agent.current_step)
             self.tb.add_scalar('_SimData/PER_Alpha', agent.memory.alpha, agent.current_step)
         self.tb.add_scalar('_SimData/Epsilon', agent.epsilon, agent.current_step)
+        # State Data
+        self.tb.add_histogram('State', agent.next_state_normalized)
 
         # -- Sim Results --
         # self.tb.add_scalar('_Results/Comfort Dissatisfied Total', agent.comfort_dissatisfaction_total, agent.current_step)
