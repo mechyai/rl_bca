@@ -408,7 +408,7 @@ class BranchingQNetwork_RNN(nn.Module):
     """BDQ network architecture with recurrent node."""
 
     def __init__(self, observation_dim, rnn_hidden_size, rnn_num_layers, action_branches, action_dim,
-                 shared_network_size, value_stream_size, advantage_streams_size):
+                 shared_network_size, value_stream_size, advantage_streams_size, lstm=False):
         """
         Below, we define the BDQN architecture's network segments, consisting of a MLP shared representation,
         then a dueling state value module and individual advantage branches. At the end, the value and advantage streams
@@ -421,7 +421,10 @@ class BranchingQNetwork_RNN(nn.Module):
         # -- RNN Node --
         self.rnn_hidden_size = rnn_hidden_size
         self.rnn_num_layers = rnn_num_layers
-        self.rnn = nn.GRU(observation_dim, rnn_hidden_size, rnn_num_layers, batch_first=True)
+        if not lstm:
+            self.rnn = nn.GRU(observation_dim, rnn_hidden_size, rnn_num_layers, batch_first=True)
+        else:
+            self.rnn = nn.LSTM(observation_dim, rnn_hidden_size, rnn_num_layers, batch_first=True)
 
         # -- Shared State Feature Estimator --
         layers = []
@@ -460,8 +463,9 @@ class BranchingQNetwork_RNN(nn.Module):
 
     def forward(self, state_input):
         # RNN Node (num layers, batch size, hidden size)
-        h0 = torch.zeros(self.rnn_num_layers, state_input.size(0), self.rnn_hidden_size).to(self.device)  # init hidden
-        out, _ = self.rnn(state_input, h0)  # out: batch size, seq len, hidden size
+        # Hidden (h0 and c0 for LSTM) is automatically 0 if not included
+        # h0 = torch.zeros(self.rnn_num_layers, state_input.size(0), self.rnn_hidden_size).to(self.device)  # init hidden
+        out, _ = self.rnn(state_input)  # out: batch size, seq len, hidden size
         out = out[:, -1, :]  # get last timestep output (many to one)
         # Shared Network
         if len(self.shared_model) != 0:
@@ -483,7 +487,7 @@ class BranchingDQN_RNN(nn.Module):
     def __init__(self, observation_dim: int, rnn_hidden_size: int, rnn_num_layers: int, action_branches: int,
                  action_dim: int, shared_network_size: list, value_stream_size: list, advantage_streams_size: list,
                  target_update_freq: int, learning_rate: float, gamma: float, td_target: str,
-                 gradient_clip_norm: float, rescale_shared_grad_factor: float = None,
+                 gradient_clip_norm: float, rescale_shared_grad_factor: float = None, lstm=False,
                  optimizer: str = 'Adam', **optimizer_kwargs):
 
         super().__init__()
@@ -501,10 +505,10 @@ class BranchingDQN_RNN(nn.Module):
 
         self.policy_network = BranchingQNetwork_RNN(observation_dim, rnn_hidden_size, rnn_num_layers, action_branches,
                                                     action_dim, shared_network_size, value_stream_size,
-                                                    advantage_streams_size)
+                                                    advantage_streams_size, lstm=lstm)
         self.target_network = BranchingQNetwork_RNN(observation_dim, rnn_hidden_size, rnn_num_layers, action_branches,
                                                     action_dim, shared_network_size, value_stream_size,
-                                                    advantage_streams_size)
+                                                    advantage_streams_size, lstm=lstm)
         self.target_network.load_state_dict(self.policy_network.state_dict())  # copy params
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

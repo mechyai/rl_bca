@@ -7,7 +7,7 @@ from emspy import BcaEnv, MdpManager
 
 from bca import Agent
 from bca import BranchingDQN, ReplayMemory, PrioritizedReplayMemory, EpsilonGreedyStrategy
-from bca import BranchingDQN_RNN, SequenceReplayMemory, PrioritizedSequenceReplayMemory
+from bca import BranchingDQN_RNN, SequenceReplayMemory, PrioritizedSequenceReplayMemory, VariableSequenceReplayMemory
 
 from bca_manager import ModelManager, TensorboardManager
 
@@ -269,12 +269,20 @@ class RunManager:
                     sequence_ts_spacing=run.sequence_ts_spacing,
                 )
             else:
-                self.experience_replay = SequenceReplayMemory(
-                    capacity=run.replay_capacity,
-                    batch_size=run.batch_size,
-                    sequence_length=run.sequence_length,
-                    sequence_ts_spacing=run.sequence_ts_spacing
-                )
+                if isinstance(run.sequence_length, int):
+                    self.experience_replay = SequenceReplayMemory(
+                        capacity=run.replay_capacity,
+                        batch_size=run.batch_size,
+                        sequence_length=run.sequence_length,
+                        sequence_ts_spacing=run.sequence_ts_spacing
+                    )
+                else:
+                    # Variable sequence spacing
+                    self.experience_replay = VariableSequenceReplayMemory(
+                        capacity=run.replay_capacity,
+                        batch_size=run.batch_size,
+                        sequence_length=run.sequence_length,
+                    )
         elif run.PER:
             self.experience_replay = PrioritizedReplayMemory(
                 capacity=run.replay_capacity,
@@ -309,7 +317,8 @@ class RunManager:
                 gamma=run.gamma,
                 td_target=run.td_target,
                 gradient_clip_norm=run.gradient_clip_norm,
-                rescale_shared_grad_factor=run.rescale_shared_grad_factor
+                rescale_shared_grad_factor=run.rescale_shared_grad_factor,
+                lstm=run.lstm
             )
         else:
             self.dqn = BranchingDQN(
