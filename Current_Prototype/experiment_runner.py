@@ -10,6 +10,8 @@ from bca import MDP
 from bca_manager import RunManager, TensorboardManager
 from bca_manager import _paths_config, experiment_manager
 
+# -------------------------------------------------- INPUT --------------------------------------------------
+
 year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
@@ -23,12 +25,10 @@ test_day_end = None
 
 model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
 
-train_period = train_month_start + '_' + train_month_end
-test_period = test_month_start + '_' + test_month_end
+run_modification = [5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]
 
-exp_name = 'cool_off_on_RNN_PER_soft_td'
 # exp_name = 'Tester'
-exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
+exp_name = 'cool_off_on_RNN_PER_soft_td'
 
 # -- Experiment Params --
 experiment_params_dict = {
@@ -40,17 +40,20 @@ experiment_params_dict = {
     'experiment_desc': 'Testing new PER RNN'
 }
 
-run_modification = [5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]  # , 1e-5, 5e-6]  # 1e-6]
-# run_modification = [5e-3]
+
+# -------------------------------------------------- START PIPELINE --------------------------------------------------
 
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/BEM')
 osm_base = os.path.join(bem_folder, 'OpenStudioModels', model_name)
 idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
+
 # Weather Path
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')
+
 # Experiment Folder
+exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 if experiment_params_dict['exploit_only']:
     exp_folder = f'Experiments/{exp_name}_EXPLOIT'
 else:
@@ -61,13 +64,15 @@ if not os.path.exists(os.path.join(exp_folder)):
 
 # -- Simulation Params --
 cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
+train_period = train_month_start + '_' + train_month_end
+test_period = test_month_start + '_' + test_month_end
 
 # --- Study Parameters ---
 run_manager = RunManager()
 run = run_manager.selected_params
 run_limit = len(run_modification)
 
-# ----------------------------------------------------- Run Study -----------------------------------------------------
+# -------------------------------------------------- RUN STUDY --------------------------------------------------
 
 # -- Create DQN Model --
 my_bdq = run_manager.create_bdq(run)
@@ -77,7 +82,7 @@ my_memory = run_manager.create_replay_memory(run)
 if experiment_params_dict['load_model']:
     my_bdq.import_model(experiment_params_dict['load_model'])
 
-# --- Run Baseline Once ---
+# -------------------------------------------------- RUN BENCHMARK --------------------------------------------------
 
 if not experiment_params_dict['exploit_only']:
 
@@ -149,7 +154,7 @@ if not experiment_params_dict['exploit_only']:
             run_type=run_type
         )
 
-    # -------------------------------------------------- Run Training --------------------------------------------------
+    # -------------------------------------------------- RUN TRAINING --------------------------------------------------
 
     for run_num, param_value in enumerate(run_modification):
 
@@ -221,7 +226,7 @@ if not experiment_params_dict['exploit_only']:
             torch.save(my_bdq.policy_network.state_dict(),
                        os.path.join(exp_folder, model_name))
 
-        # ------------------------------------------------- Run Testing ------------------------------------------------
+        # ------------------------------------------------- RUN TESTING ------------------------------------------------
 
         param = run.learning_rate
         my_tb = TensorboardManager(
@@ -324,6 +329,7 @@ if not experiment_params_dict['exploit_only']:
                 file.write(f'\n\t\t{key}: {val}')
             file.write(f'\n\nModel Architecture:\n{my_bdq.policy_network}')
 
+# -------------------------- No training, just run trained agent --------------------------
 else:
     # Save model used to folder, with same name
     print('\n********** Saved Model ************\n')
