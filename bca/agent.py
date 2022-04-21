@@ -1,6 +1,7 @@
 import math
 import time
 import itertools
+import random
 from typing import Union
 from datetime import datetime as dt
 from datetime import timedelta
@@ -497,7 +498,8 @@ class Agent:
 
                 return 'Exploit'
             else:
-                # Temporary explore until full sequence available  # TODO make variable sequence input? or ignore 1st day?
+                # Temporary explore until full sequence available
+                # TODO make variable sequence input? or ignore 1st day?
                 self.action = np.random.randint(0, self.dqn_model.action_dim, self.dqn_model.action_branches)
 
                 return 'Explore'
@@ -512,7 +514,13 @@ class Agent:
         self.epsilon = self.greedy_epsilon.get_exploration_rate(self.current_step, self.fixed_epsilon)
         if not exploit and np.random.random() < self.epsilon:
             # Explore
-            self.action = np.random.randint(0, self.dqn_model.action_dim, self.dqn_model.action_branches)
+            if self.dqn_model == 3:
+                # BDQ-based
+                self.action = np.random.randint(0, self.dqn_model.action_dim, self.dqn_model.action_branches)
+            else:
+                # DQN-based
+                self.action = random.randint(0, self.dqn_model.action_dim ** self.dqn_model.action_branches - 1)
+
             action_type = 'Explore'
         else:
             # Exploit (handle RNN)
@@ -1190,7 +1198,6 @@ class Agent:
 
         return reward_components_per_zone_dict
 
-    # IN USE
     def _reward2(self):
         """Reward function - per component, per zone."""
 
