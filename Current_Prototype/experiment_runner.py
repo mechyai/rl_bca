@@ -37,9 +37,9 @@ experiment_params_dict = {
     'exploit_only': False,
     'test': True,
     'load_model': r'',
+    'print_values': False,
     'experiment_desc': 'Testing new PER RNN'
 }
-
 
 # -------------------------------------------------- START PIPELINE --------------------------------------------------
 
@@ -53,14 +53,14 @@ idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')
 
 # Experiment Folder
+exp_root = os.path.join(_paths_config.repo_root, 'Current_Prototype/Experiments')
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
 if experiment_params_dict['exploit_only']:
-    exp_folder = f'Experiments/{exp_name}_EXPLOIT'
+    exp_folder = f'{exp_name}_EXPLOIT'
 else:
-    exp_folder = f'Experiments/{exp_name}'
-
-if not os.path.exists(os.path.join(exp_folder)):
-    os.makedirs(exp_folder)
+    exp_folder = f'{exp_name}'
+if not os.path.exists(os.path.join(exp_root, exp_folder)):
+    os.makedirs(os.path.join(exp_root, exp_folder))
 
 # -- Simulation Params --
 cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
@@ -158,10 +158,9 @@ if not experiment_params_dict['exploit_only']:
 
     for run_num, param_value in enumerate(run_modification):
 
-        if run_modification:
-            # Change specific param for run
-            run = run._replace(learning_rate=param_value)
-            my_bdq.change_learning_rate_discrete(param_value)
+        # Change specific param for run
+        run = run._replace(learning_rate=param_value)
+        my_bdq.change_learning_rate_discrete(param_value)
 
         # ---- Tensor Board ----
         param = run.learning_rate
@@ -173,11 +172,11 @@ if not experiment_params_dict['exploit_only']:
         )
 
         start_step = 0
-        continued_params_dict = {
-            'alpha_start': run.alpha_start,
-            'betta_start': run.betta_start,
-            'epsilon_start': run.eps_start
-        }
+        continued_params_dict = {'epsilon_start': run.eps_start}
+        if run.PER:
+            continued_params_dict = {**continued_params_dict, **{'alpha_start': run.alpha_start,
+                                                                 'betta_start': run.betta_start}}
+
         for epoch in range(experiment_params_dict['epochs']):
             print(
                 f'\nRun {run_num + 1} of {run_limit}, Epoch {epoch + 1} of {experiment_params_dict["epochs"]}\n{run}\n')
@@ -213,6 +212,7 @@ if not experiment_params_dict['exploit_only']:
                 run_type=run_type
             )
 
+            # Manage looping data
             start_step = my_agent.current_step
             continued_params_dict = my_agent.save_continued_params()
             my_memory.reset_between_episode()

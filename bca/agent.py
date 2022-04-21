@@ -71,7 +71,8 @@ class Agent:
                  learning_loop: int = 1,
                  tensorboard_manager=None,  # TODO fix imports
                  current_step: int = 0,
-                 continued_parameters: dict = None
+                 continued_parameters: dict = None,
+                 print_values: bool = False
                  ):
 
         # -- SIMULATION STATES --
@@ -177,13 +178,12 @@ class Agent:
         self.run = run_parameters
         self.bem = bem_model
         self._once = True
-        self._print = False
+        self._print = print_values
         self._checked_action_dims = False
 
         # -- Parameter Tracking --
         self.continued_parameters = continued_parameters
         self._set_continued_params()
-        self.decay_alpha_betta()
 
     # ----------------------------------------------------- STATE -----------------------------------------------------
 
@@ -246,7 +246,8 @@ class Agent:
                     self.loss_total += self.loss
 
                 # -- ANNEAL LEARNING VARS --
-                if isinstance(self.memory, PrioritizedReplayMemory) or isinstance(self.memory, PrioritizedSequenceReplayMemory):
+                if isinstance(self.memory, PrioritizedReplayMemory) \
+                        or isinstance(self.memory, PrioritizedSequenceReplayMemory):
                     self.decay_alpha_betta()
 
             # -- ANNEAL INTERACTION VARS --
@@ -614,7 +615,7 @@ class Agent:
                 self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
 
                 if self._print:
-                    print(f'\t\tZone{zone} ({action_cmd_print[action]}): Temp = {round(zone_temp, 2)},'
+                    print(f'\t\tZone{zone} ({action_cmd_print[action]}): Zn Temp = {round(zone_temp, 2)},'
                           f' Heating Sp = {round(heating_sp, 2)},'
                           f' Cooling Sp = {round(cooling_sp, 2)}')
 
@@ -1047,8 +1048,8 @@ class Agent:
                 """
                 reward_components_per_zone_dict[zone_i] = reward_per_component
 
-            if self._print:
-                print(f'\tReward - {zone_i}: {reward_per_component}')
+                if self._print:
+                    print(f'\tReward - {zone_i}: {reward_per_component}')
 
         return reward_components_per_zone_dict
 

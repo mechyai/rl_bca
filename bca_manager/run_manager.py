@@ -7,7 +7,7 @@ from emspy import BcaEnv, MdpManager
 
 from bca import Agent
 from bca import BranchingDQN, ReplayMemory, PrioritizedReplayMemory, EpsilonGreedyStrategy
-from bca import BranchingDQN_RNN, SequenceReplayMemory, PrioritizedSequenceReplayMemory, VariableSequenceReplayMemory
+from bca import BranchingDQN_RNN, SequenceReplayMemory, PrioritizedSequenceReplayMemory
 
 from bca_manager import ModelManager, TensorboardManager
 
@@ -34,14 +34,14 @@ class RunManager:
         'batch_size': 32,
 
         # PER
-        'PER': True,
+        'PER': False,
         'rnn': True,
 
         # -- BDQ --
         # Fixed
         'observation_dim': 51,
         'action_branches': action_branches,  # n building zones
-        'actuation_function': 5,
+        'actuation_function': 7,
 
         # Architecture
         'shared_network_size_l1': 124,
@@ -94,6 +94,7 @@ class RunManager:
     Run = namedtuple('Run', selected_params.keys())
     selected_params = Run(*selected_params.values())
 
+    # ----- For Hyperparameter Search -----
     hyperparameter_dict = {
         # -- Agent Params --
         'observation_ts_frequency': [5],  # * [5, 10, 15],
@@ -222,7 +223,8 @@ class RunManager:
         return runs
 
     def create_agent(self, run, mdp: MdpManager, sim: BcaEnv, model: ModelManager,
-                     tensorboard_manager: TensorboardManager, current_step: int = 0, continued_parameters: dict = None):
+                     tensorboard_manager: TensorboardManager, current_step: int = 0, continued_parameters: dict = None,
+                     print_values: bool = False):
         """Creates and returns new RL Agent from defined parameters."""
 
         self.agent = Agent(
@@ -241,7 +243,8 @@ class RunManager:
             learning_loop=run.learning_loops,
             tensorboard_manager=tensorboard_manager,
             current_step=current_step,
-            continued_parameters=continued_parameters
+            continued_parameters=continued_parameters,
+            print_values=print_values
         )
 
         return self.agent
@@ -269,26 +272,17 @@ class RunManager:
                     sequence_ts_spacing=run.sequence_ts_spacing,
                 )
             else:
-                if isinstance(run.sequence_length, int):
-                    self.experience_replay = SequenceReplayMemory(
-                        capacity=run.replay_capacity,
-                        batch_size=run.batch_size,
-                        sequence_length=run.sequence_length,
-                        sequence_ts_spacing=run.sequence_ts_spacing
-                    )
-                else:
-                    # Variable sequence spacing
-                    self.experience_replay = VariableSequenceReplayMemory(
-                        capacity=run.replay_capacity,
-                        batch_size=run.batch_size,
-                        sequence_length=run.sequence_length,
-                    )
+                self.experience_replay = SequenceReplayMemory(
+                    capacity=run.replay_capacity,
+                    batch_size=run.batch_size,
+                    sequence_length=run.sequence_length,
+                    sequence_ts_spacing=run.sequence_ts_spacing
+                )
+
         elif run.PER:
             self.experience_replay = PrioritizedReplayMemory(
                 capacity=run.replay_capacity,
                 batch_size=run.batch_size,
-                alpha_start=1,
-                betta_start=0.4
             )
         else:
             self.experience_replay = ReplayMemory(

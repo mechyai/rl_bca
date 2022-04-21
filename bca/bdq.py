@@ -163,8 +163,8 @@ class PrioritizedReplayMemory(ReplayMemory):
         self.priorities_memory = None
 
         self.max_loss = 0.0001
-        self.alpha = None
-        self.betta = None
+        self.alpha = 1
+        self.betta = 1
 
     def push(self, state, action, next_state, reward, terminal_flag):
         """Save a transition to replay memory"""
