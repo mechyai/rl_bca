@@ -14,7 +14,6 @@ from typing import Union
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
 
 """ 
 -- Vanilla BDQN --
@@ -31,9 +30,18 @@ Repos-
 
 
 class SequenceReplayMemory:
-    """Manages a sequential replay memory, where data is stored as numpy arrays."""
+    """Manages a sequential replay memory, where data is stored as torch tensors."""
 
     def __init__(self, capacity: int, batch_size: int, sequence_length: Union[int, list], sequence_ts_spacing: int = 1):
+        """
+        Creates looping, sequential replay memory.
+        :param capacity: Max size of replay memory
+        :param batch_size: Size of mini-batch sampling. Sample are not returned at least until this many interactions.
+        :param sequence_length: Either int for number of sequence_ts_spacing in sequence, or list of prior timesteps
+            for variable spacing sequence, where the current (0th timestep) is automatically included.
+        :param sequence_ts_spacing: If fixed sequence spacing, this is the timestep between states in the sequence.
+            Ex: 4, for 15 min timesteps --> 0:00, 0:15, 0:30, 0:45, 1:00 in sequence would get 0:00 and 1:00
+        """
         self.capacity = capacity
         self.batch_size = batch_size
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -189,7 +197,7 @@ class SequenceReplayMemory:
         if self.first_sample:
             self.first_sample = False
 
-            # Replay Memory
+            # Init replay memory storage
             self.state_memory = torch.zeros([self.capacity, len(state)]).to(self.device)
             self.action_memory = torch.zeros([self.capacity, len(action)]).to(self.device)
             self.next_state_memory = torch.zeros([self.capacity, len(next_state)]).to(self.device)
@@ -368,52 +376,6 @@ class PrioritizedSequenceReplayMemory(SequenceReplayMemory):
 
         # return super(SequenceReplayMemory).sample(), self.current_sample_indices
         return SequenceReplayMemory.sample(self), self.current_sample_indices
-
-
-class VariableSequenceReplayMemory(SequenceReplayMemory):
-    """Manages a sequential replay memory, where data is stored as numpy arrays."""
-
-    def __init__(self, capacity: int, batch_size: int, sequence_length: list):
-        super(SequenceReplayMemory).__init__(capacity, batch_size, 0)
-        self.sequence_length = sequence_length
-        self.sequence_index_span = sequence_length[-1] - 1
-
-    def sample(self):
-        """Sample a sequence of transitions randomly"""
-
-        # Get appropriate indices to sample from replay
-        self.current_sample_indices = self._get_sample_indices()
-
-        # Get full range of sequence indices for each random sample starting point
-        sequence_indices = np.expand_dims(self.current_sample_indices, axis=1)
-        for prev_timestep in self.sequence_length:
-            prior_sequence = np.expand_dims(sequence_indices.T[0] - prev_timestep, axis=1)
-            # Maintain relative order of seq
-            sequence_indices = np.concatenate((prior_sequence, sequence_indices), axis=1)
-        sequence_indices = torch.tensor(sequence_indices).long().to(self.device)
-
-        # Sequence sampling
-        # {RNN input shape: batch size, sequence len, input size}
-        state_batch = self.state_memory[sequence_indices]
-        next_state_batch = self.next_state_memory[sequence_indices]
-
-        # No sequence sampling needed, end of sequence
-        action_batch = self.action_memory[self.current_sample_indices].long().to(self.device)
-        reward_batch = self.reward_memory[self.current_sample_indices].to(self.device)
-        terminal_batch = self.terminal_memory[self.current_sample_indices].to(self.device)
-
-        return state_batch, action_batch, next_state_batch, reward_batch, terminal_batch
-
-    def get_single_sequence(self):
-        """Returns most recent sequence from replay, corresponding to current state."""
-
-        # Get most recent state, remove prior push count update & index offset
-        prior_sequence_indices = np.concatenate((self.current_index - np.array(self.sequence_length),
-                                                np.array([self.current_index])))
-        prior_sequence_indices = self._get_replay_index(prior_sequence_indices)
-
-        # RNN input shape: batch size, sequence len, input size
-        return self.state_memory[prior_sequence_indices].unsqueeze(0)
 
 
 class BranchingQNetwork_RNN(nn.Module):
