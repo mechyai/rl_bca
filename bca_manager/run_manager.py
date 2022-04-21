@@ -31,30 +31,30 @@ class RunManager:
 
         # --- Experience Replay ---
         'replay_capacity': 1024,
-        'batch_size': 16,
+        'batch_size': 32,
 
         # PER
-        'PER': False,
+        'PER': True,
         'rnn': True,
 
         # -- BDQ --
         # Fixed
         'observation_dim': 51,
         'action_branches': action_branches,  # n building zones
-        'actuation_function': 6,
+        'actuation_function': 5,
 
         # Architecture
-        'shared_network_size_l1': 64,
+        'shared_network_size_l1': 124,
         'shared_network_size_l2': 64,
-        'value_stream_size_l1': 32,
+        'value_stream_size_l1': 64,
         'value_stream_size_l2': 32,
-        'advantage_streams_size_l1': 16,
+        'advantage_streams_size_l1': 32,
         'advantage_streams_size_l2': 16,
 
         # TD Update
         'optimizer': 'Adagrad',
         'learning_rate': 5e-4,
-        'gamma': 0.9,
+        'gamma': 0.8,
 
         # Reward
         'reward_aggregation': 'sum',  # sum or mean
@@ -64,7 +64,7 @@ class RunManager:
 
         # Network mods
         'td_target': 'mean',  # (0) mean or (1) max
-        'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
+        'gradient_clip_norm': 5,  # [0, 1, 5, 10],  # 0 is nothing
         'rescale_shared_grad_factor': 1 / (action_branches),
         'target_update_freq': 0.05,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
     }
@@ -72,11 +72,11 @@ class RunManager:
     if selected_params['rnn']:
         rnn_params = {
             # -- State Sequence --
-            'sequence_ts_spacing': 2,
-            'sequence_length': 4,
+            'sequence_ts_spacing': 6,
+            'sequence_length': 4,  # input as list for variable ts spacing
 
             # -- BDQ Architecture --
-            'lstm': True,
+            'lstm': False,
             'rnn_hidden_size': 32,
             'rnn_num_layers': 3,
         }

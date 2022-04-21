@@ -416,8 +416,8 @@ class Agent:
             if 'epsilon_start' in self.continued_parameters:
                 self.greedy_epsilon.start = self.continued_parameters['epsilon_start']
         else:
-            self.alpha_start = None
-            self.betta_start = None
+            self.alpha_start = 1
+            self.betta_start = 1
 
     def save_continued_params(self):
         """Save parameters from previous episode."""

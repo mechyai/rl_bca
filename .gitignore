@@ -5,6 +5,8 @@
 /.idea
 /__pycache__
 
+*_paths_config.py
+
 *.pyc
 
 # E+/OpenStudio data
