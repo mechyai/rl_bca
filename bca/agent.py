@@ -1,5 +1,6 @@
 import math
 import time
+import itertools
 from typing import Union
 from datetime import datetime as dt
 from datetime import timedelta
@@ -146,7 +147,7 @@ class Agent:
         self.betta_start = None
 
         # -- BDQ --
-        self.bdq = dqn_model
+        self.dqn_model = dqn_model
         self.rnn = rnn
 
         # -- PERFORMANCE RESULTS --
@@ -234,13 +235,13 @@ class Agent:
                         batch, sample_indices = self.memory.sample()
                         # Learn from prioritized batch
                         weights = self.memory.get_gradient_weights(sample_indices)
-                        self.loss, loss_each = self.bdq.update_policy(batch, gradient_weights=weights)
+                        self.loss, loss_each = self.dqn_model.update_policy(batch, gradient_weights=weights)
                         # Update replay priorities
                         self.memory.update_td_losses(sample_indices, loss_each)
                     else:
                         # Get random batch
                         batch = self.memory.sample()
-                        self.loss, loss_each = self.bdq.update_policy(batch)  # batch learning
+                        self.loss, loss_each = self.dqn_model.update_policy(batch)  # batch learning
 
                     # Update data
                     self.loss_total += self.loss
@@ -490,17 +491,18 @@ class Agent:
         """Function to handle nuances of exploiting actions. Handles special case for RNN BDQ."""
 
         if self.rnn:
-            # Need to have full sequence
             if self.memory.current_interaction_count > self.memory.sequence_index_span:
-                self.action = self.bdq.get_greedy_action(self.memory.get_single_sequence())
+                # Need to have full sequence
+                self.action = self.dqn_model.get_greedy_action(self.memory.get_single_sequence())
 
                 return 'Exploit'
             else:
-                self.action = np.random.randint(0, self.bdq.action_dim, self.bdq.action_branches)
+                # Temporary explore until full sequence available  # TODO make variable sequence input? or ignore 1st day?
+                self.action = np.random.randint(0, self.dqn_model.action_dim, self.dqn_model.action_branches)
 
                 return 'Explore'
         else:
-            self.action = self.bdq.get_greedy_action(torch.Tensor(self.state_normalized).unsqueeze(1))
+            self.action = self.dqn_model.get_greedy_action(torch.Tensor(self.state_normalized).unsqueeze(1))
 
             return 'Exploit'
 
@@ -510,7 +512,7 @@ class Agent:
         self.epsilon = self.greedy_epsilon.get_exploration_rate(self.current_step, self.fixed_epsilon)
         if not exploit and np.random.random() < self.epsilon:
             # Explore
-            self.action = np.random.randint(0, self.bdq.action_dim, self.bdq.action_branches)
+            self.action = np.random.randint(0, self.dqn_model.action_dim, self.dqn_model.action_branches)
             action_type = 'Explore'
         else:
             # Exploit (handle RNN)
@@ -543,13 +545,38 @@ class Agent:
             self._explore_exploit_process(exploit)
 
             # -- ENCODE ACTIONS TO HVAC COMMAND --
-            """
-            Put actuation function here
-            """
-            for zone_i, action in enumerate(self.action):
-                pass
-                # self.actuation_dict[f'zn{zone_i}_heating_sp'] = heating_sp
-                # self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_sp
+            n_zones = self.dqn_model.action_branches
+
+            # BDQ-Based model
+            if self.run.model == 3:
+                action = self.action
+            # DQN-Based model
+            else:
+                action_options = ''.join([str(action) for action in list(range(self.actuation_dim))])
+                action_permutations = \
+                    [[int(action) for action in seq] for seq in itertools.product(action_options, repeat=n_zones)]
+                action = action_permutations[self.action]
+
+            action_cmd_print = {}
+            for zone in range(self.dqn_model.action_branches):
+                # Get zone details
+                zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
+                zone_action = action[zone]
+
+                """
+                Actuation Encoding Here
+                """
+                heating_sp = 0
+                cooling_sp = 0
+
+                self.actuation_dict[f'zn{zone}_heating_sp'] = heating_sp
+                self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
+
+                if self._print:
+                    print(f'\t\tZone{zone} ({action_cmd_print[action]}):'
+                          f' Zn Temp = {round(zone_temp, 2)},'
+                          f' Heating Sp = {round(heating_sp, 2)},'
+                          f' Cooling Sp = {round(cooling_sp, 2)}')
 
         # Offline Learning
         else:
@@ -592,30 +619,45 @@ class Agent:
             self._explore_exploit_process(exploit)
 
             # -- ENCODE ACTIONS TO HVAC COMMAND --
-            action_cmd_print = {0: 'OFF', 1: 'COOL', None: 'Availability OFF'}
-            for zone, action in enumerate(self.action):
-                zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
+            n_zones = self.dqn_model.action_branches
 
-                # adjust thermostat setpoints accordingly
-                if action == 0:
+            # BDQ-Based model
+            if self.run.model == 3:
+                action = self.action
+            # DQN-Based model
+            else:
+                action_options = ''.join([str(action) for action in list(range(self.actuation_dim))])
+                action_permutations = \
+                    [[int(action) for action in seq] for seq in itertools.product(action_options, repeat=n_zones)]
+                action = action_permutations[self.action]
+
+            action_cmd_print = {0: 'OFF', 1: 'COOL', None: 'Availability OFF'}
+            for zone in range(n_zones):
+                # Get zone details
+                zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
+                zone_action = action[zone]
+
+                # Adjust thermostat setpoints per zone
+                if zone_action == 0:
                     # OFF
                     cooling_sp = zone_temp + self.temp_buffer
-                elif action == 1:
+                elif zone_action == 1:
                     # COOL
                     cooling_sp = zone_temp - self.temp_buffer
-                    # Hold minimum cooling sepoint
-                    if cooling_sp < 19:
-                        cooling_sp = 19
+                    # Hold minimum cooling setpoint
+                    if cooling_sp < 18:
+                        cooling_sp = 18
                 else:
                     # HVAC Availability OFF
-                    cooling_sp = action  # None
+                    cooling_sp = zone_action  # None
 
                 heating_sp = 15.56
                 self.actuation_dict[f'zn{zone}_heating_sp'] = heating_sp
                 self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
 
                 if self._print:
-                    print(f'\t\tZone{zone} ({action_cmd_print[action]}): Zn Temp = {round(zone_temp, 2)},'
+                    print(f'\t\tZone{zone} ({action_cmd_print[zone_action]}):'
+                          f' Zn Temp = {round(zone_temp, 2)},'
                           f' Heating Sp = {round(heating_sp, 2)},'
                           f' Cooling Sp = {round(cooling_sp, 2)}')
 
@@ -960,7 +1002,7 @@ class Agent:
     def _reward4(self):
         """SPARSE Reward function - per component, per zone."""
 
-        n_zones = self.bdq.action_branches
+        n_zones = self.dqn_model.action_branches
         reward_components_per_zone_dict = {f'zn{zone_i}': np.array([0, 0]) for zone_i in range(n_zones)}
 
         if (self.current_step + 1) % self.run.reward_sparsity_ts == 0 and self.current_step > 0:
@@ -1059,7 +1101,7 @@ class Agent:
         lambda_comfort = 1
         lambda_rtp = self.run.lambda_rtp
 
-        n_zones = self.bdq.action_branches
+        n_zones = self.dqn_model.action_branches
         reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
 
         # -- GET DATA SINCE LAST INTERACTION --
@@ -1156,7 +1198,7 @@ class Agent:
         lambda_rtp = 0.03 * 1
         lambda_intermittent = 1
 
-        n_zones = self.bdq.action_branches
+        n_zones = self.dqn_model.action_branches
         reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
 
         # -- GET DATA SINCE LAST INTERACTION --
@@ -1283,7 +1325,7 @@ class Agent:
         lambda_rtp = 0.005
         lambda_intermittent = 1000
 
-        n_zones = self.bdq.action_branches
+        n_zones = self.dqn_model.action_branches
         reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
 
         # -- GET DATA SINCE LAST INTERACTION --
@@ -1419,7 +1461,7 @@ class Agent:
         :return: comfort compliance metric. A value of dissatisfaction. 0 is optimal.
         """
 
-        n_zones = self.bdq.action_branches
+        n_zones = self.dqn_model.action_branches
         interaction_span = range(self.observation_frequency)
         controlled_zone_names = [f'zn{zone_i}' for zone_i in range(n_zones)]
 
@@ -1483,7 +1525,7 @@ class Agent:
         :return: monetary cost of HVAC per interaction span metric. $0 is optimal.
         """
 
-        n_zones = self.bdq.action_branches
+        n_zones = self.dqn_model.action_branches
         interaction_span = range(self.observation_frequency)
         controlled_zone_names = [f'zn{zone_i}' for zone_i in range(n_zones)]
 
@@ -1559,7 +1601,7 @@ class Agent:
         :return: monetary cost of HVAC per interaction span metric. $0 is optimal.
         """
 
-        n_zones = self.bdq.action_branches
+        n_zones = self.dqn_model.action_branches
         interaction_span = range(self.observation_frequency)
         controlled_zone_names = [f'zn{zone_i}' for zone_i in range(n_zones)]
 
