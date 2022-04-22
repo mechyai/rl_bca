@@ -127,6 +127,7 @@ class ReplayMemory(object):
             # DQN-based
             action = [action]
 
+        # Update replay memory
         self.state_memory[index] = torch.Tensor(state).to(self.device)
         self.action_memory[index] = torch.ByteTensor(action).to(self.device)
         self.next_state_memory[index] = torch.Tensor(next_state).to(self.device)
@@ -178,12 +179,19 @@ class PrioritizedReplayMemory(ReplayMemory):
         if self.first_sample:
             self.first_sample = False
 
+            if isinstance(action, int):
+                # DQN-based
+                action_length = 1
+            else:
+                # BDQ-based
+                action_length = len(action)
+
             # Replay Memory
             self.state_memory = torch.zeros([self.capacity, len(state)]).to(self.device)
-            self.action_memory = torch.zeros([self.capacity, len(action)]).to(self.device)
+            self.action_memory = torch.zeros([self.capacity, action_length], dtype=torch.uint8).to(self.device)
             self.next_state_memory = torch.zeros([self.capacity, len(next_state)]).to(self.device)
             self.reward_memory = torch.zeros([self.capacity, 1]).to(self.device)
-            self.terminal_memory = torch.zeros([self.capacity, 1]).to(self.device)
+            self.terminal_memory = torch.zeros([self.capacity, 1], dtype=torch.uint8).to(self.device)
 
             # Prioritization
             self.priorities_memory = torch.zeros([self.capacity]).to(self.device)
@@ -194,12 +202,16 @@ class PrioritizedReplayMemory(ReplayMemory):
         index = self.total_interaction_count % self.capacity
         self.current_index = index
 
+        if isinstance(action, int):
+            # DQN-based
+            action = [action]
+
         # Update replay memory
         self.state_memory[index] = torch.Tensor(state).to(self.device)
-        self.action_memory[index] = torch.Tensor(action).to(self.device)
+        self.action_memory[index] = torch.ByteTensor(action).to(self.device)
         self.next_state_memory[index] = torch.Tensor(next_state).to(self.device)
         self.reward_memory[index] = torch.Tensor([reward]).to(self.device)
-        self.terminal_memory[index] = torch.Tensor([terminal_flag]).to(self.device)
+        self.terminal_memory[index] = torch.ByteTensor([terminal_flag]).to(self.device)
 
         # Update priorities
         self.loss_memory[index] = self.max_loss
