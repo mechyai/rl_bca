@@ -493,6 +493,8 @@ class BranchingDQN_RNN(nn.Module):
         self.observation_space = observation_dim
         self.action_branches = action_branches
         self.action_dim = action_dim
+        self.rnn_hidden_size = rnn_hidden_size
+        self.rnn_num_layers = rnn_num_layers
         self.shared_network_size = shared_network_size
         self.advantage_streams_size = advantage_streams_size
         self.value_stream_size = value_stream_size
