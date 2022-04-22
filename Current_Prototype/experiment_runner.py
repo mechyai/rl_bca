@@ -28,16 +28,16 @@ model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
 run_modification = [1e-2, 5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]
 
 # exp_name = 'Tester'
-exp_name = 'cool_off_on_DQN_test'
+exp_name = 'cool_off_on_Dueling_DQN_test'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 20,
+    'epochs': 40,
     'skip_benchmark': False,
     'exploit_only': False,
     'test': True,
     'load_model': r'',
-    'print_values': True,
+    'print_values': False,
     'experiment_desc': 'Testing new PER RNN'
 }
 
@@ -226,6 +226,14 @@ if not experiment_params_dict['exploit_only']:
             my_memory.reset_between_episode()
 
             time_train = round(time_start - time.time(), 2) / 60
+
+            # -- Save Model Intermediate --
+            if epoch % 10:
+                print('\n********** Saved Model ************\n')
+                model_name = f'bdq_runs_{run_num + 1}_epoch_{epoch}_of_{experiment_params_dict["epochs"]}_lr_{param}'
+                torch.save(my_bdq.policy_network.state_dict(),
+                           os.path.join(exp_folder, model_name))
+
 
         # -- Save Model --
         if experiment_params_dict['epochs'] > 0:

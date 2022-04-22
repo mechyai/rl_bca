@@ -53,6 +53,7 @@ class Agent:
             5: 7,  # act_cool_only_5
             6: 6,  # act_cool_only_default_adjustment_6
             7: 2,  # act_cool_only_on_off_7
+            8: 3,  # act_cool_only_on_off_stay_8
         }
 
         return action_dim_directory[actuation_function_id]
@@ -614,9 +615,91 @@ class Agent:
             5: self.act_cool_only_5,
             6: self.act_cool_only_default_adjustment_6,
             7: self.act_cool_only_on_off_7,
+            8: self.act_cool_only_on_off_stay_8
         }
 
         return action_directory[action_id]
+
+    def act_cool_only_on_off_stay_8(self, actuate=True, exploit=False):
+        """
+        Action callback function:
+        Takes action from network or exploration, then encodes into HVAC commands and passed into running simulation.
+
+        :return: actuation dictionary - EMS variable name (key): actuation value (value)
+        """
+
+        # Check action space dim aligns with created BDQ
+        self._action_dimension_check(this_actuation_functions_dims=3)
+
+        if actuate:
+            # -- EXPLOITATION vs EXPLORATION --
+            self._explore_exploit_process(exploit)
+
+            # -- ENCODE ACTIONS TO HVAC COMMAND --
+            n_zones = self.dqn_model.action_branches
+
+            # BDQ-Based model
+            if self.run.model == 3:
+                action = self.action
+            # DQN-Based model
+            else:
+                action_options = ''.join([str(action) for action in list(range(self.actuation_dim))])
+                action_permutations = \
+                    [[int(action) for action in seq] for seq in itertools.product(action_options, repeat=n_zones)]
+                action = action_permutations[self.action]
+
+            action_cmd_print = {0: 'OFF', 1: 'COOL', 2: 'STAY', None: 'Availability OFF'}
+            for zone in range(n_zones):
+                # Get zone details
+                zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
+                zone_action = action[zone]
+
+                # Adjust thermostat setpoints per zone
+                if zone_action == 0:
+                    # OFF
+                    cooling_sp = zone_temp + self.temp_buffer
+                elif zone_action == 1:
+                    # COOL
+                    cooling_sp = zone_temp - self.temp_buffer
+                    # Hold minimum cooling setpoint
+                    if cooling_sp < 18:
+                        cooling_sp = 18
+                elif zone_action == 2:
+                    # STAY
+                    close_enough = 0.25  # deg C buffer (0.45 f)
+                    # Manage when close enough to boundary, set at boundary to avoid unwanted penalty
+                    lower_ideal_temp = self.indoor_temp_ideal_range[0]
+                    upper_ideal_temp = self.indoor_temp_ideal_range[1]
+                    if lower_ideal_temp - close_enough <= zone_temp <= lower_ideal_temp + close_enough:
+                        cooling_sp = lower_ideal_temp
+                    elif upper_ideal_temp - close_enough <= zone_temp <= upper_ideal_temp + close_enough:
+                        cooling_sp = upper_ideal_temp
+                    else:
+                        cooling_sp = zone_temp
+
+                else:
+                    # HVAC Availability OFF
+                    cooling_sp = zone_action  # None
+
+                heating_sp = 15.56
+                self.actuation_dict[f'zn{zone}_heating_sp'] = heating_sp
+                self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
+
+                if self._print:
+                    print(f'\t\tZone{zone} ({action_cmd_print[zone_action]}):'
+                          f' Zn Temp = {round(zone_temp, 2)},'
+                          f' Heating Sp = {round(heating_sp, 2)},'
+                          f' Cooling Sp = {round(cooling_sp, 2)}')
+
+        # Offline Learning
+        else:
+            pass
+
+        # Combine system actuations with aux actions
+        aux_actuation = self._get_aux_actuation()
+        self.actuation_dict.update(aux_actuation)
+
+        return self.actuation_dict
 
     def act_cool_only_on_off_7(self, actuate=True, exploit=False):
         """
