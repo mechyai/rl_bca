@@ -35,7 +35,7 @@ class RunManager:
         'batch_size': 8,
 
         # DQN or BDQ
-        'model': 1,  # 1=DQN, 2=Dueling DQN, 3=BDQ
+        'model': 3,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
         'PER': True,
         # RNN
