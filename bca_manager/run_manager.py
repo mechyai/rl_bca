@@ -8,6 +8,7 @@ from emspy import BcaEnv, MdpManager
 from bca import Agent
 from bca import BranchingDQN, ReplayMemory, PrioritizedReplayMemory, EpsilonGreedyStrategy
 from bca import BranchingDQN_RNN, SequenceReplayMemory, PrioritizedSequenceReplayMemory
+from bca import DQN
 
 from bca_manager import ModelManager, TensorboardManager
 
@@ -30,12 +31,15 @@ class RunManager:
         'eps_decay': 1e-6,
 
         # --- Experience Replay ---
-        'replay_capacity': 1024,
-        'batch_size': 32,
+        'replay_capacity': 64,
+        'batch_size': 8,
 
+        # DQN or BDQ
+        'model': 3,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
         'PER': False,
-        'rnn': True,
+        # RNN
+        'rnn': False,
 
         # -- BDQ --
         # Fixed
@@ -295,40 +299,59 @@ class RunManager:
     def create_bdq(self, run: namedtuple):
         """Creates and returns new BDQ model from defined parameters."""
 
-        if run.rnn:
-            self.dqn = BranchingDQN_RNN(
+        # DQN
+        if run.model == 1:
+            self.dqn = DQN(
                 observation_dim=run.observation_dim,
-                rnn_hidden_size=run.rnn_hidden_size,
-                rnn_num_layers=run.rnn_num_layers,
                 action_branches=run.action_branches,
                 action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
-                shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
-                value_stream_size=[run.value_stream_size_l1, run.value_stream_size_l2],
-                advantage_streams_size=[run.advantage_streams_size_l1, run.advantage_streams_size_l2],
+                network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
                 target_update_freq=run.target_update_freq,
                 learning_rate=run.learning_rate,
                 optimizer=run.optimizer,
                 gamma=run.gamma,
-                td_target=run.td_target,
-                gradient_clip_norm=run.gradient_clip_norm,
-                rescale_shared_grad_factor=run.rescale_shared_grad_factor,
-                lstm=run.lstm
-            )
-        else:
-            self.dqn = BranchingDQN(
-                observation_dim=run.observation_dim,
-                action_branches=run.action_branches,
-                action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
-                shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
-                value_stream_size=[run.value_stream_size_l1, run.value_stream_size_l2],
-                advantage_streams_size=[run.advantage_streams_size_l1, run.advantage_streams_size_l2],
-                target_update_freq=run.target_update_freq,
-                learning_rate=run.learning_rate,
-                optimizer=run.optimizer,
-                gamma=run.gamma,
-                td_target=run.td_target,
                 gradient_clip_norm=run.gradient_clip_norm,
                 rescale_shared_grad_factor=run.rescale_shared_grad_factor
             )
+        # Dueling DQN
+        elif run.model == 2:
+            pass
+        # BDQ
+        elif run.model == 3:
+            if run.rnn:
+                self.dqn = BranchingDQN_RNN(
+                    observation_dim=run.observation_dim,
+                    rnn_hidden_size=run.rnn_hidden_size,
+                    rnn_num_layers=run.rnn_num_layers,
+                    action_branches=run.action_branches,
+                    action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
+                    shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
+                    value_stream_size=[run.value_stream_size_l1, run.value_stream_size_l2],
+                    advantage_streams_size=[run.advantage_streams_size_l1, run.advantage_streams_size_l2],
+                    target_update_freq=run.target_update_freq,
+                    learning_rate=run.learning_rate,
+                    optimizer=run.optimizer,
+                    gamma=run.gamma,
+                    td_target=run.td_target,
+                    gradient_clip_norm=run.gradient_clip_norm,
+                    rescale_shared_grad_factor=run.rescale_shared_grad_factor,
+                    lstm=run.lstm
+                )
+            else:
+                self.dqn = BranchingDQN(
+                    observation_dim=run.observation_dim,
+                    action_branches=run.action_branches,
+                    action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
+                    shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
+                    value_stream_size=[run.value_stream_size_l1, run.value_stream_size_l2],
+                    advantage_streams_size=[run.advantage_streams_size_l1, run.advantage_streams_size_l2],
+                    target_update_freq=run.target_update_freq,
+                    learning_rate=run.learning_rate,
+                    optimizer=run.optimizer,
+                    gamma=run.gamma,
+                    td_target=run.td_target,
+                    gradient_clip_norm=run.gradient_clip_norm,
+                    rescale_shared_grad_factor=run.rescale_shared_grad_factor
+                )
 
         return self.dqn
