@@ -33,7 +33,7 @@ exp_name = 'cool_off_on_RNN_PER_soft_td'
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 2,
-    'skip_benchmark': False,
+    'skip_benchmark': True,
     'exploit_only': False,
     'test': True,
     'load_model': r'',
@@ -157,6 +157,12 @@ if not experiment_params_dict['exploit_only']:
 
     # -------------------------------------------------- RUN TRAINING --------------------------------------------------
 
+    start_step = 0
+    continued_params_dict = {'epsilon_start': run.eps_start}
+    if run.PER:
+        continued_params_dict = {**continued_params_dict, **{'alpha_start': run.alpha_start,
+                                                             'betta_start': run.betta_start}}
+
     for run_num, param_value in enumerate(run_modification):
 
         # Change specific param for run
@@ -171,12 +177,6 @@ if not experiment_params_dict['exploit_only']:
                                    f'run_{run_num + 1}-{run_limit}_lr_{param}_TRAIN_'
                                    f'{experiment_params_dict["epochs"]}_{train_period}')
         )
-
-        start_step = 0
-        continued_params_dict = {'epsilon_start': run.eps_start}
-        if run.PER:
-            continued_params_dict = {**continued_params_dict, **{'alpha_start': run.alpha_start,
-                                                                 'betta_start': run.betta_start}}
 
         for epoch in range(experiment_params_dict['epochs']):
             print(
