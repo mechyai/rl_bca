@@ -488,7 +488,7 @@ class BranchingDQN_RNN(nn.Module):
     def __init__(self, observation_dim: int, rnn_hidden_size: int, rnn_num_layers: int, action_branches: int,
                  action_dim: int, shared_network_size: list, value_stream_size: list, advantage_streams_size: list,
                  target_update_freq: int, learning_rate: float, gamma: float, td_target: str,
-                 gradient_clip_norm: float, rescale_shared_grad_factor: float = None, lstm: bool =False,
+                 gradient_clip_norm: float, rescale_shared_grad_factor: float = None, lstm: bool = False,
                  optimizer: str = 'Adam', **optimizer_kwargs):
 
         super().__init__()

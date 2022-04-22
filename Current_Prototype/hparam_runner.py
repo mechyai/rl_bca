@@ -58,8 +58,9 @@ if experiment_params_dict['exploit_only']:
     exp_folder = f'{exp_name}_EXPLOIT'
 else:
     exp_folder = f'{exp_name}'
-if not os.path.exists(os.path.join(exp_root, exp_folder)):
-    os.makedirs(os.path.join(exp_root, exp_folder))
+exp_folder = os.path.join(exp_root, exp_folder)
+if not os.path.exists(exp_folder):
+    os.makedirs(exp_folder)
 
 # -- Simulation Params --
 cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)

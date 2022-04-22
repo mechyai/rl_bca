@@ -73,7 +73,7 @@ class DQN_RNN(nn.Module):
 
     def __init__(self, observation_dim: int, rnn_hidden_size: int, rnn_num_layers: int, action_branches: int,
                  action_dim: int, network_size: list, target_update_freq: int, learning_rate: float, gamma: float,
-                 gradient_clip_norm: float, rescale_shared_grad_factor: float = None,
+                 gradient_clip_norm: float, rescale_shared_grad_factor: float = None, lstm: bool = False,
                  optimizer: str = 'Adam', **optimizer_kwargs):
 
         super().__init__()
@@ -88,9 +88,9 @@ class DQN_RNN(nn.Module):
         self.rescale_shared_grad_factor = rescale_shared_grad_factor
 
         self.policy_network = QNetwork_RNN(observation_dim, rnn_hidden_size, rnn_num_layers,
-                                           action_branches, action_dim, network_size)
+                                           action_branches, action_dim, network_size, lstm)
         self.target_network = QNetwork_RNN(observation_dim, rnn_hidden_size, rnn_num_layers,
-                                           action_branches, action_dim, network_size)
+                                           action_branches, action_dim, network_size, lstm)
         self.target_network.load_state_dict(self.policy_network.state_dict())  # copy params
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

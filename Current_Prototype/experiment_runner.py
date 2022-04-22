@@ -16,14 +16,14 @@ year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
 train_day_start = 1
-train_day_end = 7
+train_day_end = 3
 
 test_month_start = 'May'
 test_month_end = 'May'
 test_day_start = None
 test_day_end = None
 
-model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
+model_name = 'BEM_5z_2A_Base_Test.osm'
 
 run_modification = [5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]
 
@@ -32,7 +32,7 @@ exp_name = 'cool_off_on_RNN_PER_soft_td'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 20,
+    'epochs': 2,
     'skip_benchmark': False,
     'exploit_only': False,
     'test': True,
@@ -59,8 +59,9 @@ if experiment_params_dict['exploit_only']:
     exp_folder = f'{exp_name}_EXPLOIT'
 else:
     exp_folder = f'{exp_name}'
-if not os.path.exists(os.path.join(exp_root, exp_folder)):
-    os.makedirs(os.path.join(exp_root, exp_folder))
+exp_folder = os.path.join(exp_root, exp_folder)
+if not os.path.exists(exp_folder):
+    os.makedirs(exp_folder)
 
 # -- Simulation Params --
 cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)

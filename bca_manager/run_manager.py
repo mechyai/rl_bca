@@ -35,11 +35,11 @@ class RunManager:
         'batch_size': 8,
 
         # DQN or BDQ
-        'model': 3,  # 1=DQN, 2=Dueling DQN, 3=BDQ
+        'model': 1,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
-        'PER': False,
+        'PER': True,
         # RNN
-        'rnn': False,
+        'rnn': True,
 
         # -- BDQ --
         # Fixed
@@ -80,7 +80,7 @@ class RunManager:
             'sequence_length': 4,  # input as list for variable ts spacing
 
             # -- BDQ Architecture --
-            'lstm': False,
+            'lstm': True,
             'rnn_hidden_size': 32,
             'rnn_num_layers': 3,
         }
@@ -315,7 +315,7 @@ class RunManager:
                     gamma=run.gamma,
                     gradient_clip_norm=run.gradient_clip_norm,
                     rescale_shared_grad_factor=run.rescale_shared_grad_factor,
-                    rnn=run.rnn
+                    lstm=run.lstm
                 )
             else:
                 self.dqn = DQN(
@@ -329,7 +329,6 @@ class RunManager:
                     gamma=run.gamma,
                     gradient_clip_norm=run.gradient_clip_norm,
                     rescale_shared_grad_factor=run.rescale_shared_grad_factor,
-                    rnn=run.rnn
                 )
 
         # Dueling DQN
