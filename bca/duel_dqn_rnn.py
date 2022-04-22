@@ -26,11 +26,11 @@ Repos-
 """
 
 
-class QNetwork_RNN(nn.Module):
-    """Deep Q-network architecture with RNN."""
+class DuelingQNetwork_RNN(nn.Module):
+    """Deep Q-network architecture."""
 
-    def __init__(self, observation_dim, rnn_hidden_size, rnn_num_layers, action_branches, action_dim, network_size,
-                 lstm=False):
+    def __init__(self, observation_dim, rnn_hidden_size, rnn_num_layers, action_branches, action_dim,
+                 shared_network_size, value_stream_size, advantage_streams_size, lstm=False):
 
         super().__init__()
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -43,40 +43,71 @@ class QNetwork_RNN(nn.Module):
         else:
             self.rnn = nn.LSTM(observation_dim, rnn_hidden_size, rnn_num_layers, batch_first=True)
 
-        # -- DQN --
+        # -- Shared State Feature Estimator --
         layers = []
         prev_layer_size = rnn_hidden_size
-        for i, layer_size in enumerate(network_size):
+        for i, layer_size in enumerate(shared_network_size):
             if layer_size != 0:
                 layers.append(nn.Linear(prev_layer_size, layer_size))
                 layers.append(nn.ReLU())
                 prev_layer_size = layer_size
 
-        final_layer = nn.Linear(prev_layer_size, action_dim ** action_branches)  # output state-value
+        shared_final_layer = prev_layer_size
+        self.shared_model = nn.Sequential(*layers)
 
-        self.network = nn.Sequential(*layers, final_layer)
+        # --- Value Stream ---
+        layers = []
+        prev_layer_size = shared_final_layer
+        for i, layer_size in enumerate(value_stream_size):
+            if layer_size != 0:
+                layers.append(nn.Linear(prev_layer_size, layer_size))
+                layers.append(nn.ReLU())
+                prev_layer_size = layer_size
+
+        final_layer = nn.Linear(prev_layer_size, 1)  # output state-value
+        self.value_stream = nn.Sequential(*layers, final_layer)
+
+        # --- Advantage Streams ---
+        layers = []
+        prev_layer_size = shared_final_layer
+        for i, layer_size in enumerate(advantage_streams_size):
+            if layer_size != 0:
+                layers.append(nn.Linear(prev_layer_size, layer_size))
+                layers.append(nn.ReLU())
+                prev_layer_size = layer_size
+
+        final_layer = nn.Linear(prev_layer_size, action_dim ** action_branches)
+        self.advantage_stream = (nn.Sequential(*layers, final_layer))
 
     def forward(self, state_input):
         """Get q-values output for given state"""
+
         # RNN Node (num layers, batch size, hidden size)
         # Hidden (h0 and c0 for LSTM) is automatically 0 if not included
         # h0 = torch.zeros(self.rnn_num_layers, state_input.size(0), self.rnn_hidden_size).to(self.device)
-
         out, _ = self.rnn(state_input)  # out: batch size, seq len, hidden size
         out = out[:, -1, :]  # get last timestep output (many to one)
+        # Shared Network
+        if len(self.shared_model) != 0:
+            out = self.shared_model(out)
+        # Value Branch
+        value = self.value_stream(out)
+        # Advantage Streams
+        advs = self.advantage_stream(out)
 
-        qvals = self.network(out)
+        # Q-Value - Recombine Branches
+        q_vals = value.unsqueeze(2) + advs - advs.mean(1, keepdim=True)  # identifiable method eqn #1
 
-        return qvals
+        return q_vals
 
 
-class DQN_RNN(nn.Module):
+class DuelingDQN_RNN(nn.Module):
     """A DQN algorithm with RNN optional."""
 
     def __init__(self, observation_dim: int, rnn_hidden_size: int, rnn_num_layers: int, action_branches: int,
-                 action_dim: int, network_size: list, target_update_freq: int, learning_rate: float, gamma: float,
-                 gradient_clip_norm: float, lstm: bool = False,
-                 optimizer: str = 'Adam', **optimizer_kwargs):
+                 action_dim: int, shared_network_size: list, value_stream_size: list, advantage_stream_size: list,
+                 target_update_freq: int, learning_rate: float, gamma: float, lstm: bool = False,
+                 gradient_clip_norm: float = 1, optimizer: str = 'Adam', **optimizer_kwargs):
 
         super().__init__()
 
@@ -85,15 +116,19 @@ class DQN_RNN(nn.Module):
         self.action_dim = action_dim
         self.rnn_hidden_size = rnn_hidden_size
         self.rnn_num_layers = rnn_num_layers
-        self.network_size = network_size
+        self.shared_network_size = shared_network_size
+        self.advantage_streams_size = advantage_stream_size
+        self.value_stream_size = value_stream_size
         self.gamma = gamma
         self.learning_rate = learning_rate
         self.gradient_clip_norm = gradient_clip_norm
 
-        self.policy_network = QNetwork_RNN(observation_dim, rnn_hidden_size, rnn_num_layers,
-                                           action_branches, action_dim, network_size, lstm)
-        self.target_network = QNetwork_RNN(observation_dim, rnn_hidden_size, rnn_num_layers,
-                                           action_branches, action_dim, network_size, lstm)
+        self.policy_network = DuelingQNetwork_RNN(observation_dim, rnn_hidden_size, rnn_num_layers, action_branches,
+                                                  action_dim, shared_network_size, value_stream_size,
+                                                  advantage_stream_size, lstm=lstm)
+        self.target_network = DuelingQNetwork_RNN(observation_dim, rnn_hidden_size, rnn_num_layers, action_branches,
+                                                  action_dim, shared_network_size, value_stream_size,
+                                                  advantage_stream_size, lstm=lstm)
         self.target_network.load_state_dict(self.policy_network.state_dict())  # copy params
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -109,7 +144,7 @@ class DQN_RNN(nn.Module):
         self.step_count = 0
 
     def get_greedy_action(self, state_tensor):
-        x = state_tensor.to(self.device)  # single action row vector
+        x = state_tensor.to(self.device).T  # single action row vector
 
         with torch.no_grad():
             q_value = self.policy_network(x).squeeze(0)
@@ -172,6 +207,11 @@ class DQN_RNN(nn.Module):
             # If 0, don't clip norm
             nn.utils.clip_grad_norm_(self.policy_network.parameters(), max_norm=self.gradient_clip_norm)
 
+        # Normalize gradients converging at shared network from advantage stream and value stream
+        for layer in self.policy_network.shared_model:
+            if hasattr(layer, 'weight'):  # Ignore activation layers
+                layer.weight.grad = layer.weight.grad * 1 / 2
+
         # -- Optimize --
         self.optimizer.step()
 
@@ -183,7 +223,7 @@ class DQN_RNN(nn.Module):
 
         self.step_count += 1
 
-        return float(loss_total.detach().cpu()), loss_each.detach().mean(dim=1)
+        return float(loss_total.detach().cpu()), loss_each.detach().mean(dim=1).cpu()
 
     def import_model(self, model_path: str):
         """

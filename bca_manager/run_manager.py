@@ -9,6 +9,7 @@ from bca import Agent
 from bca import BranchingDQN, ReplayMemory, PrioritizedReplayMemory, EpsilonGreedyStrategy
 from bca import BranchingDQN_RNN, SequenceReplayMemory, PrioritizedSequenceReplayMemory
 from bca import DQN, DQN_RNN
+from bca import DuelingDQN, DuelingDQN_RNN
 
 from bca_manager import ModelManager, TensorboardManager
 
@@ -35,7 +36,7 @@ class RunManager:
         'batch_size': 64,
 
         # DQN or BDQ
-        'model': 1,  # 1=DQN, 2=Dueling DQN, 3=BDQ
+        'model': 2,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
         'PER': False,
         # RNN
@@ -63,6 +64,23 @@ class RunManager:
         'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
         'target_update_freq': 1e4,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
     }
+
+    if selected_params['model'] == 1:
+        # DQN-based
+        architecture_params = {
+            'network_size': [124, 124, 64]
+        }
+        selected_params = {**selected_params, **architecture_params}
+
+    if selected_params['model'] == 2:
+        # Dueling-DQN
+        architecture_params = {
+            'shared_network_size': [124, 124],
+            'value_stream_size': [64, 64],
+            'advantage_stream_size': [32, 32]
+        }
+        selected_params = {**selected_params, **architecture_params}
+
     if selected_params['model'] == 3:
         # BDQ-based
         architecture_params = {
@@ -73,13 +91,6 @@ class RunManager:
             'td_target': 'mean',  # (0) mean or (1) max
             'rescale_shared_grad_factor': 1 / (action_branches)
 
-        }
-        selected_params = {**selected_params, **architecture_params}
-
-    if selected_params['model'] == 1 or selected_params['model'] == 2:
-        # DQN-based
-        architecture_params = {
-            'network_size': [124, 124, 64]
         }
         selected_params = {**selected_params, **architecture_params}
 
@@ -341,7 +352,37 @@ class RunManager:
 
         # Dueling DQN
         elif run.model == 2:
-            pass
+            if run.rnn:
+                self.dqn = DuelingDQN_RNN(
+                    observation_dim=run.observation_dim,
+                    rnn_hidden_size=run.rnn_hidden_size,
+                    rnn_num_layers=run.rnn_num_layers,
+                    action_branches=run.action_branches,
+                    action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
+                    shared_network_size=run.shared_network_size,
+                    value_stream_size=run.value_stream_size,
+                    advantage_stream_size=run.advantage_stream_size,
+                    target_update_freq=run.target_update_freq,
+                    learning_rate=run.learning_rate,
+                    optimizer=run.optimizer,
+                    gamma=run.gamma,
+                    gradient_clip_norm=run.gradient_clip_norm,
+                    lstm=run.lstm
+                )
+            else:
+                self.dqn = DuelingDQN(
+                    observation_dim=run.observation_dim,
+                    action_branches=run.action_branches,
+                    action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
+                    shared_network_size=run.shared_network_size,
+                    value_stream_size=run.value_stream_size,
+                    advantage_stream_size=run.advantage_stream_size,
+                    target_update_freq=run.target_update_freq,
+                    learning_rate=run.learning_rate,
+                    optimizer=run.optimizer,
+                    gamma=run.gamma,
+                    gradient_clip_norm=run.gradient_clip_norm,
+                )
         # BDQ
         elif run.model == 3:
             if run.rnn:

@@ -79,10 +79,10 @@ class DuelingQNetwork(nn.Module):
         # Value Branch
         value = self.value_stream(out)
         # Advantage Streams
-        advs = torch.stack([advantage_stream(out) for advantage_stream in self.advantage_streams], dim=1)
+        advs = self.advantage_stream(out)
 
         # Q-Value - Recombine Branches
-        q_vals = value.unsqueeze(2) + advs - advs.mean(2, keepdim=True)  # identifiable method eqn #1
+        q_vals = value + advs - advs.mean(1, keepdim=True)  # identifiable method eqn #1
 
         return q_vals
 
@@ -91,23 +91,26 @@ class DuelingDQN(nn.Module):
     """A DQN algorithm with RNN optional."""
 
     def __init__(self, observation_dim: int, action_branches: int, action_dim: int,
-                 network_size: list, target_update_freq: int, learning_rate: float, gamma: float,
-                 gradient_clip_norm: float, rescale_shared_grad_factor: float = None,
-                 optimizer: str = 'Adam', **optimizer_kwargs):
+                 shared_network_size: list, value_stream_size: list, advantage_stream_size: list,
+                 target_update_freq: int, learning_rate: float, gamma: float,
+                 gradient_clip_norm: float, optimizer: str = 'Adam', **optimizer_kwargs):
 
         super().__init__()
 
         self.observation_space = observation_dim
         self.action_branches = action_branches
         self.action_dim = action_dim
-        self.network_size = network_size
+        self.shared_network_size = shared_network_size
+        self.advantage_streams_size = advantage_stream_size
+        self.value_stream_size = value_stream_size
         self.gamma = gamma
         self.learning_rate = learning_rate
         self.gradient_clip_norm = gradient_clip_norm
-        self.rescale_shared_grad_factor = rescale_shared_grad_factor
 
-        self.policy_network = QNetwork(observation_dim, action_branches, action_dim, network_size)
-        self.target_network = QNetwork(observation_dim, action_branches, action_dim, network_size)
+        self.policy_network = DuelingQNetwork(observation_dim, action_branches, action_dim, shared_network_size,
+                                              value_stream_size, advantage_stream_size)
+        self.target_network = DuelingQNetwork(observation_dim, action_branches, action_dim, shared_network_size,
+                                              value_stream_size, advantage_stream_size)
         self.target_network.load_state_dict(self.policy_network.state_dict())  # copy params
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -185,6 +188,11 @@ class DuelingDQN(nn.Module):
         if self.gradient_clip_norm != 0:
             # If 0, don't clip norm
             nn.utils.clip_grad_norm_(self.policy_network.parameters(), max_norm=self.gradient_clip_norm)
+
+        # Normalize gradients converging at shared network from advantage stream and value stream
+        for layer in self.policy_network.shared_model:
+            if hasattr(layer, 'weight'):  # Ignore activation layers
+                layer.weight.grad = layer.weight.grad * 1/2
 
         # -- Optimize --
         self.optimizer.step()
