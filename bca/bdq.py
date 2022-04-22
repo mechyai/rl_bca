@@ -8,7 +8,6 @@ This BDQN will consist of:
 """
 
 import math
-from collections import namedtuple
 import numpy as np
 
 import torch
@@ -27,9 +26,6 @@ Guides-
 https://www.youtube.com/watch?v=Odmeb3gkN0M&t=3s - Eden Meyer
 Repos-
 """
-
-# subclass tuple for experiences
-Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'reward', 'terminal'))
 
 
 class ReplayMemory(object):
@@ -52,7 +48,6 @@ class ReplayMemory(object):
         self.first_sample = True
         self.total_interaction_count = 0
         self.current_interaction_count = 0
-
 
         self.current_sampling_index_end = None
         self.current_sampling_index_start = None
@@ -110,22 +105,33 @@ class ReplayMemory(object):
         if self.first_sample:
             self.first_sample = False
 
+            if isinstance(action, int):
+                # DQN-based
+                action_length = 1
+            else:
+                # BDQ-based
+                action_length = len(action)
+
             # Init replay memory storage
             self.state_memory = torch.zeros([self.capacity, len(state)]).to(self.device)
-            self.action_memory = torch.zeros([self.capacity, len(action)]).to(self.device)
+            self.action_memory = torch.zeros([self.capacity, action_length], dtype=torch.uint8).to(self.device)
             self.next_state_memory = torch.zeros([self.capacity, len(next_state)]).to(self.device)
             self.reward_memory = torch.zeros([self.capacity, 1]).to(self.device)
-            self.terminal_memory = torch.zeros([self.capacity, 1]).to(self.device)
+            self.terminal_memory = torch.zeros([self.capacity, 1], dtype=torch.uint8).to(self.device)
 
         # Loop through indices based on size of memory
         index = self.total_interaction_count % self.capacity
         self.current_index = index
 
+        if isinstance(action, int):
+            # DQN-based
+            action = [action]
+
         self.state_memory[index] = torch.Tensor(state).to(self.device)
-        self.action_memory[index] = torch.Tensor(action).to(self.device)
+        self.action_memory[index] = torch.ByteTensor(action).to(self.device)
         self.next_state_memory[index] = torch.Tensor(next_state).to(self.device)
         self.reward_memory[index] = torch.Tensor([reward]).to(self.device)
-        self.terminal_memory[index] = torch.Tensor([terminal_flag]).to(self.device)
+        self.terminal_memory[index] = torch.ByteTensor([terminal_flag]).to(self.device)
 
         self.total_interaction_count += 1
         self.current_interaction_count = self.total_interaction_count - self.episode_start_interaction_count
@@ -380,7 +386,8 @@ class BranchingDQN(nn.Module):
     @staticmethod
     def get_current_qval(bdq_network, states, actions):
         qvals = bdq_network(states)
-        return qvals.gather(2, actions.unsqueeze(2)).squeeze(-1)
+        selected_qvals = qvals.gather(2, actions.unsqueeze(2)).squeeze(-1)
+        return selected_qvals
 
     def get_next_double_qval(self, next_states):
         # Double q learning implementation
@@ -485,20 +492,6 @@ class BranchingDQN(nn.Module):
         optimizer = self.optimizer.__class__.__name__
         self.optimizer = \
             getattr(optim, optimizer)(self.policy_network.parameters(), lr=lr, **optimizer_kwargs)
-
-    def _extract_tensors(self, experiences_batch):
-        """Format batch of experiences to proper tensor format."""
-
-        # transpose batch of experiences to "Experience" named tuple of 'batches'
-        batch = Experience(*zip(*experiences_batch))
-        # convert all (S,A,R,S',t)_i tuple list to np.array then into tensors
-        s = torch.Tensor(np.array(batch.state))
-        a = torch.Tensor(np.array(batch.action)).long()  # action indices, make int64
-        s_ = torch.Tensor(np.array(batch.next_state))
-        r = torch.Tensor(np.array(batch.reward)).unsqueeze(1)  # 1-dim
-        t = torch.Tensor(np.array(batch.terminal)).unsqueeze(1)  # 1-dim
-
-        return s, a, s_, r, t  # tensor tuple
 
 
 class EpsilonGreedyStrategy:
