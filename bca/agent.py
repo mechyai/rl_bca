@@ -514,7 +514,7 @@ class Agent:
         self.epsilon = self.greedy_epsilon.get_exploration_rate(self.current_step, self.fixed_epsilon)
         if not exploit and np.random.random() < self.epsilon:
             # Explore
-            if self.dqn_model == 3:
+            if self.run.model == 3:
                 # BDQ-based
                 self.action = np.random.randint(0, self.dqn_model.action_dim, self.dqn_model.action_branches)
             else:
