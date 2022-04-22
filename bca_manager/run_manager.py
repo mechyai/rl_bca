@@ -47,14 +47,6 @@ class RunManager:
         'action_branches': action_branches,  # n building zones
         'actuation_function': 7,
 
-        # Architecture
-        'shared_network_size_l1': 124,
-        'shared_network_size_l2': 64,
-        'value_stream_size_l1': 64,
-        'value_stream_size_l2': 32,
-        'advantage_streams_size_l1': 32,
-        'advantage_streams_size_l2': 16,
-
         # TD Update
         'optimizer': 'Adagrad',
         'learning_rate': 5e-4,
@@ -64,6 +56,7 @@ class RunManager:
         'reward_aggregation': 'sum',  # sum or mean
         'reward_sparsity_ts': 1,
         'reward_scale': 0.1,
+        'reward_clipping': 0,
         'lambda_rtp': 0.01,
 
         # Network mods
@@ -72,6 +65,23 @@ class RunManager:
         'rescale_shared_grad_factor': 1 / (action_branches),
         'target_update_freq': 0.05,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
     }
+    if selected_params['model'] == 3:
+        architecture_params = {
+            'shared_network_size_l2': 124,
+            'shared_network_size_l2': 64,
+            'value_stream_size_l1': 64,
+            'value_stream_size_l2': 32,
+            'advantage_streams_size_l1': 32,
+            'advantage_streams_size_l2': 16,
+        }
+        selected_params = {**selected_params, **architecture_params}
+
+    if selected_params['model'] == 1 and selected_params['model'] == 2:
+        architecture_params = {
+            'shared_network_size_l1': 124,
+            'shared_network_size_l2': 64,
+        }
+        selected_params = {**selected_params, **architecture_params}
 
     if selected_params['rnn']:
         rnn_params = {
