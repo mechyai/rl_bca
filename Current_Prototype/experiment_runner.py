@@ -16,28 +16,28 @@ year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
 train_day_start = 1
-train_day_end = 3
+train_day_end = 14
 
 test_month_start = 'May'
 test_month_end = 'May'
 test_day_start = None
 test_day_end = None
 
-model_name = 'BEM_5z_2A_Base_Test.osm'
+model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
 
-run_modification = [5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]
+run_modification = [1e-2, 5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]
 
 # exp_name = 'Tester'
-exp_name = 'cool_off_on_RNN_PER_soft_td'
+exp_name = 'cool_off_on_DQN_test'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 2,
-    'skip_benchmark': True,
+    'epochs': 20,
+    'skip_benchmark': False,
     'exploit_only': False,
     'test': True,
     'load_model': r'',
-    'print_values': False,
+    'print_values': True,
     'experiment_desc': 'Testing new PER RNN'
 }
 
@@ -110,6 +110,8 @@ if not experiment_params_dict['exploit_only']:
             start_day=train_day_start,
             end_day=train_day_end,
             run_type=run_type,
+            print_values=experiment_params_dict['print_values']
+
         )
         my_tb.record_epoch_results(
             agent=baseline_agent,
@@ -144,6 +146,8 @@ if not experiment_params_dict['exploit_only']:
             start_day=test_day_start,
             end_day=test_day_end,
             run_type=run_type,
+            print_values=experiment_params_dict['print_values']
+
         )
         my_tb.record_epoch_results(
             agent=baseline_agent,
@@ -201,7 +205,10 @@ if not experiment_params_dict['exploit_only']:
                 end_day=train_day_end,
                 run_type=run_type,
                 current_step=start_step,
-                continued_parameters=continued_params_dict
+                continued_parameters=continued_params_dict,
+                print_values=experiment_params_dict['print_values']
+
+
             )
             my_tb.record_epoch_results(
                 agent=my_agent,
@@ -254,6 +261,7 @@ if not experiment_params_dict['exploit_only']:
             start_day=train_day_start,
             end_day=train_day_end,
             run_type=run_type,
+            print_values=experiment_params_dict['print_values']
         )
         my_tb.record_epoch_results(
             agent=my_agent,
