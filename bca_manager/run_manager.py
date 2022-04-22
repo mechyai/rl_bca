@@ -26,20 +26,20 @@ class RunManager:
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
-        'eps_start': 0.15,
+        'eps_start': 0.25,
         'eps_end': 0.001,
         'eps_decay': 1e-6,
 
         # --- Experience Replay ---
-        'replay_capacity': 64,
-        'batch_size': 8,
+        'replay_capacity': 1024,
+        'batch_size': 64,
 
         # DQN or BDQ
         'model': 1,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
-        'PER': True,
+        'PER': False,
         # RNN
-        'rnn': True,
+        'rnn': False,
 
         # -- BDQ --
         # Fixed
@@ -50,27 +50,29 @@ class RunManager:
         # TD Update
         'optimizer': 'Adagrad',
         'learning_rate': 5e-4,
-        'gamma': 0.8,
+        'gamma': 0.7,
 
         # Reward
         'reward_aggregation': 'sum',  # sum or mean
         'reward_sparsity_ts': 1,
-        'reward_scale': 0.1,
+        'reward_scale': 0.01,
         'reward_clipping': 0,
         'lambda_rtp': 0.01,
 
         # Network mods
-        'td_target': 'mean',  # (0) mean or (1) max
-        'gradient_clip_norm': 5,  # [0, 1, 5, 10],  # 0 is nothing
-        'rescale_shared_grad_factor': 1 / (action_branches),
-        'target_update_freq': 0.05,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
+        'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
+        'target_update_freq': 1e4,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
     }
     if selected_params['model'] == 3:
         # BDQ-based
         architecture_params = {
             'shared_network_size': [124, 64],
             'value_stream_size': [64, 32],
-            'advantage_streams_size': [32, 16]
+            'advantage_streams_size': [32, 16],
+
+            'td_target': 'mean',  # (0) mean or (1) max
+            'rescale_shared_grad_factor': 1 / (action_branches)
+
         }
         selected_params = {**selected_params, **architecture_params}
 
@@ -322,7 +324,6 @@ class RunManager:
                     optimizer=run.optimizer,
                     gamma=run.gamma,
                     gradient_clip_norm=run.gradient_clip_norm,
-                    rescale_shared_grad_factor=run.rescale_shared_grad_factor,
                     lstm=run.lstm
                 )
             else:
@@ -336,7 +337,6 @@ class RunManager:
                     optimizer=run.optimizer,
                     gamma=run.gamma,
                     gradient_clip_norm=run.gradient_clip_norm,
-                    rescale_shared_grad_factor=run.rescale_shared_grad_factor,
                 )
 
         # Dueling DQN
