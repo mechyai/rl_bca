@@ -205,7 +205,7 @@ class DuelingDQN(nn.Module):
 
         self.step_count += 1
 
-        return float(loss_total.detach().cpu()), loss_each.detach().mean(dim=1).cpu()
+        return float(loss_total.detach().cpu()), loss_each.detach().mean(dim=1)
 
     def import_model(self, model_path: str):
         """
