@@ -18,7 +18,7 @@ class RunManager:
     """This class helps manage all hparams and sampling, as well as creating all objects dependent on these hparams."""
     # -- Agent Params --
     # Misc. Params
-    action_branches = 4
+    action_branches = 1
 
     selected_params = {
         # -- Agent Params --
@@ -46,7 +46,7 @@ class RunManager:
         # Fixed
         'observation_dim': 51,
         'action_branches': action_branches,  # n building zones
-        'actuation_function': 7,
+        'actuation_function': 8,
 
         # TD Update
         'optimizer': 'Adagrad',
@@ -61,7 +61,7 @@ class RunManager:
         'lambda_rtp': 0.01,
 
         # Network mods
-        'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
+        'gradient_clip_norm': 0,  # [0, 1, 5, 10],  # 0 is nothing
         'target_update_freq': 1e4,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
     }
 
@@ -84,9 +84,9 @@ class RunManager:
     if selected_params['model'] == 3:
         # BDQ-based
         architecture_params = {
-            'shared_network_size': [124, 64],
+            'shared_network_size': [64, 64],
             'value_stream_size': [64, 32],
-            'advantage_streams_size': [32, 16],
+            'advantage_streams_size': [32, 32],
 
             'td_target': 'mean',  # (0) mean or (1) max
             'rescale_shared_grad_factor': 1 / (action_branches)
@@ -97,12 +97,12 @@ class RunManager:
     if selected_params['rnn']:
         rnn_params = {
             # -- State Sequence --
-            'sequence_ts_spacing': 6,
+            'sequence_ts_spacing': 1,
             'sequence_length': 4,  # input as list for variable ts spacing
 
             # -- BDQ Architecture --
             'lstm': True,
-            'rnn_hidden_size': 32,
+            'rnn_hidden_size': 24,
             'rnn_num_layers': 3,
         }
         selected_params = {**selected_params, **rnn_params}
