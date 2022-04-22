@@ -35,7 +35,7 @@ class RunManager:
         'batch_size': 8,
 
         # DQN or BDQ
-        'model': 3,  # 1=DQN, 2=Dueling DQN, 3=BDQ
+        'model': 1,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
         'PER': True,
         # RNN
@@ -47,14 +47,6 @@ class RunManager:
         'action_branches': action_branches,  # n building zones
         'actuation_function': 7,
 
-        # Architecture
-        'shared_network_size_l1': 124,
-        'shared_network_size_l2': 64,
-        'value_stream_size_l1': 64,
-        'value_stream_size_l2': 32,
-        'advantage_streams_size_l1': 32,
-        'advantage_streams_size_l2': 16,
-
         # TD Update
         'optimizer': 'Adagrad',
         'learning_rate': 5e-4,
@@ -64,6 +56,7 @@ class RunManager:
         'reward_aggregation': 'sum',  # sum or mean
         'reward_sparsity_ts': 1,
         'reward_scale': 0.1,
+        'reward_clipping': 0,
         'lambda_rtp': 0.01,
 
         # Network mods
@@ -72,6 +65,21 @@ class RunManager:
         'rescale_shared_grad_factor': 1 / (action_branches),
         'target_update_freq': 0.05,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
     }
+    if selected_params['model'] == 3:
+        # BDQ-based
+        architecture_params = {
+            'shared_network_size': [124, 64],
+            'value_stream_size': [64, 32],
+            'advantage_streams_size': [32, 16]
+        }
+        selected_params = {**selected_params, **architecture_params}
+
+    if selected_params['model'] == 1 or selected_params['model'] == 2:
+        # DQN-based
+        architecture_params = {
+            'network_size': [124, 124, 64]
+        }
+        selected_params = {**selected_params, **architecture_params}
 
     if selected_params['rnn']:
         rnn_params = {
@@ -308,7 +316,7 @@ class RunManager:
                     rnn_hidden_size=run.rnn_hidden_size,
                     rnn_num_layers=run.rnn_num_layers,
                     action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
-                    network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
+                    network_size=run.network_size,
                     target_update_freq=run.target_update_freq,
                     learning_rate=run.learning_rate,
                     optimizer=run.optimizer,
@@ -322,7 +330,7 @@ class RunManager:
                     observation_dim=run.observation_dim,
                     action_branches=run.action_branches,
                     action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
-                    network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
+                    network_size=run.network_size,
                     target_update_freq=run.target_update_freq,
                     learning_rate=run.learning_rate,
                     optimizer=run.optimizer,
@@ -343,9 +351,9 @@ class RunManager:
                     rnn_num_layers=run.rnn_num_layers,
                     action_branches=run.action_branches,
                     action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
-                    shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
-                    value_stream_size=[run.value_stream_size_l1, run.value_stream_size_l2],
-                    advantage_streams_size=[run.advantage_streams_size_l1, run.advantage_streams_size_l2],
+                    shared_network_size=run.shared_network_size,
+                    value_stream_size=run.value_stream_size,
+                    advantage_streams_size=run.advantage_streams_size,
                     target_update_freq=run.target_update_freq,
                     learning_rate=run.learning_rate,
                     optimizer=run.optimizer,
@@ -360,9 +368,9 @@ class RunManager:
                     observation_dim=run.observation_dim,
                     action_branches=run.action_branches,
                     action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
-                    shared_network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
-                    value_stream_size=[run.value_stream_size_l1, run.value_stream_size_l2],
-                    advantage_streams_size=[run.advantage_streams_size_l1, run.advantage_streams_size_l2],
+                    shared_network_size=run.shared_network_size,
+                    value_stream_size=run.value_stream_size,
+                    advantage_streams_size=run.advantage_streams_size,
                     target_update_freq=run.target_update_freq,
                     learning_rate=run.learning_rate,
                     optimizer=run.optimizer,

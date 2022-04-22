@@ -205,6 +205,9 @@ class Agent:
         reward_scale = self.run.reward_scale
         self.reward_dict = self._reward4()
         self.reward = self._get_total_reward(self.reward_aggregation) * reward_scale  # aggregate 'mean' or 'sum'
+        if self.run.reward_clipping != 0:
+            self.reward = max(self.reward, self.run.reward_clipping)
+
         # Get total reward per component, not Zone
         reward_component_sums = np.array(list(self.reward_dict.values())).sum(axis=0)  # sum reward per component
         self.reward_component_sum = np.array(list(zip(self.reward_component_sum, reward_component_sums))).sum(axis=1)
@@ -217,7 +220,6 @@ class Agent:
                 self.state_normalized,
                 self.action,
                 self.next_state_normalized,
-                # max(self.reward, -50),
                 self.reward,
                 self.termination
             )
