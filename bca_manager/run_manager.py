@@ -8,7 +8,7 @@ from emspy import BcaEnv, MdpManager
 from bca import Agent
 from bca import BranchingDQN, ReplayMemory, PrioritizedReplayMemory, EpsilonGreedyStrategy
 from bca import BranchingDQN_RNN, SequenceReplayMemory, PrioritizedSequenceReplayMemory
-from bca import DQN
+from bca import DQN, DQN_RNN
 
 from bca_manager import ModelManager, TensorboardManager
 
@@ -301,18 +301,37 @@ class RunManager:
 
         # DQN
         if run.model == 1:
-            self.dqn = DQN(
-                observation_dim=run.observation_dim,
-                action_branches=run.action_branches,
-                action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
-                network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
-                target_update_freq=run.target_update_freq,
-                learning_rate=run.learning_rate,
-                optimizer=run.optimizer,
-                gamma=run.gamma,
-                gradient_clip_norm=run.gradient_clip_norm,
-                rescale_shared_grad_factor=run.rescale_shared_grad_factor
-            )
+            if run.rnn:
+                self.dqn = DQN_RNN(
+                    observation_dim=run.observation_dim,
+                    action_branches=run.action_branches,
+                    rnn_hidden_size=run.rnn_hidden_size,
+                    rnn_num_layers=run.rnn_num_layers,
+                    action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
+                    network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
+                    target_update_freq=run.target_update_freq,
+                    learning_rate=run.learning_rate,
+                    optimizer=run.optimizer,
+                    gamma=run.gamma,
+                    gradient_clip_norm=run.gradient_clip_norm,
+                    rescale_shared_grad_factor=run.rescale_shared_grad_factor,
+                    rnn=run.rnn
+                )
+            else:
+                self.dqn = DQN(
+                    observation_dim=run.observation_dim,
+                    action_branches=run.action_branches,
+                    action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
+                    network_size=[run.shared_network_size_l1, run.shared_network_size_l2],
+                    target_update_freq=run.target_update_freq,
+                    learning_rate=run.learning_rate,
+                    optimizer=run.optimizer,
+                    gamma=run.gamma,
+                    gradient_clip_norm=run.gradient_clip_norm,
+                    rescale_shared_grad_factor=run.rescale_shared_grad_factor,
+                    rnn=run.rnn
+                )
+
         # Dueling DQN
         elif run.model == 2:
             pass

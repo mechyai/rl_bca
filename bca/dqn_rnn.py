@@ -26,17 +26,26 @@ Repos-
 """
 
 
-class QNetwork(nn.Module):
-    """Deep Q-network architecture."""
+class QNetwork_RNN(nn.Module):
+    """Deep Q-network architecture with RNN."""
 
-    def __init__(self, observation_dim, action_branches, action_dim, network_size):
+    def __init__(self, observation_dim, rnn_hidden_size, rnn_num_layers, action_branches, action_dim, network_size,
+                 lstm=False):
 
         super().__init__()
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+        # -- RNN Head --
+        self.rnn_hidden_size = rnn_hidden_size
+        self.rnn_num_layers = rnn_num_layers
+        if not lstm:
+            self.rnn = nn.GRU(observation_dim, rnn_hidden_size, rnn_num_layers, batch_first=True)
+        else:
+            self.rnn = nn.LSTM(observation_dim, rnn_hidden_size, rnn_num_layers, batch_first=True)
+
         # -- DQN --
         layers = []
-        prev_layer_size = observation_dim
+        prev_layer_size = rnn_hidden_size
         for i, layer_size in enumerate(network_size):
             if layer_size != 0:
                 layers.append(nn.Linear(prev_layer_size, layer_size))
@@ -49,14 +58,21 @@ class QNetwork(nn.Module):
 
     def forward(self, state_input):
         """Get q-values output for given state"""
+        # RNN Node (num layers, batch size, hidden size)
+        # Hidden (h0 and c0 for LSTM) is automatically 0 if not included
+        # h0 = torch.zeros(self.rnn_num_layers, state_input.size(0), self.rnn_hidden_size).to(self.device)
 
-        return self.network(state_input)
+        out, _ = self.rnn(state_input)  # out: batch size, seq len, hidden size
+        out = out[:, -1, :]  # get last timestep output (many to one)
 
-class DQN(nn.Module):
+        return self.network(out)
+
+
+class DQN_RNN(nn.Module):
     """A DQN algorithm with RNN optional."""
 
-    def __init__(self, observation_dim: int, action_branches: int, action_dim: int,
-                 network_size: list, target_update_freq: int, learning_rate: float, gamma: float,
+    def __init__(self, observation_dim: int, rnn_hidden_size: int, rnn_num_layers: int, action_branches: int,
+                 action_dim: int, network_size: list, target_update_freq: int, learning_rate: float, gamma: float,
                  gradient_clip_norm: float, rescale_shared_grad_factor: float = None,
                  optimizer: str = 'Adam', **optimizer_kwargs):
 
@@ -71,8 +87,10 @@ class DQN(nn.Module):
         self.gradient_clip_norm = gradient_clip_norm
         self.rescale_shared_grad_factor = rescale_shared_grad_factor
 
-        self.policy_network = QNetwork(observation_dim, action_branches, action_dim, network_size)
-        self.target_network = QNetwork(observation_dim, action_branches, action_dim, network_size)
+        self.policy_network = QNetwork_RNN(observation_dim, rnn_hidden_size, rnn_num_layers,
+                                           action_branches, action_dim, network_size)
+        self.target_network = QNetwork_RNN(observation_dim, rnn_hidden_size, rnn_num_layers,
+                                           action_branches, action_dim, network_size)
         self.target_network.load_state_dict(self.policy_network.state_dict())  # copy params
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
