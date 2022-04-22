@@ -299,19 +299,16 @@ class PrioritizedSequenceReplayMemory(SequenceReplayMemory):
         if self.first_sample:
             self.first_sample = False
 
-            if self.first_sample:
-                self.first_sample = False
-
-                if isinstance(action, int):
-                    # DQN-based
-                    action_length = 1
-                else:
-                    # BDQ-based
-                    action_length = len(action)
+            if isinstance(action, int):
+                # DQN-based
+                action_length = 1
+            else:
+                # BDQ-based
+                action_length = len(action)
 
             # Replay Memory
             self.state_memory = torch.zeros([self.capacity, len(state)]).to(self.device)
-            self.action_memory = torch.zeros([self.capacity, len(action)], dtype=torch.uint8).to(self.device)
+            self.action_memory = torch.zeros([self.capacity, action_length], dtype=torch.uint8).to(self.device)
             self.next_state_memory = torch.zeros([self.capacity, len(next_state)]).to(self.device)
             self.reward_memory = torch.zeros([self.capacity, 1]).to(self.device)
             self.terminal_memory = torch.zeros([self.capacity, 1], dtype=torch.uint8).to(self.device)

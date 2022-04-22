@@ -500,7 +500,12 @@ class Agent:
             else:
                 # Temporary explore until full sequence available
                 # TODO make variable sequence input? or ignore 1st day?
-                self.action = np.random.randint(0, self.dqn_model.action_dim, self.dqn_model.action_branches)
+                if self.run.model == 3:
+                    # BDQ-based
+                    self.action = np.random.randint(0, self.dqn_model.action_dim, self.dqn_model.action_branches)
+                else:
+                    # DQN-based
+                    self.action = random.randint(0, self.dqn_model.action_dim ** self.dqn_model.action_branches - 1)
 
                 return 'Explore'
         else:

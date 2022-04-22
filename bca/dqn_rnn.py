@@ -65,7 +65,9 @@ class QNetwork_RNN(nn.Module):
         out, _ = self.rnn(state_input)  # out: batch size, seq len, hidden size
         out = out[:, -1, :]  # get last timestep output (many to one)
 
-        return self.network(out)
+        qvals = self.network(out)
+
+        return qvals
 
 
 class DQN_RNN(nn.Module):
@@ -106,7 +108,7 @@ class DQN_RNN(nn.Module):
         self.step_count = 0
 
     def get_greedy_action(self, state_tensor):
-        x = state_tensor.to(self.device).T  # single action row vector
+        x = state_tensor.to(self.device)  # single action row vector
 
         with torch.no_grad():
             q_value = self.policy_network(x).squeeze(0)

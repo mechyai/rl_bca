@@ -9,6 +9,8 @@
 
 *.pyc
 
+# E+ IDF no longer needed
+*idf
 # E+/OpenStudio data
 */out
 *.sql
