@@ -110,6 +110,8 @@ if not experiment_params_dict['exploit_only']:
             start_day=train_day_start,
             end_day=train_day_end,
             run_type=run_type,
+            print_values=experiment_params_dict['print_values']
+
         )
         my_tb.record_epoch_results(
             agent=baseline_agent,
@@ -144,6 +146,8 @@ if not experiment_params_dict['exploit_only']:
             start_day=test_day_start,
             end_day=test_day_end,
             run_type=run_type,
+            print_values=experiment_params_dict['print_values']
+
         )
         my_tb.record_epoch_results(
             agent=baseline_agent,
@@ -201,7 +205,10 @@ if not experiment_params_dict['exploit_only']:
                 end_day=train_day_end,
                 run_type=run_type,
                 current_step=start_step,
-                continued_parameters=continued_params_dict
+                continued_parameters=continued_params_dict,
+                print_values=experiment_params_dict['print_values']
+
+
             )
             my_tb.record_epoch_results(
                 agent=my_agent,
@@ -254,6 +261,7 @@ if not experiment_params_dict['exploit_only']:
             start_day=train_day_start,
             end_day=train_day_end,
             run_type=run_type,
+            print_values=experiment_params_dict['print_values']
         )
         my_tb.record_epoch_results(
             agent=my_agent,
