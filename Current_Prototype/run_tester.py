@@ -11,35 +11,48 @@ from bca_manager import RunManager, TensorboardManager
 from bca_manager import _paths_config, experiment_manager
 
 
-year = MDP.year
-month_start = 'June'
-month_end = 'June'
-day_start = 1
-day_end = 8
+# -------------------------------------------------- INPUT --------------------------------------------------
 
-exp_name = 'testing'
-test_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}'
+year = MDP.year
+train_month_start = 'April'
+train_month_end = 'April'
+train_day_start = 1
+train_day_end = 2
+
+exp_name = '_testing'
+# model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
+model_name = 'BEM_5z_2A_Base_Test.osm'
+
+run_type = 'train'
+run_modification = [5e-3]  #, 5e-5, 1e-5, 5e-6, 1e-6]
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 1,
-    'load_model': r''
+    'epochs': 3,
+    'load_model': r'',
+    'print_values': True
 }
 
-run_modification = [5e-3]  #, 5e-5, 1e-5, 5e-6, 1e-6]
+# -------------------------------------------------- START PIPELINE --------------------------------------------------
 
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/BEM')
-osm_base = os.path.join(bem_folder, 'OpenStudioModels/BEM_5z_2A_Base_Test.osm')
+osm_base = os.path.join(bem_folder, 'OpenStudioModels', model_name)
 idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
+
 # Weather Path
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')
+
 # Experiment Folder
-exp_folder = f'Experiments/{exp_name}'
+test_name = f'{exp_name}_{datetime.datetime.now().strftime("%y%m%d-%H%M")}'
+test_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/Experiments/_testing', test_name)
+if not os.path.exists(test_folder):
+    os.makedirs(test_folder)
 
 # -- Simulation Params --
 cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
+train_period = train_month_start + '_' + train_month_end
 
 # --- Study Parameters ---
 run_manager = RunManager()
@@ -59,17 +72,23 @@ if experiment_params_dict['load_model']:
 # ---------------------------------------------------- Run Training ----------------------------------------------------
 
 for run_num, param_value in enumerate(run_modification):
+
+    start_step = 0
+    continued_params_dict = {'epsilon_start': run.eps_start}
+    if run.PER:
+        continued_params_dict = {**continued_params_dict, **{'alpha_start': run.alpha_start,
+                                                             'betta_start': run.betta_start}}
+
     for epoch in range(experiment_params_dict['epochs']):
 
         # ---- Tensor Board ----
         param = run.learning_rate
         my_tb = TensorboardManager(
             run_manager,
-            name_path=os.path.join(exp_folder, test_name)
+            name_path=os.path.join(test_folder, test_name)
         )
 
-        run_type = 'train'
-        agent = experiment_manager.run_experiment(
+        my_agent = experiment_manager.run_experiment(
             run=run,
             run_manager=run_manager,
             bdq=my_bdq,
@@ -78,12 +97,17 @@ for run_num, param_value in enumerate(run_modification):
             idf_file_final=idf_final_file,
             epw_file=epw_file,
             year=year,
-            start_month=month_start,
-            end_day=day_end,
+            start_month=train_month_start,
+            end_month=train_month_end,
+            start_day=train_day_start,
+            end_day=train_day_end,
             run_type=run_type,
+            current_step=start_step,
+            continued_parameters=continued_params_dict,
+            print_values=experiment_params_dict['print_values']
         )
         my_tb.record_epoch_results(
-            agent=agent,
+            agent=my_agent,
             experimental_params=experiment_params_dict,
             run=run,
             run_count=0,
@@ -91,3 +115,7 @@ for run_num, param_value in enumerate(run_modification):
             epoch=0,
             run_type=run_type
         )
+
+        start_step = my_agent.current_step
+        continued_params_dict = my_agent.save_continued_params()
+        my_memory.reset_between_episode()

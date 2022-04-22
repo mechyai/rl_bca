@@ -7,13 +7,16 @@ import torch
 
 from emspy import EmsPy
 from bca import MDP
-from bca_manager import RunManager, TensorboardManager, _paths_config, experiment_manager
+from bca_manager import RunManager, TensorboardManager
+from bca_manager import _paths_config, experiment_manager
+
+# -------------------------------------------------- INPUT --------------------------------------------------
 
 year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
 train_day_start = 1
-train_day_end = 14
+train_day_end = 7
 
 test_month_start = 'May'
 test_month_end = 'May'
@@ -22,70 +25,79 @@ test_day_end = None
 
 model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
 
-exp_name = 'working_RNN_PER_hparam'
+run_modification = [5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]
+
 # exp_name = 'Tester'
-exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
-prepend_tb = 'PER'
+exp_name = 'cool_off_on_RNN_PER_soft_td'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 20,
+    'epochs': 10,
     'run_index_start': 0,
     'run_index_limit': 100,
-    'load_model': r'',
     'skip_baseline': False,
-    'experiment_desc': ''
+    'experiment_desc': '',
+    'print_values': True
 }
+
+# -------------------------------------------------- START PIPELINE --------------------------------------------------
 
 # -- FILE PATHS --
 # IDF File / Modification Paths
 bem_folder = os.path.join(_paths_config.repo_root, 'Current_Prototype/BEM')
 osm_base = os.path.join(bem_folder, 'OpenStudioModels', model_name)
 idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
+
 # Weather Path
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')
+
 # Experiment Folder
-exp_folder = f'HparamTest/{exp_name}'
-
-if not os.path.exists(os.path.join(exp_folder)):
+exp_root = os.path.join(_paths_config.repo_root, 'Current_Prototype/Experiments')
+exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
+if experiment_params_dict['exploit_only']:
+    exp_folder = f'{exp_name}_EXPLOIT'
+else:
+    exp_folder = f'{exp_name}'
+exp_folder = os.path.join(exp_root, exp_folder)
+if not os.path.exists(exp_folder):
     os.makedirs(exp_folder)
-
-train_period = train_month_start + '_' + train_month_end
-test_period = test_month_start + '_' + test_month_end
 
 # -- Simulation Params --
 cp = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop (9*)
+train_period = train_month_start + '_' + train_month_end
+test_period = test_month_start + '_' + test_month_end
 
 # ----------------------------------------------------- Run Study -----------------------------------------------------
 
 # --- Study Parameters ---
 run_manager = RunManager()
-runs = run_manager.shuffle_runs()
-run_limit = experiment_params_dict['run_index_limit']
 run_start = experiment_params_dict['run_index_start']
+run_limit = experiment_params_dict['run_index_limit']
 
-# -- Create DQN Model --
-run = runs[0]
-my_bdq = run_manager.create_bdq(run)
+# runs = run_manager.shuffle_runs()
+runs = run_manager.runs
+runs = runs[run_start: run_limit]
 
-# Load model, if desired
-if experiment_params_dict['load_model']:
-    my_bdq.import_model(experiment_params_dict['load_model'])
-
-# --- Run Baseline Once ---
-run_type = 'benchmark'
-my_tb = TensorboardManager(
-    run_manager,
-    name_path=os.path.join(exp_folder, f'_{train_period}_BASELINE')
-)
+# -------------------------------------------------- RUN BENCHMARK --------------------------------------------------
 
 if not experiment_params_dict['skip_baseline']:
     print('\n********** Baseline **********\n')
 
+    run_type = 'benchmark'
+    my_tb = TensorboardManager(
+        run_manager,
+        name_path=os.path.join(exp_folder, f'_{train_period}_BASELINE')
+    )
+
+    # -- Create DQN Model --
+    # Just for benchmark, not used
+    _ = runs[0]
+    benchmark_bdq = run_manager.create_bdq(_)
+
     baseline_agent = experiment_manager.run_experiment(
-        run=run,
+        run=_,
         run_manager=run_manager,
-        bdq=my_bdq,
+        bdq=benchmark_bdq,
         tensorboard_manager=my_tb,
         osm_file=osm_base,
         idf_file_final=idf_final_file,
@@ -100,7 +112,7 @@ if not experiment_params_dict['skip_baseline']:
     my_tb.record_epoch_results(
         agent=baseline_agent,
         experimental_params=experiment_params_dict,
-        run=run,
+        run=_,
         run_count=0,
         run_limit=run_limit,
         epoch=0,
@@ -116,9 +128,9 @@ if not experiment_params_dict['skip_baseline']:
     print('\n********** Testing Baseline **********\n')
 
     baseline_agent = experiment_manager.run_experiment(
-        run=run,
+        run=_,
         run_manager=run_manager,
-        bdq=my_bdq,
+        bdq=benchmark_bdq,
         tensorboard_manager=my_tb,
         osm_file=osm_base,
         idf_file_final=idf_final_file,
@@ -133,7 +145,7 @@ if not experiment_params_dict['skip_baseline']:
     my_tb.record_epoch_results(
         agent=baseline_agent,
         experimental_params=experiment_params_dict,
-        run=run,
+        run=_,
         run_count=0,
         run_limit=run_limit,
         epoch=0,
@@ -149,11 +161,11 @@ for run_num, run in enumerate(runs):
     my_memory = run_manager.create_replay_memory(run)
 
     start_step = 0
-    continued_params_dict = {
-        'alpha_start': run.alpha_start,
-        'betta_start': run.betta_start,
-        'epsilon_start': run.eps_start
-    }
+    continued_params_dict = {'epsilon_start': run.eps_start}
+    if run.PER:
+        continued_params_dict = {**continued_params_dict, **{'alpha_start': run.alpha_start,
+                                                             'betta_start': run.betta_start}}
+
     for epoch in range(experiment_params_dict['epochs']):
 
         print(f'\nRun {run_num + 1} of {run_limit}, Epoch {epoch + 1} of {experiment_params_dict["epochs"]}\n{run}\n')
@@ -185,7 +197,8 @@ for run_num, run in enumerate(runs):
             end_day=train_day_end,
             run_type=run_type,
             current_step=start_step,
-            continued_parameters=continued_params_dict
+            continued_parameters=continued_params_dict,
+            print_values=experiment_params_dict['print_values']
         )
         my_tb.record_epoch_results(
             agent=my_agent,
@@ -247,7 +260,6 @@ for run_num, run in enumerate(runs):
         epoch=0,
         run_type=run_type
     )
-
 
     print('\n********** Test **********\n')
 
