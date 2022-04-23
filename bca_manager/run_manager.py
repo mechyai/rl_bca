@@ -18,7 +18,7 @@ class RunManager:
     """This class helps manage all hparams and sampling, as well as creating all objects dependent on these hparams."""
     # -- Agent Params --
     # Misc. Params
-    action_branches = 1
+    action_branches = 4
 
     selected_params = {
         # -- Agent Params --
@@ -29,18 +29,18 @@ class RunManager:
         # --- Behavioral Policy ---
         'eps_start': 0.25,
         'eps_end': 0.001,
-        'eps_decay': 1e-6,
+        'eps_decay': 1e-7,
 
         # --- Experience Replay ---
-        'replay_capacity': 1024,
-        'batch_size': 64,
+        'replay_capacity': 2048,
+        'batch_size': 32,
 
         # DQN or BDQ
         'model': 2,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
-        'PER': False,
+        'PER': True,
         # RNN
-        'rnn': False,
+        'rnn': True,
 
         # -- BDQ --
         # Fixed
@@ -61,7 +61,7 @@ class RunManager:
         'lambda_rtp': 0.01,
 
         # Network mods
-        'gradient_clip_norm': 0,  # [0, 1, 5, 10],  # 0 is nothing
+        'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
         'target_update_freq': 1e4,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
     }
 
@@ -75,7 +75,7 @@ class RunManager:
     if selected_params['model'] == 2:
         # Dueling-DQN
         architecture_params = {
-            'shared_network_size': [124, 124],
+            'shared_network_size': [124],
             'value_stream_size': [64, 64],
             'advantage_stream_size': [32, 32]
         }
@@ -84,9 +84,9 @@ class RunManager:
     if selected_params['model'] == 3:
         # BDQ-based
         architecture_params = {
-            'shared_network_size': [64, 64],
+            'shared_network_size': [124, 64],
             'value_stream_size': [64, 32],
-            'advantage_streams_size': [32, 32],
+            'advantage_streams_size': [32, 16],
 
             'td_target': 'mean',  # (0) mean or (1) max
             'rescale_shared_grad_factor': 1 / (action_branches)
@@ -97,12 +97,12 @@ class RunManager:
     if selected_params['rnn']:
         rnn_params = {
             # -- State Sequence --
-            'sequence_ts_spacing': 1,
+            'sequence_ts_spacing': 3,
             'sequence_length': 4,  # input as list for variable ts spacing
 
             # -- BDQ Architecture --
             'lstm': True,
-            'rnn_hidden_size': 24,
+            'rnn_hidden_size': 32,
             'rnn_num_layers': 3,
         }
         selected_params = {**selected_params, **rnn_params}
@@ -112,7 +112,7 @@ class RunManager:
             'alpha_start': 1,
             'alpha_decay_factor': None,
             'betta_start': 0.5,
-            'betta_decay_factor': 1e-5,
+            'betta_decay_factor': 1e-6,
         }
         selected_params = {**selected_params, **per_params}
 

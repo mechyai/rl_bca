@@ -17,18 +17,18 @@ year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
 train_day_start = 1
-train_day_end = 2
+train_day_end = 14
 
 exp_name = '_testing'
 # model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
 model_name = 'BEM_5z_2A_Base_Test.osm'
 
 run_type = 'train'
-run_modification = [5e-3]  #, 5e-5, 1e-5, 5e-6, 1e-6]
+run_modification = [5e-2]  #, 5e-5, 1e-5, 5e-6, 1e-6]
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 3,
+    'epochs': 1,
     'load_model': r'',
     'print_values': True
 }
