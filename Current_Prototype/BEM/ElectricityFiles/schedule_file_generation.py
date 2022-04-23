@@ -13,7 +13,7 @@ import ErcotDAM_fromCSV as dam
 import ErcotFuelMix_fromCSV as fmix
 
 from emspy import idf_editor
-from bca import _paths_config
+from bca_manager import _paths_config
 
 # -- OUTPUT PARAMS --
 # metadata
