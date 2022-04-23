@@ -29,24 +29,24 @@ class RunManager:
         # --- Behavioral Policy ---
         'eps_start': 0.25,
         'eps_end': 0.001,
-        'eps_decay': 1e-6,
+        'eps_decay': 1e-7,
 
         # --- Experience Replay ---
-        'replay_capacity': 1024,
-        'batch_size': 64,
+        'replay_capacity': 2048,
+        'batch_size': 32,
 
         # DQN or BDQ
         'model': 2,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
-        'PER': False,
+        'PER': True,
         # RNN
-        'rnn': False,
+        'rnn': True,
 
         # -- BDQ --
         # Fixed
         'observation_dim': 51,
         'action_branches': action_branches,  # n building zones
-        'actuation_function': 7,
+        'actuation_function': 8,
 
         # TD Update
         'optimizer': 'Adagrad',
@@ -75,7 +75,7 @@ class RunManager:
     if selected_params['model'] == 2:
         # Dueling-DQN
         architecture_params = {
-            'shared_network_size': [124, 124],
+            'shared_network_size': [124],
             'value_stream_size': [64, 64],
             'advantage_stream_size': [32, 32]
         }
@@ -97,7 +97,7 @@ class RunManager:
     if selected_params['rnn']:
         rnn_params = {
             # -- State Sequence --
-            'sequence_ts_spacing': 6,
+            'sequence_ts_spacing': 3,
             'sequence_length': 4,  # input as list for variable ts spacing
 
             # -- BDQ Architecture --
@@ -112,7 +112,7 @@ class RunManager:
             'alpha_start': 1,
             'alpha_decay_factor': None,
             'betta_start': 0.5,
-            'betta_decay_factor': 1e-5,
+            'betta_decay_factor': 1e-6,
         }
         selected_params = {**selected_params, **per_params}
 

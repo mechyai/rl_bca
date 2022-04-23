@@ -33,10 +33,13 @@ def run_experiment(run: RunManager.Run,
         learn = False
         act = True
         exploit = True
-    else:
+    elif run_type == 'train':
         learn = True
         act = True
         exploit = False
+    else:
+        raise ValueError("Please enter 'benchmark', 'exploit', 'test', or 'train' as run type input. You entered"
+                         f"{run_type}")
 
     # - Clean Memory -
     if 'my_mdp' in locals():
