@@ -28,7 +28,7 @@ model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
 run_modification = [5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]
 
 # exp_name = 'Tester'
-exp_name = 'cool_off_on_stay_Dueling_DQN_PER_RNN_experiment'
+exp_name = 'cool_off_on_stay_Dueling_DQN_PER_2zn_experiment'
 
 # -- Experiment Params --
 experiment_params_dict = {
