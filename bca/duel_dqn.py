@@ -25,6 +25,8 @@ https://www.youtube.com/watch?v=Odmeb3gkN0M&t=3s - Eden Meyer
 Repos-
 """
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 class DuelingQNetwork(nn.Module):
     """Deep Q-network architecture."""
@@ -33,7 +35,6 @@ class DuelingQNetwork(nn.Module):
                  shared_network_size, value_stream_size, advantage_streams_size):
 
         super().__init__()
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         # -- Shared State Feature Estimator --
         layers = []
@@ -113,9 +114,8 @@ class DuelingDQN(nn.Module):
                                               value_stream_size, advantage_stream_size)
         self.target_network.load_state_dict(self.policy_network.state_dict())  # copy params
 
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.policy_network.to(self.device)
-        self.target_network.to(self.device)
+        self.policy_network.to(device)
+        self.target_network.to(device)
 
         # self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.learning_rate)  # learned policy
         self.optimizer = \
@@ -126,7 +126,7 @@ class DuelingDQN(nn.Module):
         self.step_count = 0
 
     def get_greedy_action(self, state_tensor):
-        x = state_tensor.to(self.device).T  # single action row vector
+        x = state_tensor.to(device).T  # single action row vector
 
         with torch.no_grad():
             q_value = self.policy_network(x).squeeze(0)

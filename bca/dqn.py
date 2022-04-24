@@ -25,6 +25,8 @@ https://www.youtube.com/watch?v=Odmeb3gkN0M&t=3s - Eden Meyer
 Repos-
 """
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 class QNetwork(nn.Module):
     """Deep Q-network architecture."""
@@ -32,7 +34,6 @@ class QNetwork(nn.Module):
     def __init__(self, observation_dim, action_branches, action_dim, network_size):
 
         super().__init__()
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         # -- DQN --
         layers = []
@@ -73,9 +74,8 @@ class DQN(nn.Module):
         self.target_network = QNetwork(observation_dim, action_branches, action_dim, network_size)
         self.target_network.load_state_dict(self.policy_network.state_dict())  # copy params
 
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.policy_network.to(self.device)
-        self.target_network.to(self.device)
+        self.policy_network.to(device)
+        self.target_network.to(device)
 
         # self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.learning_rate)  # learned policy
         self.optimizer = \
@@ -86,7 +86,7 @@ class DQN(nn.Module):
         self.step_count = 0
 
     def get_greedy_action(self, state_tensor):
-        x = state_tensor.to(self.device).T  # single action row vector
+        x = state_tensor.to(device).T  # single action row vector
 
         with torch.no_grad():
             q_value = self.policy_network(x).squeeze(0)

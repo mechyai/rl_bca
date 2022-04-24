@@ -25,6 +25,8 @@ https://www.youtube.com/watch?v=Odmeb3gkN0M&t=3s - Eden Meyer
 Repos-
 """
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 class QNetwork_RNN(nn.Module):
     """Deep Q-network architecture with RNN."""
@@ -33,7 +35,6 @@ class QNetwork_RNN(nn.Module):
                  lstm=False):
 
         super().__init__()
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         # -- RNN Head --
         self.rnn_hidden_size = rnn_hidden_size
@@ -60,7 +61,7 @@ class QNetwork_RNN(nn.Module):
         """Get q-values output for given state"""
         # RNN Node (num layers, batch size, hidden size)
         # Hidden (h0 and c0 for LSTM) is automatically 0 if not included
-        # h0 = torch.zeros(self.rnn_num_layers, state_input.size(0), self.rnn_hidden_size).to(self.device)
+        # h0 = torch.zeros(self.rnn_num_layers, state_input.size(0), self.rnn_hidden_size).to(device)
 
         out, _ = self.rnn(state_input)  # out: batch size, seq len, hidden size
         out = out[:, -1, :]  # get last timestep output (many to one)
@@ -96,9 +97,8 @@ class DQN_RNN(nn.Module):
                                            action_branches, action_dim, network_size, lstm)
         self.target_network.load_state_dict(self.policy_network.state_dict())  # copy params
 
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.policy_network.to(self.device)
-        self.target_network.to(self.device)
+        self.policy_network.to(device)
+        self.target_network.to(device)
 
         # self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.learning_rate)  # learned policy
         self.optimizer = \
@@ -109,7 +109,7 @@ class DQN_RNN(nn.Module):
         self.step_count = 0
 
     def get_greedy_action(self, state_tensor):
-        x = state_tensor.to(self.device)  # single action row vector
+        x = state_tensor.to(device)  # single action row vector
 
         with torch.no_grad():
             q_value = self.policy_network(x).squeeze(0)
