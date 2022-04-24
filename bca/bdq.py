@@ -27,6 +27,8 @@ https://www.youtube.com/watch?v=Odmeb3gkN0M&t=3s - Eden Meyer
 Repos-
 """
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 class ReplayMemory(object):
     """Manages a replay memory, where data is stored as torch tensors."""
@@ -40,7 +42,6 @@ class ReplayMemory(object):
 
         self.capacity = capacity
         self.batch_size = batch_size
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         self.current_index = 0
         self.episode_start_interaction_count = 0
@@ -113,11 +114,11 @@ class ReplayMemory(object):
                 action_length = len(action)
 
             # Init replay memory storage
-            self.state_memory = torch.zeros([self.capacity, len(state)]).to(self.device)
-            self.action_memory = torch.zeros([self.capacity, action_length], dtype=torch.uint8).to(self.device)
-            self.next_state_memory = torch.zeros([self.capacity, len(next_state)]).to(self.device)
-            self.reward_memory = torch.zeros([self.capacity, 1]).to(self.device)
-            self.terminal_memory = torch.zeros([self.capacity, 1], dtype=torch.uint8).to(self.device)
+            self.state_memory = torch.zeros([self.capacity, len(state)]).to(device)
+            self.action_memory = torch.zeros([self.capacity, action_length], dtype=torch.uint8).to(device)
+            self.next_state_memory = torch.zeros([self.capacity, len(next_state)]).to(device)
+            self.reward_memory = torch.zeros([self.capacity, 1]).to(device)
+            self.terminal_memory = torch.zeros([self.capacity, 1], dtype=torch.uint8).to(device)
 
         # Loop through indices based on size of memory
         index = self.total_interaction_count % self.capacity
@@ -128,11 +129,11 @@ class ReplayMemory(object):
             action = [action]
 
         # Update replay memory
-        self.state_memory[index] = torch.Tensor(state).to(self.device)
-        self.action_memory[index] = torch.ByteTensor(action).to(self.device)
-        self.next_state_memory[index] = torch.Tensor(next_state).to(self.device)
-        self.reward_memory[index] = torch.Tensor([reward]).to(self.device)
-        self.terminal_memory[index] = torch.ByteTensor([terminal_flag]).to(self.device)
+        self.state_memory[index] = torch.Tensor(state).to(device)
+        self.action_memory[index] = torch.ByteTensor(action).to(device)
+        self.next_state_memory[index] = torch.Tensor(next_state).to(device)
+        self.reward_memory[index] = torch.Tensor([reward]).to(device)
+        self.terminal_memory[index] = torch.ByteTensor([terminal_flag]).to(device)
 
         self.total_interaction_count += 1
         self.current_interaction_count = self.total_interaction_count - self.episode_start_interaction_count
@@ -144,11 +145,11 @@ class ReplayMemory(object):
         self.current_sample_indices = self._get_sample_indices()
         sample_indices = self.current_sample_indices
 
-        state_batch = self.state_memory[sample_indices].to(self.device)
-        action_batch = self.action_memory[sample_indices].long().to(self.device)
-        next_state_batch = self.next_state_memory[sample_indices].to(self.device)
-        reward_batch = self.reward_memory[sample_indices].to(self.device)
-        terminal_batch = self.terminal_memory[sample_indices].to(self.device)
+        state_batch = self.state_memory[sample_indices].to(device)
+        action_batch = self.action_memory[sample_indices].long().to(device)
+        next_state_batch = self.next_state_memory[sample_indices].to(device)
+        reward_batch = self.reward_memory[sample_indices].to(device)
+        terminal_batch = self.terminal_memory[sample_indices].to(device)
 
         return state_batch, action_batch, next_state_batch, reward_batch, terminal_batch
 
@@ -187,16 +188,16 @@ class PrioritizedReplayMemory(ReplayMemory):
                 action_length = len(action)
 
             # Replay Memory
-            self.state_memory = torch.zeros([self.capacity, len(state)]).to(self.device)
-            self.action_memory = torch.zeros([self.capacity, action_length], dtype=torch.uint8).to(self.device)
-            self.next_state_memory = torch.zeros([self.capacity, len(next_state)]).to(self.device)
-            self.reward_memory = torch.zeros([self.capacity, 1]).to(self.device)
-            self.terminal_memory = torch.zeros([self.capacity, 1], dtype=torch.uint8).to(self.device)
+            self.state_memory = torch.zeros([self.capacity, len(state)]).to(device)
+            self.action_memory = torch.zeros([self.capacity, action_length], dtype=torch.uint8).to(device)
+            self.next_state_memory = torch.zeros([self.capacity, len(next_state)]).to(device)
+            self.reward_memory = torch.zeros([self.capacity, 1]).to(device)
+            self.terminal_memory = torch.zeros([self.capacity, 1], dtype=torch.uint8).to(device)
 
             # Prioritization
-            self.priorities_memory = torch.zeros([self.capacity]).to(self.device)
-            self.weights_memory = torch.zeros([self.capacity]).to(self.device)
-            self.loss_memory = torch.ones([self.capacity]).to(self.device)
+            self.priorities_memory = torch.zeros([self.capacity]).to(device)
+            self.weights_memory = torch.zeros([self.capacity]).to(device)
+            self.loss_memory = torch.ones([self.capacity]).to(device)
 
         # Loop through indices based on size of memory
         index = self.total_interaction_count % self.capacity
@@ -207,11 +208,11 @@ class PrioritizedReplayMemory(ReplayMemory):
             action = [action]
 
         # Update replay memory
-        self.state_memory[index] = torch.Tensor(state).to(self.device)
-        self.action_memory[index] = torch.ByteTensor(action).to(self.device)
-        self.next_state_memory[index] = torch.Tensor(next_state).to(self.device)
-        self.reward_memory[index] = torch.Tensor([reward]).to(self.device)
-        self.terminal_memory[index] = torch.ByteTensor([terminal_flag]).to(self.device)
+        self.state_memory[index] = torch.Tensor(state).to(device)
+        self.action_memory[index] = torch.ByteTensor(action).to(device)
+        self.next_state_memory[index] = torch.Tensor(next_state).to(device)
+        self.reward_memory[index] = torch.Tensor([reward]).to(device)
+        self.terminal_memory[index] = torch.ByteTensor([terminal_flag]).to(device)
 
         # Update priorities
         self.loss_memory[index] = self.max_loss
@@ -373,9 +374,8 @@ class BranchingDQN(nn.Module):
                                                 value_stream_size, advantage_streams_size)
         self.target_network.load_state_dict(self.policy_network.state_dict())  # copy params
 
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.policy_network.to(self.device)
-        self.target_network.to(self.device)
+        self.policy_network.to(device)
+        self.target_network.to(device)
 
         # self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.learning_rate)  # learned policy
         self.optimizer = \
@@ -388,7 +388,7 @@ class BranchingDQN(nn.Module):
         self.td_target = td_target
 
     def get_greedy_action(self, state_tensor):
-        x = state_tensor.to(self.device).T  # single action row vector
+        x = state_tensor.to(device).T  # single action row vector
         with torch.no_grad():
             out = self.policy_network(x).squeeze(0)
             action = torch.argmax(out, dim=1)  # argmax within each branch
