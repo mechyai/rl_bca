@@ -228,7 +228,7 @@ if not experiment_params_dict['exploit_only']:
             time_train = round(time_start - time.time(), 2) / 60
 
             # -- Save Model Intermediate --
-            if epoch % 5 == 0 and epoch != 0:
+            if (epoch % 5 == 0 or epoch == experiment_params_dict['epochs'] - 1) and epoch != 0:
                 print('\n********** Saved Model ************\n')
                 model_name = f'bdq_runs_{run_num + 1}_epoch_{epoch}_of_{experiment_params_dict["epochs"]}_lr_{param}'
                 torch.save(my_bdq.policy_network.state_dict(),
