@@ -25,7 +25,7 @@ test_day_end = None
 
 model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
 
-run_modification = [5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]
+run_modification = [1e-1, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]
 
 # exp_name = 'Tester'
 exp_name = 'cool_off_on_stay_Dueling_DQN_PER_2zn_experiment'
@@ -228,7 +228,7 @@ if not experiment_params_dict['exploit_only']:
             time_train = round(time_start - time.time(), 2) / 60
 
             # -- Save Model Intermediate --
-            if epoch % 10:
+            if epoch % 10 == 0:
                 print('\n********** Saved Model ************\n')
                 model_name = f'bdq_runs_{run_num + 1}_epoch_{epoch}_of_{experiment_params_dict["epochs"]}_lr_{param}'
                 torch.save(my_bdq.policy_network.state_dict(),
