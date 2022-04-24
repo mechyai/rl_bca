@@ -18,7 +18,7 @@ class RunManager:
     """This class helps manage all hparams and sampling, as well as creating all objects dependent on these hparams."""
     # -- Agent Params --
     # Misc. Params
-    action_branches = 4
+    action_branches = 2
 
     selected_params = {
         # -- Agent Params --
@@ -32,15 +32,15 @@ class RunManager:
         'eps_decay': 1e-7,
 
         # --- Experience Replay ---
-        'replay_capacity': 2048,
-        'batch_size': 32,
+        'replay_capacity': 1024,
+        'batch_size': 64,
 
         # DQN or BDQ
         'model': 2,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
         'PER': True,
         # RNN
-        'rnn': True,
+        'rnn': False,
 
         # -- BDQ --
         # Fixed
@@ -51,17 +51,17 @@ class RunManager:
         # TD Update
         'optimizer': 'Adagrad',
         'learning_rate': 5e-4,
-        'gamma': 0.7,
+        'gamma': 0.8,
 
         # Reward
         'reward_aggregation': 'sum',  # sum or mean
         'reward_sparsity_ts': 1,
         'reward_scale': 0.01,
         'reward_clipping': 0,
-        'lambda_rtp': 0.01,
+        'lambda_rtp': 0.02,
 
         # Network mods
-        'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
+        'gradient_clip_norm': 0,  # [0, 1, 5, 10],  # 0 is nothing
         'target_update_freq': 1e4,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
     }
 
@@ -75,7 +75,7 @@ class RunManager:
     if selected_params['model'] == 2:
         # Dueling-DQN
         architecture_params = {
-            'shared_network_size': [124],
+            'shared_network_size': [128, 128],
             'value_stream_size': [64, 64],
             'advantage_stream_size': [32, 32]
         }
