@@ -18,7 +18,7 @@ class RunManager:
     """This class helps manage all hparams and sampling, as well as creating all objects dependent on these hparams."""
     # -- Agent Params --
     # Misc. Params
-    action_branches = 2
+    action_branches = 4
 
     selected_params = {
         # -- Agent Params --
@@ -44,7 +44,7 @@ class RunManager:
 
         # -- BDQ --
         # Fixed
-        'observation_dim': 51,
+        'observation_dim': 51 + action_branches,
         'action_branches': action_branches,  # n building zones
         'actuation_function': 8,
 
@@ -84,9 +84,9 @@ class RunManager:
     if selected_params['model'] == 3:
         # BDQ-based
         architecture_params = {
-            'shared_network_size': [124, 64],
-            'value_stream_size': [64, 32],
-            'advantage_streams_size': [32, 16],
+            'shared_network_size': [124, 124],
+            'value_stream_size': [64, 64],
+            'advantage_streams_size': [64, 64],
 
             'td_target': 'mean',  # (0) mean or (1) max
             'rescale_shared_grad_factor': 1 / (action_branches)
@@ -112,7 +112,7 @@ class RunManager:
             'alpha_start': 1,
             'alpha_decay_factor': None,
             'betta_start': 0.5,
-            'betta_decay_factor': 1e-6,
+            'betta_decay_factor': 5e-7,
         }
         selected_params = {**selected_params, **per_params}
 

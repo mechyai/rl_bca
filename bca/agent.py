@@ -308,12 +308,11 @@ class Agent:
         #         cooling_val = self.meter_encoded_vals.pop(zone_n + '_cooling_electricity')
         #         self.meter_encoded_vals[zone_n + '_hvac_electricity'] = heating_val + cooling_val
 
-
         # -- Temperature Bounds Warning --
-        occupancy_schedule = self.mdp.get_ems_values('hvac_operation_sched')
+        occupancy_schedule = self.mdp.get_mdp_element('hvac_operation_sched').value
         temperature_warnings_list = []
         for zone_i in range(self.dqn_model.action_branches):
-            zone_temp = self.mdp.get_ems_values(f'zn{zone_i}_temp')
+            zone_temp = self.mdp.get_mdp_element(f'zn{zone_i}_temp').value
             # Occupied hours
             if occupancy_schedule == 1:
                 if zone_temp >= self.indoor_temp_ideal_range[1]:
