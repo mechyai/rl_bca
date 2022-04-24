@@ -308,6 +308,31 @@ class Agent:
         #         cooling_val = self.meter_encoded_vals.pop(zone_n + '_cooling_electricity')
         #         self.meter_encoded_vals[zone_n + '_hvac_electricity'] = heating_val + cooling_val
 
+
+        # -- Temperature Bounds Warning --
+        occupancy_schedule = self.mdp.get_ems_values('hvac_operation_sched')
+        temperature_warnings_list = []
+        for zone_i in range(self.dqn_model.action_branches):
+            zone_temp = self.mdp.get_ems_values(f'zn{zone_i}_temp')
+            # Occupied hours
+            if occupancy_schedule == 1:
+                if zone_temp >= self.indoor_temp_ideal_range[1]:
+                    warning_values = 1
+                elif zone_temp <= self.indoor_temp_ideal_range[0]:
+                    warning_values = -1
+                else:
+                    warning_values = 0
+            # Unoccupied hours
+            else:
+                if zone_temp >= self.indoor_temp_unoccupied_range[1]:
+                    warning_values = 1
+                elif zone_temp <= self.indoor_temp_unoccupied_range[0]:
+                    warning_values = -1
+                else:
+                    warning_values = 0
+            temperature_warnings_list.append(warning_values)
+
+
         # -- RTP High-Price Signal --
         rtp = self.var_vals['rtp']
         # Add extra RTP pricing state signal
@@ -401,6 +426,7 @@ class Agent:
 
         # -- ENCODED STATE --
         return np.array(
+            temperature_warnings_list +
             rtp_alert +
             time_list +
             weather_forecast_list +
