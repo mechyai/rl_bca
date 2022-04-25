@@ -28,8 +28,8 @@ class RunManager:
 
         # --- Behavioral Policy ---
         'eps_start': 0.25,
-        'eps_end': 0.001,
-        'eps_decay': 1e-7,
+        'eps_end': 0.005,
+        'eps_decay': 1e-6,
 
         # --- Experience Replay ---
         'replay_capacity': 1024,

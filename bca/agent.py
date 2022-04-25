@@ -51,7 +51,7 @@ class Agent:
             3: 3,  # act_step_strict_setpoints_3
             4: 6,  # act_default_adjustments_4
             5: 7,  # act_cool_only_5
-            6: 6,  # act_cool_only_default_adjustment_6
+            6: 7,  # act_cool_only_default_adjustment_6
             7: 2,  # act_cool_only_on_off_7
             8: 3,  # act_cool_only_on_off_stay_8
         }
@@ -457,6 +457,8 @@ class Agent:
             list(self.meter_encoded_vals.values()),
             dtype=float)
 
+    # ------------------------------------------------- Misc... -------------------------------------------------
+
     def _set_continued_params(self):
         """Write saved parameters from previous episode."""
         if self.continued_parameters is not None:
@@ -666,6 +668,9 @@ class Agent:
 
         return action_directory[action_id]
 
+    # ----------------------------------------------- ACTION ENCODINGS ------------------------------------------------
+
+
     def act_cool_only_on_off_stay_8(self, actuate=True, exploit=False):
         """
         Action callback function:
@@ -824,7 +829,7 @@ class Agent:
                """
 
         # Check action space dim aligns with created BDQ
-        self._action_dimension_check(this_actuation_functions_dims=6)
+        self._action_dimension_check(this_actuation_functions_dims=7)
 
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
@@ -836,30 +841,32 @@ class Agent:
             """
             # -- ENCODE ACTIONS TO HVAC COMMAND --
             occupied_setpoints = {
-                0: [21.1, 23.89],  # IDEAL
-                1: [19.1, 21.1],  # LOWER
-                2: [21.1, 22.5],  # INNER LOWER
-                3: [22.5, 23.89],  # INNER UPPER
-                4: [23.89, 25.89],  # UPPER
-                5: [21.8, 23.19]  # INNER
+                0: self.indoor_temp_ideal_range[1] + 1.5,
+                1: self.indoor_temp_ideal_range[1],
+                2: 23.2,
+                3: 22.5,
+                4: 21.8,
+                5: self.indoor_temp_ideal_range[0],
+                6: self.indoor_temp_ideal_range[0] - 1.5
             }
 
             unoccupied_setpoints = {
-                0: [15.56, 29.4],  # IDEAL
-                1: [13.56, 15.56],  # LOWER
-                2: [15.56, 22.5],  # INNER LOWER
-                3: [22.5, 29.4],  # INNER UPPER
-                4: [29.4, 32.4],  # UPPER
-                5: [21.1, 23.89]  # INNER
+                0: self.indoor_temp_unoccupied_range[1] + 1.5,
+                1: self.indoor_temp_unoccupied_range[1],
+                2: 27.1,
+                3: 24.84,
+                4: 22.56,
+                5: 20.28,
+                6: 18
             }
 
             occupied = self.sim.get_ems_data(['hvac_operation_sched'])
 
             for zone_i, action in enumerate(self.action):
                 if occupied:
-                    heating_sp, cooling_sp = occupied_setpoints[action]
+                    cooling_sp = occupied_setpoints[action]
                 else:
-                    heating_sp, cooling_sp = unoccupied_setpoints[action]
+                    cooling_sp = unoccupied_setpoints[action]
 
                 self.actuation_dict[f'zn{zone_i}_heating_sp'] = 15.56
                 self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_sp
@@ -1463,7 +1470,6 @@ class Agent:
     def _reward1(self):
         """Reward function - per component, per zone."""
 
-        # TODO add some sort of normalization
         lambda_comfort = 0.2
         lambda_rtp = 0.005
         lambda_intermittent = 1000
