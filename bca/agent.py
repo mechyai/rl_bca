@@ -308,7 +308,7 @@ class Agent:
         #         cooling_val = self.meter_encoded_vals.pop(zone_n + '_cooling_electricity')
         #         self.meter_encoded_vals[zone_n + '_hvac_electricity'] = heating_val + cooling_val
 
-        # -- Temperature Bounds Warning --
+        # ----------------------------------- Temperature Bounds Warning -----------------------------------
         occupancy_schedule = self.mdp.get_mdp_element('hvac_operation_sched').value
         temperature_warnings_list = []
         for zone_i in range(self.dqn_model.action_branches):
@@ -332,7 +332,7 @@ class Agent:
             temperature_warnings_list.append(warning_values)
 
 
-        # -- RTP High-Price Signal --
+        # ----------------------------------- RTP High-Price Signal -----------------------------------
         rtp = self.var_vals['rtp']
         # Add extra RTP pricing state signal
         if rtp > 75:
@@ -418,6 +418,26 @@ class Agent:
 
         building_hours_progress = [*MDP.sin_cos_normalization(building_hours_progress)]
 
+        # ----------------------------------- State History -----------------------------------
+        # Prior temps
+        prior_timesteps = 1
+        prior_timestep_spacing = 1
+        prior_timesteps_list = list(range(1, prior_timesteps + 1, prior_timestep_spacing))
+        indoor_temp_vars = [f'zn{zn_num}_temp' for zn_num in range(self.dqn_model.action_branches)]
+        outdoor_var = ['oa_db']
+
+        prior_indoor_temp_data = self.sim.get_ems_data(indoor_temp_vars, prior_timesteps_list, return_dict=False)
+        prior_outdoor_data = self.sim.get_ems_data(outdoor_var, prior_timesteps_list, return_dict=False)
+
+        prior_data = []
+        # Indoor Temps
+        for zone_data_times in prior_indoor_temp_data:
+            for zone_temps in [zone_data_times]:
+                prior_data.append(MDP.normalize_min_max_saturate(zone_temps, MDP.indoor_temp_min, MDP.indoor_temp_max))
+        # Outdoor conditions
+        for outdoor_times in [prior_outdoor_data]:
+            prior_data.append(MDP.normalize_min_max_saturate(outdoor_times, MDP.outdoor_temp_min, MDP.outdoor_temp_max))
+
         # -- DO ONCE --
         if self._once:
             self.state_var_names = self.var_names + self.weather_names + meter_names
@@ -431,6 +451,7 @@ class Agent:
             weather_forecast_list +
             building_hours_progress +
             week_state_hot_encoding +
+            prior_data +
             list(self.var_encoded_vals.values()) +
             list(self.weather_encoded_vals.values()) +
             list(self.meter_encoded_vals.values()),
