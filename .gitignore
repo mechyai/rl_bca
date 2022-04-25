@@ -5,12 +5,12 @@
 /.idea
 /__pycache__
 
-*_paths_config.py
+_paths_config.py
 
 *.pyc
 
 # E+ IDF no longer needed
-*idf
+*.idf
 # E+/OpenStudio data
 */out
 *.sql

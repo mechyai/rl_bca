@@ -36,7 +36,7 @@ class RunManager:
         'batch_size': 64,
 
         # DQN or BDQ
-        'model': 2,  # 1=DQN, 2=Dueling DQN, 3=BDQ
+        'model': 3,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
         'PER': True,
         # RNN
@@ -44,7 +44,7 @@ class RunManager:
 
         # -- BDQ --
         # Fixed
-        'observation_dim': 51 + action_branches,
+        'observation_dim': 60,
         'action_branches': action_branches,  # n building zones
         'actuation_function': 8,
 

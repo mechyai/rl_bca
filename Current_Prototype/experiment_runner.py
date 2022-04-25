@@ -33,8 +33,8 @@ exp_name = 'cool_off_on_stay_Dueling_DQN_PER_2zn_experiment'
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 25,
-    'skip_benchmark': False,
-    'exploit_only': False,
+    'skip_benchmark': True,
+    'exploit_only': True,
     'test': True,
     'load_model': r'',
     'print_values': False,
