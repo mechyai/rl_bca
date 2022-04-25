@@ -260,11 +260,11 @@ class Agent:
             # self.bdq.update_learning_rate()
 
         # -- PERFORMANCE RESULTS --
-        # self.comfort_dissatisfaction = self._get_comfort_results()
-        # self.hvac_rtp_costs = self._get_rtp_hvac_cost_and_wind_results()
+        self.comfort_dissatisfaction = self._get_comfort_results()
+        self.hvac_rtp_costs = self._get_rtp_hvac_cost_results()
         # # Update Results Sums
-        # self.comfort_dissatisfaction_total += self.comfort_dissatisfaction
-        # self.hvac_rtp_costs_total += self.hvac_rtp_costs
+        self.comfort_dissatisfaction_total += self.comfort_dissatisfaction
+        self.hvac_rtp_costs_total += self.hvac_rtp_costs
         self.reward_sum += self.reward
 
         # -- UPDATE DATA --

@@ -50,8 +50,8 @@ class TensorboardManager:
         # self.tb.add_scalar('Thermostat/Heating_SP', heating_sp, agent.current_step)
 
         # -- Sim Results --
-        # self.tb.add_scalar('_Results/Comfort Dissatisfied Total', agent.comfort_dissatisfaction_total, agent.current_step)
-        # self.tb.add_scalar('_Results/HVAC RTP Cost Total', agent.hvac_rtp_costs_total, agent.current_step)
+        self.tb.add_scalar('_Results/Comfort Dissatisfied Total', agent.comfort_dissatisfaction_total, agent.current_step)
+        self.tb.add_scalar('_Results/HVAC RTP Cost Total', agent.hvac_rtp_costs_total, agent.current_step)
 
     def record_epoch_results(self,
                              agent,
