@@ -33,7 +33,7 @@ class RunManager:
 
         # --- Experience Replay ---
         'replay_capacity': 2028,
-        'batch_size': 64,
+        'batch_size': 128,
 
         # DQN or BDQ
         'model': 3,  # 1=DQN, 2=Dueling DQN, 3=BDQ
