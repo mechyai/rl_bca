@@ -15,14 +15,15 @@ learning_loops = 10
 observation_ts_freq = 5
 
 # Training params
-param_iterations = 5
+param_iterations = 8
 training_days = 14
 training_epochs = 25 * param_iterations
+training_epochs = 8
 
 
 # Hparams
-hparam_start = 0.25
-hparam_end = 0.005
+hparam_start = 0.1
+hparam_end = 0.0001
 
 decay_factor = 1e-6
 

@@ -115,7 +115,7 @@ class Agent:
 
         # -- ACTION ENCODING --
         self.temp_deadband = 5  # distance between heating and cooling setpoints
-        self.temp_buffer = 2  # new setpoint distance from current temps
+        self.temp_buffer = 1  # new setpoint distance from current temps
         self.current_setpoint_windows = [3, 3, 3, 3]
 
         # -- REWARD --
@@ -669,7 +669,6 @@ class Agent:
         return action_directory[action_id]
 
     # ----------------------------------------------- ACTION ENCODINGS ------------------------------------------------
-
 
     def act_cool_only_on_off_stay_8(self, actuate=True, exploit=False):
         """
@@ -1769,9 +1768,9 @@ class Agent:
             timestep will be accounted for proportional to the energy used.
             """
 
-            heating_electricity = np.asarray(
-                self.sim.get_ems_data([f'{zone_i}_heating_electricity'], interaction_span)
-            )
+            # heating_electricity = np.asarray(
+            #     self.sim.get_ems_data([f'{zone_i}_heating_electricity'], interaction_span)
+            # )
 
             cooling_electricity = np.asarray(
                 self.sim.get_ems_data([f'{zone_i}_cooling_electricity'], interaction_span)
@@ -1786,18 +1785,18 @@ class Agent:
 
             joules_to_MWh = 2.77778e-10
             total_hvac_electricity = joules_to_MWh * \
-                                     (heating_electricity + cooling_electricity + fan_electricity_off_hours)
+                                     (cooling_electricity + fan_electricity_off_hours)
 
             # timestep-wise RTP cost, accounting for HVAC electricity usage
             hvac_electricity_costs = np.multiply(total_hvac_electricity, rtp_since_last_interaction)
             rtp_hvac_costs += hvac_electricity_costs.sum()
 
             # RTP Histogram - collect rtp prices when a zone is heating/cooling
-            rtp_hvac_usage = rtp_since_last_interaction[heating_electricity != cooling_electricity]
+            # rtp_hvac_usage = rtp_since_last_interaction[heating_electricity != cooling_electricity]
             # get rid of 0s for when heat/cool OFF
-            self.rtp_histogram_data.extend(list(rtp_hvac_usage))
+            # self.rtp_histogram_data.extend(list(rtp_hvac_usage))
 
-        print(
-            f'\tRTP: ${round(rtp_hvac_costs, 2)}, Cumulative: ${round(self.hvac_rtp_costs_total + rtp_hvac_costs, 2)}')
+        # print(
+        #     f'\tRTP: ${round(rtp_hvac_costs, 2)}, Cumulative: ${round(self.hvac_rtp_costs_total + rtp_hvac_costs, 2)}')
 
         return rtp_hvac_costs

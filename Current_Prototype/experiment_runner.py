@@ -15,7 +15,7 @@ from bca_manager import _paths_config, experiment_manager
 year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
-train_day_start = None
+train_day_start = 7
 train_day_end = None
 
 test_month_start = 'May'
@@ -25,16 +25,16 @@ test_day_end = None
 
 model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
 
-run_modification = [1e-1, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]
+run_modification = [5e-1, 1e-1, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]
 
 # exp_name = 'Tester'
-exp_name = 'cool_off_on_stay_Dueling_DQN_PER_2zn_experiment'
+exp_name = 'act5_bdq_soft_td'
 
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 25,
-    'skip_benchmark': True,
-    'exploit_only': True,
+    'skip_benchmark': False,
+    'exploit_only': False,
     'test': True,
     'load_model': r'',
     'print_values': False,

@@ -18,7 +18,7 @@ class RunManager:
     """This class helps manage all hparams and sampling, as well as creating all objects dependent on these hparams."""
     # -- Agent Params --
     # Misc. Params
-    action_branches = 4
+    action_branches = 3
 
     selected_params = {
         # -- Agent Params --
@@ -28,41 +28,41 @@ class RunManager:
 
         # --- Behavioral Policy ---
         'eps_start': 0.25,
-        'eps_end': 0.005,
+        'eps_end': 0.01,
         'eps_decay': 1e-6,
 
         # --- Experience Replay ---
-        'replay_capacity': 1024,
+        'replay_capacity': 2028,
         'batch_size': 64,
 
         # DQN or BDQ
         'model': 3,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
-        'PER': True,
+        'PER': False,
         # RNN
         'rnn': False,
 
         # -- BDQ --
         # Fixed
-        'observation_dim': 60,
+        'observation_dim': 58,
         'action_branches': action_branches,  # n building zones
         'actuation_function': 8,
 
         # TD Update
         'optimizer': 'Adagrad',
-        'learning_rate': 5e-4,
-        'gamma': 0.8,
+        'learning_rate': 5e-2,
+        'gamma': 0.99,
 
         # Reward
         'reward_aggregation': 'sum',  # sum or mean
-        'reward_sparsity_ts': 1,
-        'reward_scale': 0.01,
+        'reward_sparsity_ts': 12,
+        'reward_scale': 0.05,
         'reward_clipping': 0,
         'lambda_rtp': 0.02,
 
         # Network mods
         'gradient_clip_norm': 0,  # [0, 1, 5, 10],  # 0 is nothing
-        'target_update_freq': 1e4,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
+        'target_update_freq': 0.01,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
     }
 
     if selected_params['model'] == 1:
@@ -85,7 +85,7 @@ class RunManager:
         # BDQ-based
         architecture_params = {
             'shared_network_size': [124, 124],
-            'value_stream_size': [64, 64],
+            'value_stream_size': [124, 64],
             'advantage_streams_size': [64, 64],
 
             'td_target': 'mean',  # (0) mean or (1) max
@@ -102,7 +102,7 @@ class RunManager:
 
             # -- BDQ Architecture --
             'lstm': True,
-            'rnn_hidden_size': 32,
+            'rnn_hidden_size': 64,
             'rnn_num_layers': 3,
         }
         selected_params = {**selected_params, **rnn_params}
