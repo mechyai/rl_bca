@@ -404,8 +404,12 @@ class BranchingDQN(nn.Module):
     def get_next_double_qval(self, next_states):
         # Double q learning implementation
         with torch.no_grad():
-            argmax = torch.argmax(self.policy_network(next_states), dim=2)
-            return self.target_network(next_states).gather(2, argmax.unsqueeze(2)).squeeze(-1)
+            out = self.policy_network(next_states)
+            argmax = torch.argmax(out, dim=2)
+            target_out = self.target_network(next_states)
+            qmax = target_out.gather(2, argmax.unsqueeze(2)).squeeze(-1)
+
+            return qmax
 
     def target_hard_update(self):
         self.update_count += 1
@@ -431,6 +435,7 @@ class BranchingDQN(nn.Module):
         # Bellman TD update
         current_Q = self.get_current_qval(self.policy_network, batch_states, batch_actions)
         next_Q = self.get_next_double_qval(batch_next_states)
+
 
         # Get global target across branches, if desired
         if self.td_target:
