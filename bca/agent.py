@@ -436,7 +436,7 @@ class Agent:
 
         prior_data = []
         # Indoor Temps
-        for zone_data_times in prior_indoor_temp_data:
+        for zone_data_times in ([prior_indoor_temp_data] if not hasattr(prior_indoor_temp_data, '__iter__') else prior_indoor_temp_data):
             for zone_temps in [zone_data_times]:
                 prior_data.append(MDP.normalize_min_max_saturate(zone_temps, MDP.indoor_temp_min, MDP.indoor_temp_max))
         # Outdoor conditions
