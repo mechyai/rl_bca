@@ -69,7 +69,7 @@ class TensorboardManager:
 
         # Loss & Reward
         self.tb.add_scalar('__Epoch/Loss Total', agent.loss_total, epoch)
-        self.tb.add_scalar('__Epoch/Reward - All', agent.reward_sum, epoch)
+        self.tb.add_scalar('__Epoch/Reward - All', agent.reward_sum.sum(), epoch)
         self.tb.add_scalar('__Epoch/Reward - Comfort', agent.reward_component_sum[0], epoch)
         self.tb.add_scalar('__Epoch/Reward - RTP', agent.reward_component_sum[1], epoch)
         # self.tb.add_scalar('__Epoch/Reward - Wind', agent.reward_component_sum[2], epoch)
