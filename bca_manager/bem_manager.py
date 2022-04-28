@@ -47,6 +47,7 @@ class ModelManager:
             'Schedule:Constant', 'Schedule Value', 'Total HVAC Energy Usage Tracker', 'Dimensionless'),
         # -- Learning --
         'loss': ('Schedule:Constant', 'Schedule Value', 'Loss Tracker', 'Dimensionless'),
+        'loss_cumulative': ('Schedule:Constant', 'Schedule Value', 'Loss Cumulative Tracker', 'Dimensionless'),
     }
 
     def __init__(self, mdp_manager_file: MDP, osm_file: str, idf_file_output: str, year: int):

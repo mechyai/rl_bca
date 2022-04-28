@@ -29,11 +29,12 @@ run_modification = [5e-1, 1e-1, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 
 
 # exp_name = 'Tester'
 exp_name = 'act8_bdq_soft_td_1hr_reward'
+exp_name = 'testing_reward'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 25,
-    'skip_benchmark': False,
+    'epochs': 5,
+    'skip_benchmark': True,
     'exploit_only': False,
     'test': True,
     'load_model': r'',

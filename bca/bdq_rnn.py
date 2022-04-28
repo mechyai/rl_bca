@@ -209,7 +209,7 @@ class SequenceReplayMemory:
             self.state_memory = torch.zeros([self.capacity, len(state)]).to(device)
             self.action_memory = torch.zeros([self.capacity, action_length], dtype=torch.uint8).to(device)
             self.next_state_memory = torch.zeros([self.capacity, len(next_state)]).to(device)
-            self.reward_memory = torch.zeros([self.capacity, 1]).to(device)
+            self.reward_memory = torch.zeros([self.capacity, np.array([reward]).shape[-1]]).to(device)
             self.terminal_memory = torch.zeros([self.capacity, 1], dtype=torch.uint8).to(device)
 
         # Loop through indices based on size of memory
@@ -223,7 +223,7 @@ class SequenceReplayMemory:
         self.state_memory[index] = torch.Tensor(state).to(device)
         self.action_memory[index] = torch.ByteTensor(action).to(device)
         self.next_state_memory[index] = torch.Tensor(next_state).to(device)
-        self.reward_memory[index] = torch.Tensor([reward]).to(device)
+        self.reward_memory[index] = torch.Tensor([reward] if isinstance(reward, np.float64) else reward).to(device)
         self.terminal_memory[index] = torch.ByteTensor([terminal_flag]).to(device)
 
         self.total_interaction_count += 1
@@ -311,7 +311,7 @@ class PrioritizedSequenceReplayMemory(SequenceReplayMemory):
             self.state_memory = torch.zeros([self.capacity, len(state)]).to(device)
             self.action_memory = torch.zeros([self.capacity, action_length], dtype=torch.uint8).to(device)
             self.next_state_memory = torch.zeros([self.capacity, len(next_state)]).to(device)
-            self.reward_memory = torch.zeros([self.capacity, 1]).to(device)
+            self.reward_memory = torch.zeros([self.capacity, np.array([reward]).shape[-1]]).to(device)
             self.terminal_memory = torch.zeros([self.capacity, 1], dtype=torch.uint8).to(device)
 
             # Prioritization

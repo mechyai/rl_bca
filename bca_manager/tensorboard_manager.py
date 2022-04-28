@@ -1,6 +1,6 @@
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
-
+from bca import Agent
 
 class TensorboardManager:
     def __init__(self,
@@ -16,16 +16,19 @@ class TensorboardManager:
 
         self.run_manager = run_manager
 
-    def record_timestep_results(self, agent):
+    def record_timestep_results(self, agent: Agent):
         """Record data for each timestep from agent state."""
 
         # -- Learning --
         self.tb.add_scalar('Loss', agent.loss, agent.current_step)
-        self.tb.add_scalar('Reward/All', agent.reward, agent.current_step)
-        self.tb.add_scalar('Reward/Cumulative', agent.reward_sum, agent.current_step)
+        self.tb.add_scalar('Reward/All', agent.reward.sum(), agent.current_step)
+        self.tb.add_scalar('Reward/Cumulative', agent.reward_sum.sum(), agent.current_step)
         self.tb.add_scalar('Reward/Comfort', agent.reward_component_sum[0], agent.current_step)
         self.tb.add_scalar('Reward/RTP', agent.reward_component_sum[1], agent.current_step)
         # self.tb.add_scalar('Reward/Wind', agent.reward_component_sum[2], agent.current_step)
+        # Per Zone
+        for zone_i in range(agent.dqn_model.action_branches):
+            self.tb.add_scalar(f'PerZone/All Reward Zn{zone_i}', agent.reward_zone_sum[zone_i], agent.current_step)
 
         # -- Sim Data --
         self.tb.add_scalar('_SimData/RTP', agent.mdp.get_mdp_element('rtp').value, agent.current_step)
@@ -54,7 +57,7 @@ class TensorboardManager:
         self.tb.add_scalar('_Results/HVAC RTP Cost Total', agent.hvac_rtp_costs_total, agent.current_step)
 
     def record_epoch_results(self,
-                             agent,
+                             agent: Agent,
                              experimental_params: dict,
                              run,
                              run_count: int,

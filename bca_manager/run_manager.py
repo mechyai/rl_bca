@@ -40,7 +40,7 @@ class RunManager:
         # PER
         'PER': False,
         # RNN
-        'rnn': False,
+        'rnn': True,
 
         # -- BDQ --
         # Fixed
@@ -88,8 +88,11 @@ class RunManager:
             'value_stream_size': [124, 64],
             'advantage_streams_size': [64, 64],
 
+            'combine_reward': False,  # to keep zone reward contributions separate or not
+
             'td_target': '',  # mean or max or empty ''
             'rescale_shared_grad_factor': 1 / (action_branches)
+
 
         }
         selected_params = {**selected_params, **architecture_params}

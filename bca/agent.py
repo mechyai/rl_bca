@@ -70,7 +70,7 @@ class Agent:
                  actuation_frequency: int,
                  actuation_dimension: int,
                  rnn: bool = False,
-                 reward_aggregation: str = 'mean',
+                 reward_aggregation: str = 'sum',
                  learning_loop: int = 1,
                  tensorboard_manager=None,  # TODO fix imports
                  current_step: int = 0,
@@ -124,6 +124,7 @@ class Agent:
         self.reward = 0
         self.reward_sum = 0
         self.reward_component_sum = [0, 0, 0]
+        self.reward_zone_sum = [0] * dqn_model.action_branches
 
         # -- CONTROL GOALS --
         self.indoor_temp_ideal_range = np.array([21.1, 23.89])  # occupied hours, based on OS model
@@ -203,15 +204,19 @@ class Agent:
         self.termination = self._is_terminal()
 
         # -- REWARD --
-        reward_scale = self.run.reward_scale
         self.reward_dict = self._reward4()
-        self.reward = self._get_total_reward(self.reward_aggregation) * reward_scale  # aggregate 'mean' or 'sum'
+        # Aggregate reward across zones
+        self.reward = self._get_total_reward(self.reward_aggregation) * self.run.reward_scale
+        # Reward clipping
         if self.run.reward_clipping != 0:
-            self.reward = max(self.reward, self.run.reward_clipping)
+            self.reward = np.fmax(self.reward, self.run.reward_clipping)
 
-        # Get total reward per component, not Zone
+        # Get total reward per component
         reward_component_sums = np.array(list(self.reward_dict.values())).sum(axis=0)  # sum reward per component
         self.reward_component_sum = np.array(list(zip(self.reward_component_sum, reward_component_sums))).sum(axis=1)
+        # Get total reward per zone
+        reward_zone_sums = np.array(list(self.reward_dict.values())).sum(axis=1)  # sum reward per zone
+        self.reward_zone_sum = np.array(list(zip(self.reward_zone_sum, reward_zone_sums))).sum(axis=1)
 
         # -- STORE INTERACTIONS --
         # Must store regardless for RNN to work
@@ -276,11 +281,11 @@ class Agent:
 
         # -- REPORTING --
         if self._print:
-            # self._report_time()  # time
-            print(f'\n\t*Reward: {round(self.reward, 2)}, Cumulative: {round(self.reward_sum, 2)}')
+            print(f'\n\t*Reward: {round(self.reward.sum(), 2)}, Cumulative: {round(self.reward_sum.sum(), 2)}')
+            pass
 
         # -- TRACK REWARD --
-        return self.reward
+        # return sum([self.reward] if not hasattr(self.reward, '__iter__') else self.reward)
 
     def _get_encoded_state(self):
         """Gets and processes state input from simulation at every timestep. Returns the current encoded state."""
@@ -513,11 +518,12 @@ class Agent:
         Used to manage auxiliary actuation (likely schedule writing) in one place.
         """
         reward_component_instance = np.array(list(self.reward_dict.values())).sum(axis=0)
+
+        # Data Tracking
         return {
-            # Data Tracking
             # -- Rewards --
-            'reward': self.reward,
-            'reward_cumulative': self.reward_sum,
+            'reward': self.reward.sum(),
+            'reward_cumulative': self.reward_sum.sum(),
             # Reward Components
             'reward_comfort': reward_component_instance[0],
             'reward_cumulative_comfort': self.reward_component_sum[0],
@@ -525,6 +531,7 @@ class Agent:
             'reward_cumulative_rtp': self.reward_component_sum[1],
             # 'reward_wind': reward_component_instance[2],
             # 'reward_cumulative_wind': self.reward_component_sum[2],
+
             # -- Results Metric --
             # Comfort
             'comfort': self.comfort_dissatisfaction,
@@ -536,7 +543,8 @@ class Agent:
             # 'wind_hvac_use': self.wind_energy_hvac_data[-1],
             # 'total_hvac_use': self.total_energy_hvac_data[-1],
             # -- Learning --
-            'loss': self.loss
+            'loss': self.loss,
+            'loss_cumulative': self.loss_total
         }
 
     def _exploit_action(self):
@@ -1596,10 +1604,28 @@ class Agent:
     # IN USE
     def _get_total_reward(self, aggregate_type: str):
         """Aggregates value from reward dict organized by zones and reward components"""
-        if aggregate_type == 'sum':
-            return np.array(list(self.reward_dict.values())).sum()
-        elif aggregate_type == 'mean':
-            return np.array(list(self.reward_dict.values())).mean()
+
+        # DQN-style model
+        if self.run.model == 1 or self.run.model == 2:
+            if aggregate_type == 'sum':
+                return np.array(list(self.reward_dict.values())).sum()
+            elif aggregate_type == 'mean':
+                return np.array(list(self.reward_dict.values())).mean()
+
+        # BDQ-style model
+        elif self.run.model == 3:
+            if self.run.combine_reward:
+                # Get single scalar
+                if aggregate_type == 'sum':
+                    return np.array(list(self.reward_dict.values())).sum()
+                elif aggregate_type == 'mean':
+                    return np.array(list(self.reward_dict.values())).mean()
+            else:
+                # Keep reward separate per zone
+                if aggregate_type == 'sum':
+                    return np.array(list(self.reward_dict.values())).sum(axis=1)
+                elif aggregate_type == 'mean':
+                    return np.array(list(self.reward_dict.values())).mean(axis=1)
 
     # IN USE
     def _get_comfort_results(self):
