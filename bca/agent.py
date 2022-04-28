@@ -734,6 +734,9 @@ class Agent:
                         cooling_sp = upper_ideal_temp
                     else:
                         cooling_sp = zone_temp
+                    # Hold minimum cooling setpoint
+                    if cooling_sp < 18:
+                        cooling_sp = 18
 
                 else:
                     # HVAC Availability OFF
