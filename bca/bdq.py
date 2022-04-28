@@ -211,7 +211,7 @@ class PrioritizedReplayMemory(ReplayMemory):
         self.state_memory[index] = torch.Tensor(state).to(device)
         self.action_memory[index] = torch.ByteTensor(action).to(device)
         self.next_state_memory[index] = torch.Tensor(next_state).to(device)
-        self.reward_memory[index] = torch.Tensor([reward]).to(device)
+        self.reward_memory[index] = torch.Tensor([reward] if isinstance(reward, np.float64) else reward).to(device)
         self.terminal_memory[index] = torch.ByteTensor([terminal_flag]).to(device)
 
         # Update priorities
