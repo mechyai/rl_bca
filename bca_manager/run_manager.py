@@ -88,7 +88,7 @@ class RunManager:
             'value_stream_size': [124, 64],
             'advantage_streams_size': [64, 64],
 
-            'td_target': 'mean',  # (0) mean or (1) max
+            'td_target': '',  # mean or max or empty ''
             'rescale_shared_grad_factor': 1 / (action_branches)
 
         }
