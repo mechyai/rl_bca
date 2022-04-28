@@ -25,7 +25,7 @@ test_day_end = None
 
 model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation_oa1.osm'
 
-run_modification = [5e-1, 1e-1, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]
+run_modification = [5e-1, 1e-1, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6, 1e-6]
 
 # exp_name = 'Tester'
 exp_name = 'act8_bdq_soft_td_1hr_reward'
@@ -33,7 +33,7 @@ exp_name = 'testing_reward'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 5,
+    'epochs': 2,
     'skip_benchmark': True,
     'exploit_only': False,
     'test': True,

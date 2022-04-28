@@ -17,7 +17,7 @@ year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
 train_day_start = 1
-train_day_end = 14
+train_day_end = 1
 
 exp_name = '_testing'
 # model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'

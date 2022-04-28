@@ -88,7 +88,7 @@ class RunManager:
             'value_stream_size': [124, 64],
             'advantage_streams_size': [64, 64],
 
-            'combine_reward': False,  # to keep zone reward contributions separate or not
+            'combine_reward': True,  # to keep zone reward contributions separate or not
 
             'td_target': '',  # mean or max or empty ''
             'rescale_shared_grad_factor': 1 / (action_branches)
@@ -106,7 +106,7 @@ class RunManager:
             # -- BDQ Architecture --
             'lstm': True,
             'rnn_hidden_size': 64,
-            'rnn_num_layers': 3,
+            'rnn_num_layers': 1,
         }
         selected_params = {**selected_params, **rnn_params}
 
