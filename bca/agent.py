@@ -355,7 +355,6 @@ class Agent:
                     warning_values = 0
             temperature_warnings_list.append(warning_values)
 
-
         # ----------------------------------- RTP High-Price Signal -----------------------------------
         rtp = self.var_vals['rtp']
         # Add extra RTP pricing state signal
@@ -455,7 +454,9 @@ class Agent:
 
         prior_data = []
         # Indoor Temps
-        for zone_data_times in ([prior_indoor_temp_data] if not hasattr(prior_indoor_temp_data, '__iter__') else prior_indoor_temp_data):
+        for zone_data_times in (
+                [prior_indoor_temp_data] if not hasattr(prior_indoor_temp_data,
+                                                        '__iter__') else prior_indoor_temp_data):
             for zone_temps in [zone_data_times]:
                 prior_data.append(MDP.normalize_min_max_saturate(zone_temps, MDP.indoor_temp_min, MDP.indoor_temp_max))
         # Outdoor conditions
@@ -882,10 +883,26 @@ class Agent:
             self._explore_exploit_process(exploit)
 
             # -- ENCODE ACTIONS TO HVAC COMMAND --
-            """
-            Put actuation function here
-            """
-            # -- ENCODE ACTIONS TO HVAC COMMAND --
+            n_zones = self.dqn_model.action_branches
+
+            # -- Handle Different Action-Space Architectures --
+            # BDQ-Based model
+            if self.run.model == 3:
+                # Inference from model
+                action = self.action
+            # DQN-Based model
+            else:
+                # Inference from model
+                action_options = ''.join([str(action) for action in list(range(self.actuation_dim))])
+                action_permutations = \
+                    [[int(action) for action in seq] for seq in itertools.product(action_options, repeat=n_zones)]
+                action = action_permutations[self.action]
+
+            # -- Handle RNN Sequence --
+            if not self.rnn_start:
+                # Default action before enough sequence
+                action = [3] * self.dqn_model.action_dim
+
             occupied_setpoints = {
                 0: self.indoor_temp_ideal_range[1] + 1.5,
                 1: self.indoor_temp_ideal_range[1],
@@ -908,14 +925,17 @@ class Agent:
 
             occupied = self.sim.get_ems_data(['hvac_operation_sched'])
 
-            for zone_i, action in enumerate(self.action):
-                if occupied:
-                    cooling_sp = occupied_setpoints[action]
-                else:
-                    cooling_sp = unoccupied_setpoints[action]
+            for zone in range(n_zones):
+                # Get zone details
+                zone_action = action[zone]
 
-                self.actuation_dict[f'zn{zone_i}_heating_sp'] = 15.56
-                self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_sp
+                if occupied:
+                    cooling_sp = occupied_setpoints[zone_action]
+                else:
+                    cooling_sp = unoccupied_setpoints[zone_action]
+
+                self.actuation_dict[f'zn{zone}_heating_sp'] = 15.56
+                self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
 
         # Offline Learning
         else:
