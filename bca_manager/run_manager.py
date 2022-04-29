@@ -18,7 +18,7 @@ class RunManager:
     """This class helps manage all hparams and sampling, as well as creating all objects dependent on these hparams."""
     # -- Agent Params --
     # Misc. Params
-    action_branches = 3
+    action_branches = 1
 
     selected_params = {
         # -- Agent Params --
@@ -29,7 +29,7 @@ class RunManager:
         # --- Behavioral Policy ---
         'eps_start': 0.25,
         'eps_end': 0.01,
-        'eps_decay': 5e-7,
+        'eps_decay': 1e-6,
 
         # --- Experience Replay ---
         'replay_capacity': 2028,
@@ -38,30 +38,31 @@ class RunManager:
         # DQN or BDQ
         'model': 3,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
-        'PER': False,
+        'PER': True,
         # RNN
         'rnn': True,
 
         # -- BDQ --
         # Fixed
-        'observation_dim': 58,
+        'observation_dim': 54,
         'action_branches': action_branches,  # n building zones
         'actuation_function': 8,
 
         # TD Update
         'optimizer': 'Adagrad',
-        'learning_rate': 5e-2,
-        'gamma': 0.99,
+        'learning_rate': 5e-1,
+        'lr_scheduler': 'ReduceLROnPlateau',
+        'gamma': 0.9,
 
         # Reward
         'reward_aggregation': 'sum',  # sum or mean
         'reward_sparsity_ts': 12,
-        'reward_scale': 0.05,
+        'reward_scale': 0.005,
         'reward_clipping': 0,
-        'lambda_rtp': 0.02,
+        'lambda_rtp': 0.005,
 
         # Network mods
-        'gradient_clip_norm': 0,  # [0, 1, 5, 10],  # 0 is nothing
+        'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
         'target_update_freq': 0.01,  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
     }
 
@@ -84,11 +85,11 @@ class RunManager:
     if selected_params['model'] == 3:
         # BDQ-based
         architecture_params = {
-            'shared_network_size': [124, 124],
+            'shared_network_size': [124],
             'value_stream_size': [124, 64],
             'advantage_streams_size': [64, 64],
 
-            'combine_reward': True,  # to keep zone reward contributions separate or not
+            'combine_reward': False,  # to keep zone reward contributions separate or not
 
             'td_target': '',  # mean or max or empty ''
             'rescale_shared_grad_factor': 1 / (action_branches)
@@ -160,6 +161,7 @@ class RunManager:
         # TD Update
         'optimizer': ['Adagrad'],
         'learning_rate': [5e-4],
+        'lr_scheduler': [''],
         'gamma': [0.8],
 
         # Reward
@@ -338,7 +340,8 @@ class RunManager:
                     optimizer=run.optimizer,
                     gamma=run.gamma,
                     gradient_clip_norm=run.gradient_clip_norm,
-                    lstm=run.lstm
+                    lstm=run.lstm,
+                    lr_scheduler=run.lr_scheduler
                 )
             else:
                 self.dqn = DQN(
@@ -351,6 +354,7 @@ class RunManager:
                     optimizer=run.optimizer,
                     gamma=run.gamma,
                     gradient_clip_norm=run.gradient_clip_norm,
+                    lr_scheduler=run.lr_scheduler
                 )
 
         # Dueling DQN
@@ -370,7 +374,8 @@ class RunManager:
                     optimizer=run.optimizer,
                     gamma=run.gamma,
                     gradient_clip_norm=run.gradient_clip_norm,
-                    lstm=run.lstm
+                    lstm=run.lstm,
+                    lr_scheduler=run.lr_scheduler
                 )
             else:
                 self.dqn = DuelingDQN(
@@ -385,6 +390,7 @@ class RunManager:
                     optimizer=run.optimizer,
                     gamma=run.gamma,
                     gradient_clip_norm=run.gradient_clip_norm,
+                    lr_scheduler=run.lr_scheduler
                 )
         # BDQ
         elif run.model == 3:
@@ -405,7 +411,8 @@ class RunManager:
                     td_target=run.td_target,
                     gradient_clip_norm=run.gradient_clip_norm,
                     rescale_shared_grad_factor=run.rescale_shared_grad_factor,
-                    lstm=run.lstm
+                    lstm=run.lstm,
+                    lr_scheduler=run.lr_scheduler
                 )
             else:
                 self.dqn = BranchingDQN(
@@ -421,7 +428,8 @@ class RunManager:
                     gamma=run.gamma,
                     td_target=run.td_target,
                     gradient_clip_norm=run.gradient_clip_norm,
-                    rescale_shared_grad_factor=run.rescale_shared_grad_factor
+                    rescale_shared_grad_factor=run.rescale_shared_grad_factor,
+                    lr_scheduler=run.lr_scheduler
                 )
 
         return self.dqn

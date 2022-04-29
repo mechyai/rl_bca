@@ -25,15 +25,14 @@ test_day_end = None
 
 model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation_oa1.osm'
 
-run_modification = [5e-1, 1e-1, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6, 1e-6]
-
 # exp_name = 'Tester'
 exp_name = 'act8_bdq_soft_td_1hr_SPLIT_reward_1zn_1week_overfit'
+exp_name = 'lr_scheduler_testing'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 5,
-    'skip_benchmark': False,
+    'epochs': 10,
+    'skip_benchmark': True,
     'exploit_only': False,
     'test': True,
     'load_model': r'',
@@ -71,8 +70,7 @@ test_period = test_month_start + '_' + test_month_end
 # --- Study Parameters ---
 run_manager = RunManager()
 run = run_manager.selected_params
-run_limit = len(run_modification)
-
+run_limit = experiment_params_dict['epochs']
 # -------------------------------------------------- RUN STUDY --------------------------------------------------
 
 # -- Create DQN Model --
@@ -167,78 +165,75 @@ if not experiment_params_dict['exploit_only']:
         continued_params_dict = {**continued_params_dict, **{'alpha_start': run.alpha_start,
                                                              'betta_start': run.betta_start}}
 
-    for run_num, param_value in enumerate(run_modification):
+    # ---- Tensor Board ----
+    my_tb = TensorboardManager(
+        run_manager,
+        name_path=os.path.join(exp_folder, f'TRAIN_{experiment_params_dict["epochs"]}_{train_period}')
+    )
 
-        # Change specific param for run
-        run = run._replace(learning_rate=param_value)
-        my_bdq.change_learning_rate_discrete(param_value)
+    for epoch in range(run_limit):
 
-        # ---- Tensor Board ----
-        param = run.learning_rate
-        my_tb = TensorboardManager(
-            run_manager,
-            name_path=os.path.join(exp_folder,
-                                   f'run_{run_num + 1}-{run_limit}_lr_{param}_TRAIN_'
-                                   f'{experiment_params_dict["epochs"]}_{train_period}')
+        # Update lr tracking
+        run = run._replace(learning_rate=my_bdq.lr_scheduler.optimizer.param_groups[0]['lr'])
+
+        print(f'\nEpoch {epoch + 1} of {experiment_params_dict["epochs"]}\n{run}\n')
+        print('\n********** Train **********\n')
+        time_start = time.time()
+
+        run_type = 'train'
+        my_agent = experiment_manager.run_experiment(
+            run=run,
+            run_manager=run_manager,
+            bdq=my_bdq,
+            tensorboard_manager=my_tb,
+            osm_file=osm_base,
+            idf_file_final=idf_final_file,
+            epw_file=epw_file,
+            year=year,
+            start_month=train_month_start,
+            end_month=train_month_end,
+            start_day=train_day_start,
+            end_day=train_day_end,
+            run_type=run_type,
+            current_step=start_step,
+            continued_parameters=continued_params_dict,
+            print_values=experiment_params_dict['print_values']
+
+
+        )
+        my_tb.record_epoch_results(
+            agent=my_agent,
+            experimental_params=experiment_params_dict,
+            run=run,
+            run_count=0,
+            run_limit=run_limit,
+            epoch=0,
+            run_type=run_type
         )
 
-        for epoch in range(experiment_params_dict['epochs']):
-            print(
-                f'\nRun {run_num + 1} of {run_limit}, Epoch {epoch + 1} of {experiment_params_dict["epochs"]}\n{run}\n')
+        # Manage looping data
+        start_step = my_agent.current_step
+        continued_params_dict = my_agent.save_continued_params()
+        my_memory.reset_between_episode()
 
-            print('\n********** Train **********\n')
-            time_start = time.time()
+        # LR Scheduler
+        if run.lr_schedule:
+            my_bdq.lr_scheduler.step(my_agent.loss_total)
 
-            run_type = 'train'
-            my_agent = experiment_manager.run_experiment(
-                run=run,
-                run_manager=run_manager,
-                bdq=my_bdq,
-                tensorboard_manager=my_tb,
-                osm_file=osm_base,
-                idf_file_final=idf_final_file,
-                epw_file=epw_file,
-                year=year,
-                start_month=train_month_start,
-                end_month=train_month_end,
-                start_day=train_day_start,
-                end_day=train_day_end,
-                run_type=run_type,
-                current_step=start_step,
-                continued_parameters=continued_params_dict,
-                print_values=experiment_params_dict['print_values']
+        time_train = round(time_start - time.time(), 2) / 60
 
-
-            )
-            my_tb.record_epoch_results(
-                agent=my_agent,
-                experimental_params=experiment_params_dict,
-                run=run,
-                run_count=0,
-                run_limit=run_limit,
-                epoch=0,
-                run_type=run_type
-            )
-
-            # Manage looping data
-            start_step = my_agent.current_step
-            continued_params_dict = my_agent.save_continued_params()
-            my_memory.reset_between_episode()
-
-            time_train = round(time_start - time.time(), 2) / 60
-
-            # -- Save Model Intermediate --
-            if (epoch % 5 == 0 or epoch == experiment_params_dict['epochs'] - 1) and epoch != 0:
-                print('\n********** Saved Model ************\n')
-                model_name = f'bdq_runs_{run_num + 1}_epoch_{epoch}_of_{experiment_params_dict["epochs"]}_lr_{param}'
-                torch.save(my_bdq.policy_network.state_dict(),
-                           os.path.join(exp_folder, model_name))
+        # -- Save Model Intermediate --
+        if (epoch % 5 == 0 or epoch == experiment_params_dict['epochs'] - 1) and epoch != 0:
+            print('\n********** Saved Model ************\n')
+            model_name = f'bdq_epoch_{epoch}_of_{experiment_params_dict["epochs"]}'
+            torch.save(my_bdq.policy_network.state_dict(),
+                       os.path.join(exp_folder, model_name))
 
 
         # -- Save Model --
         if experiment_params_dict['epochs'] > 0:
             print('\n********** Saved Model ************\n')
-            model_name = f'bdq_runs_{run_num + 1}_epochs_{experiment_params_dict["epochs"]}_lr_{param}'
+            model_name = f'bdq__epochs_{experiment_params_dict["epochs"]}'
             torch.save(my_bdq.policy_network.state_dict(),
                        os.path.join(exp_folder, model_name))
 
@@ -248,8 +243,7 @@ if not experiment_params_dict['exploit_only']:
         my_tb = TensorboardManager(
             run_manager,
             name_path=os.path.join(exp_folder,
-                                   f'run_{run_num + 1}-{run_limit}_lr_{param}_EXPLOIT_epoch{epoch + 1}-'
-                                   f'{experiment_params_dict["epochs"]}_{train_period}')
+                                   f'EXPLOIT_epoch{epoch + 1}-{experiment_params_dict["epochs"]}_{train_period}')
         )
 
         print('\n********** Exploit **********\n')
@@ -285,16 +279,13 @@ if not experiment_params_dict['exploit_only']:
         shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype/out/eplusout.sql'), exp_folder)
         time.sleep(1)
         os.rename(os.path.join(exp_folder, 'eplusout.sql'),
-                  os.path.join(exp_folder,
-                               f'{train_period}_run_{run_num + 1}-{run_limit}_ep{epoch + 1}_EXPLOIT_SQL.sql'))
+                  os.path.join(exp_folder, f'{train_period}_ep{epoch + 1}_EXPLOIT_SQL.sql'))
 
         print('\n********** Test **********\n')
 
         my_tb = TensorboardManager(
             run_manager,
-            name_path=os.path.join(exp_folder,
-                                   f'run_{run_num + 1}-{run_limit}_lr_{param}_TEST_epoch{epoch + 1}-'
-                                   f'{experiment_params_dict["epochs"]}_{test_period}')
+            name_path=os.path.join(exp_folder,f'TEST_epoch{epoch + 1}-{experiment_params_dict["epochs"]}_{test_period}')
         )
 
         run_type = 'test'
@@ -327,7 +318,7 @@ if not experiment_params_dict['exploit_only']:
         shutil.copy(os.path.join(_paths_config.repo_root, r'Current_Prototype/out/eplusout.sql'), exp_folder)
         time.sleep(1)
         os.rename(os.path.join(exp_folder, 'eplusout.sql'),
-                  os.path.join(exp_folder, f'{test_period}_run_{run_num + 1}-{run_limit}_ep{epoch + 1}_TEST_SQL.sql'))
+                  os.path.join(exp_folder, f'{test_period}_ep{epoch + 1}_TEST_SQL.sql'))
 
         exp_file = os.path.join(exp_folder, '_exp_results_log.txt')
         # -- Save / Write Data --
@@ -336,7 +327,7 @@ if not experiment_params_dict['exploit_only']:
             file.write(f'\n\n Experiment Descp: {experiment_params_dict["experiment_desc"]}')
             file.write(f'\n\n Model Name: {model_name}')
             file.write(f'\n\tTime Train = {time_train} mins')
-            file.write(f'\n\t*Epochs trained = Run {run_num}-{run_limit}, Epoch: {epoch + 1}')
+            file.write(f'\n\t*Epochs trained: Epoch: {epoch + 1}')
             file.write(f'\n\t******* Cumulative Reward = {my_agent.reward_sum}')
             file.write(f'\n\t*Performance Metrics:')
             file.write(f'\n\t\tDiscomfort Metric = {my_agent.comfort_dissatisfaction_total}')

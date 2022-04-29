@@ -269,7 +269,6 @@ class Agent:
         # -- PERFORMANCE RESULTS --
         if not self.rnn_start and self.run.rnn:
             # Don't record results until SequenceMemory (RNN) has enough results to inference
-            self.rnn_start = True
             # Reset results
             self.comfort_dissatisfaction = 0
             self.hvac_rtp_costs = 0

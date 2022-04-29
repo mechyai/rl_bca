@@ -10,6 +10,7 @@ This BDQN will consist of:
 import math
 import numpy as np
 from typing import Union
+import importlib
 
 import torch
 import torch.nn as nn
@@ -486,7 +487,7 @@ class BranchingDQN_RNN(nn.Module):
                  action_dim: int, shared_network_size: list, value_stream_size: list, advantage_streams_size: list,
                  target_update_freq: int, learning_rate: float, gamma: float, td_target: str,
                  gradient_clip_norm: float, rescale_shared_grad_factor: float = None, lstm: bool = False,
-                 optimizer: str = 'Adam', **optimizer_kwargs):
+                 optimizer: str = 'Adam', lr_scheduler: str = '', **optimizer_kwargs):
 
         super().__init__()
 
@@ -514,9 +515,15 @@ class BranchingDQN_RNN(nn.Module):
         self.policy_network.to(device)
         self.target_network.to(device)
 
-        # self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.learning_rate)  # learned policy
         self.optimizer = \
             getattr(optim, optimizer)(self.policy_network.parameters(), lr=learning_rate, **optimizer_kwargs)
+
+        # Learning rate scheduler
+        if lr_scheduler:
+            torch_lr_scheduler = importlib.import_module('torch.optim.lr_scheduler')
+            self.lr_scheduler = getattr(torch_lr_scheduler, lr_scheduler)
+            # Init lr scheduler
+            self.lr_scheduler = self.lr_scheduler(self.optimizer, mode='min', factor=0.75, patience=3, cooldown=2, verbose=True)
 
         self.target_update_freq = target_update_freq
         self.update_count = 0
@@ -533,13 +540,6 @@ class BranchingDQN_RNN(nn.Module):
             action = torch.argmax(out, dim=1)  # argmax within each branch
 
         return action.detach().cpu().numpy()  # action.numpy()
-
-    def update_learning_rate(self):
-        """Based on conditions, the optimizer's learning rate is dynamically updated."""
-        lr = 0.004
-        if False:
-            for param_group in self.optimizer.param_groups:
-                param_group['lr'] = lr
 
     @staticmethod
     def get_current_qval(bdq_network, states, actions):
