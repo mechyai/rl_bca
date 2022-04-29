@@ -293,7 +293,7 @@ class Agent:
         self.current_step += 1
 
         # -- TensorBoard --
-        if not self.run.rnn or self.rnn_start:
+        if not self.run.rnn or self.rnn_start or not learn:
             # Collect results right away for non-RNN models, or wait until rnn_start
             self.TB.record_timestep_results(self)
 
