@@ -220,7 +220,7 @@ class DuelingDQN(nn.Module):
         Loads a serialized/pickled model from Path, and sets it to the policy and target network.
         :param model_path: Path to pickled PyTorch model
         """
-        self.policy_network.load_state_dict(torch.load(model_path))
+        self.policy_network.load_state_dict(torch.load(model_path, map_location=device))
         self.target_network.load_state_dict(self.policy_network.state_dict())
 
     def change_learning_rate_discrete(self, lr: float, **optimizer_kwargs):
