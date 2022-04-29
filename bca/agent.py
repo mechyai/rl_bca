@@ -267,19 +267,6 @@ class Agent:
             # self.bdq.update_learning_rate()
 
         # -- PERFORMANCE RESULTS --
-        if not self.rnn_start and self.run.rnn:
-            # Don't record results until SequenceMemory (RNN) has enough results to inference
-            # Reset results
-            self.comfort_dissatisfaction = 0
-            self.hvac_rtp_costs = 0
-            self.comfort_dissatisfaction = 0
-            self.hvac_rtp_costs_total = 0
-            # Reset reward
-            self.reward = 0
-            self.reward_sum = 0
-            self.reward_component_sum = [0, 0, 0]
-            self.reward_zone_sum = [0] * self.dqn_model.action_branches
-
         # Record results
         self.comfort_dissatisfaction = self._get_comfort_results()
         self.hvac_rtp_costs = self._get_rtp_hvac_cost_results()
@@ -287,6 +274,19 @@ class Agent:
         self.comfort_dissatisfaction_total += self.comfort_dissatisfaction
         self.hvac_rtp_costs_total += self.hvac_rtp_costs
         self.reward_sum += self.reward
+
+        # Don't record results until SequenceMemory (RNN) has enough results to inference
+        if not self.rnn_start and self.run.rnn:
+            # Reset performance results
+            self.comfort_dissatisfaction = 0
+            self.hvac_rtp_costs = 0
+            self.comfort_dissatisfaction = 0
+            self.hvac_rtp_costs_total = 0
+            # Reset reward
+            self.reward = np.zeros_like(self.reward)
+            self.reward_sum = np.zeros_like(self.reward_sum)
+            self.reward_component_sum = [0, 0, 0]
+            self.reward_zone_sum = [0] * self.dqn_model.action_branches
 
         # -- UPDATE DATA --
         self.state_normalized = self.next_state_normalized
