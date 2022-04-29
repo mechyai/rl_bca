@@ -655,7 +655,7 @@ class Agent:
             # -- Handle RNN Sequence --
             if self.run.rnn and not self.rnn_start:
                 # Default action before enough sequence
-                action = [1] * self.dqn_model.action_dim  # Stay
+                action = [1] * self.dqn_model.action_branches  # Stay
                 self.action = action  # save as agent action
 
 
@@ -742,7 +742,7 @@ class Agent:
             # -- Handle RNN Sequence --
             if self.run.rnn and not self.rnn_start:
                 # Default action before enough sequence
-                action = [1] * self.dqn_model.action_dim  # Stay
+                action = [1] * self.dqn_model.action_branches  # Stay
                 self.action = action  # save as agent action
 
             action_cmd_print = {0: 'OFF', 1: 'COOL', 2: 'STAY', None: 'Availability OFF'}
@@ -903,7 +903,7 @@ class Agent:
             # -- Handle RNN Sequence --
             if self.run.rnn and not self.rnn_start:
                 # Default action before enough sequence
-                action = [3] * self.dqn_model.action_dim
+                action = [4] * self.dqn_model.action_branches  # Stay
                 self.action = action  # save as agent action
 
             occupied_setpoints = {
@@ -984,7 +984,7 @@ class Agent:
             # -- Handle RNN Sequence --
             if self.run.rnn and not self.rnn_start:
                 # Default action before enough sequence
-                action = [5] * self.dqn_model.action_dim  # Stay
+                action = [5] * self.dqn_model.action_branches  # Stay
                 self.action = action  # save as agent action
 
             # -- ENCODE ACTIONS TO HVAC COMMAND --
