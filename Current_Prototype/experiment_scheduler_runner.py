@@ -231,7 +231,7 @@ if not experiment_params_dict['exploit_only']:
             torch.save(my_bdq.policy_network.state_dict(),
                        os.path.join(exp_folder, model_name))
 
-        if epoch % (reporting_freq - 1) == 0 and epoch != 0:
+        if epoch % (reporting_freq - 2) == 0 and epoch != 0:
 
             # -- Save Model --
             if experiment_params_dict['epochs'] > 0:
@@ -243,7 +243,7 @@ if not experiment_params_dict['exploit_only']:
             # ----------------------------------------------- RUN TESTING ----------------------------------------------
 
             param = run.learning_rate
-            my_tb = TensorboardManager(
+            test_tb = TensorboardManager(
                 run_manager,
                 name_path=os.path.join(exp_folder,
                                        f'EXPLOIT_epoch{epoch + 1}-{experiment_params_dict["epochs"]}_{train_period}')
@@ -256,7 +256,7 @@ if not experiment_params_dict['exploit_only']:
                 run=run,
                 run_manager=run_manager,
                 bdq=my_bdq,
-                tensorboard_manager=my_tb,
+                tensorboard_manager=test_tb,
                 osm_file=osm_base,
                 idf_file_final=idf_final_file,
                 epw_file=epw_file,
@@ -268,7 +268,7 @@ if not experiment_params_dict['exploit_only']:
                 run_type=run_type,
                 print_values=experiment_params_dict['print_values']
             )
-            my_tb.record_epoch_results(
+            test_tb.record_epoch_results(
                 agent=my_agent,
                 experimental_params=experiment_params_dict,
                 run=run,
@@ -286,7 +286,7 @@ if not experiment_params_dict['exploit_only']:
 
             print('\n********** Test **********\n')
 
-            my_tb = TensorboardManager(
+            test_tb = TensorboardManager(
                 run_manager,
                 name_path=os.path.join(exp_folder,f'TEST_epoch{epoch + 1}-{experiment_params_dict["epochs"]}_{test_period}')
             )
@@ -296,7 +296,7 @@ if not experiment_params_dict['exploit_only']:
                 run=run,
                 run_manager=run_manager,
                 bdq=my_bdq,
-                tensorboard_manager=my_tb,
+                tensorboard_manager=test_tb,
                 osm_file=osm_base,
                 idf_file_final=idf_final_file,
                 epw_file=epw_file,
@@ -307,7 +307,7 @@ if not experiment_params_dict['exploit_only']:
                 end_day=test_day_end,
                 run_type=run_type,
             )
-            my_tb.record_epoch_results(
+            test_tb.record_epoch_results(
                 agent=agent,
                 experimental_params=experiment_params_dict,
                 run=run,
