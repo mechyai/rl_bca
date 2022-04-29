@@ -138,6 +138,7 @@ class Agent:
         self.n_ts = 0
         self.current_step = current_step
         self.friday_date = 0
+        self.simulation_start_time = None
 
         # -- INTERACTION FREQUENCIES --
         self.observation_frequency = observation_frequency
@@ -181,6 +182,7 @@ class Agent:
         # -- Misc. --
         self.run = run_parameters
         self.bem = bem_model
+        self.rnn_start = False
         self._once = True
         self._print = print_values
         self._checked_action_dims = False
@@ -265,6 +267,21 @@ class Agent:
             # self.bdq.update_learning_rate()
 
         # -- PERFORMANCE RESULTS --
+        if not self.rnn_start and self.run.rnn:
+            # Don't record results until SequenceMemory (RNN) has enough results to inference
+            self.rnn_start = True
+            # Reset results
+            self.comfort_dissatisfaction = 0
+            self.hvac_rtp_costs = 0
+            self.comfort_dissatisfaction = 0
+            self.hvac_rtp_costs_total = 0
+            # Reset reward
+            self.reward = 0
+            self.reward_sum = 0
+            self.reward_component_sum = [0, 0, 0]
+            self.reward_zone_sum = [0] * self.dqn_model.action_branches
+
+        # Record results
         self.comfort_dissatisfaction = self._get_comfort_results()
         self.hvac_rtp_costs = self._get_rtp_hvac_cost_results()
         # # Update Results Sums
@@ -277,7 +294,9 @@ class Agent:
         self.current_step += 1
 
         # -- TensorBoard --
-        self.TB.record_timestep_results(self)
+        if not self.run.rnn or self.rnn_start:
+            # Collect results right away for non-RNN models, or wait until rnn_start
+            self.TB.record_timestep_results(self)
 
         # -- REPORTING --
         if self._print:
@@ -445,8 +464,9 @@ class Agent:
 
         # -- DO ONCE --
         if self._once:
-            self.state_var_names = self.var_names + self.weather_names + meter_names
             self._once = False
+            self.state_var_names = self.var_names + self.weather_names + meter_names
+            self.simulation_start_time = self.time
 
         # -- ENCODED STATE --
         return np.array(
@@ -553,6 +573,7 @@ class Agent:
         if self.rnn:
             if self.memory.current_interaction_count > self.memory.sequence_index_span:
                 # Need to have full sequence
+                self.rnn_start = True
                 self.action = self.dqn_model.get_greedy_action(self.memory.get_single_sequence())
 
                 return 'Exploit'
@@ -698,13 +719,19 @@ class Agent:
 
             # BDQ-Based model
             if self.run.model == 3:
+                # Inference from model
                 action = self.action
             # DQN-Based model
             else:
+                # Inference from model
                 action_options = ''.join([str(action) for action in list(range(self.actuation_dim))])
                 action_permutations = \
                     [[int(action) for action in seq] for seq in itertools.product(action_options, repeat=n_zones)]
                 action = action_permutations[self.action]
+
+            if not self.rnn_start:
+                # Default action before enough sequence
+                action = [1] * self.dqn_model.action_dim  # Stay
 
             action_cmd_print = {0: 'OFF', 1: 'COOL', 2: 'STAY', None: 'Availability OFF'}
             for zone in range(n_zones):
