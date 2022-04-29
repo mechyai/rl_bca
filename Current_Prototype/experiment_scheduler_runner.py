@@ -26,8 +26,8 @@ test_day_end = None
 model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation_oa1.osm'
 
 # exp_name = 'Tester'
-exp_name = 'act8_bdq_soft_td_1hr_SPLIT_reward_1zn_1week_overfit'
-exp_name = 'lr_scheduler_testing'
+# exp_name = 'act8_bdq_soft_td_1hr_SPLIT_reward_1zn_1week_overfit'
+exp_name = 'lr_scheduler_testing_pretrained_fixed'
 
 # -- Experiment Params --
 experiment_params_dict = {
@@ -168,7 +168,7 @@ if not experiment_params_dict['exploit_only']:
     reporting_freq = 15
     for epoch in range(run_limit):
 
-        if epoch % (reporting_freq - 1) == 0:
+        if epoch % reporting_freq == 0:
             # ---- Tensor Board ----
             my_tb = TensorboardManager(
                 run_manager,
@@ -225,13 +225,13 @@ if not experiment_params_dict['exploit_only']:
         time_train = round(time_start - time.time(), 2) / 60
 
         # -- Save Model Intermediate --
-        if (epoch % 10 == 0 or epoch == experiment_params_dict['epochs'] - 1) and epoch != 0:
+        if ((epoch + 1) % reporting_freq == 0 or epoch == experiment_params_dict['epochs'] - 1) and epoch != 0:
             print('\n********** Saved Model ************\n')
             model_name = f'bdq_epoch_{epoch}_of_{experiment_params_dict["epochs"]}'
             torch.save(my_bdq.policy_network.state_dict(),
                        os.path.join(exp_folder, model_name))
 
-        if epoch % (reporting_freq - 2) == 0 and epoch != 0:
+        if (epoch + 1) % reporting_freq == 0 and epoch != 0:
 
             # -- Save Model --
             if experiment_params_dict['epochs'] > 0:
