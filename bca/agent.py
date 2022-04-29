@@ -1013,7 +1013,7 @@ class Agent:
                 self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
 
                 if self._print:
-                    print(f'\t\tZone{zone} ({action_cmd_print[action]}):'
+                    print(f'\t\tZone{zone} ({action_cmd_print[zone_action]}):'
                           f' Zn Temp = {round(zone_temp, 2)},'
                           f' Heating Sp = {round(heating_sp, 2)},'
                           f' Cooling Sp = {round(cooling_sp, 2)}')
