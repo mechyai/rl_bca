@@ -50,7 +50,7 @@ class Agent:
             2: 6,  # act_strict_setpoints_2
             3: 3,  # act_step_strict_setpoints_3
             4: 6,  # act_default_adjustments_4
-            5: 7,  # act_cool_only_5
+            5: 10,  # act_cool_only_5
             6: 7,  # act_cool_only_default_adjustment_6
             7: 2,  # act_cool_only_on_off_7
             8: 3,  # act_cool_only_on_off_stay_8
@@ -955,26 +955,63 @@ class Agent:
         """
 
         # Check action space dim aligns with created BDQ
-        self._action_dimension_check(this_actuation_functions_dims=7)
+        self._action_dimension_check(this_actuation_functions_dims=10)
 
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
             self._explore_exploit_process(exploit)
 
             # -- ENCODE ACTIONS TO HVAC COMMAND --
+            n_zones = self.dqn_model.action_branches
+
+            # -- Handle Different Action-Space Architectures --
+            # BDQ-Based model
+            if self.run.model == 3:
+                # Inference from model
+                action = self.action
+            # DQN-Based model
+            else:
+                # Inference from model
+                action_options = ''.join([str(action) for action in list(range(self.actuation_dim))])
+                action_permutations = \
+                    [[int(action) for action in seq] for seq in itertools.product(action_options, repeat=n_zones)]
+                action = action_permutations[self.action]
+
+            # -- Handle RNN Sequence --
+            if self.run.rnn and not self.rnn_start:
+                # Default action before enough sequence
+                action = [5] * self.dqn_model.action_dim  # Stay
+
+            # -- ENCODE ACTIONS TO HVAC COMMAND --
             cooling_setpoints = {
                 0: 18.1,
-                1: 21.1,  # LB Comfort
-                2: 22.5,
-                3: 23.89,  # UB Comfort
-                4: 26.89,
-                5: 29.4,
-                6: 31
+                1: 19.1,
+                2: 21.1,  # LB Comfort
+                3: 22,
+                4: 23,
+                5: 23.89,  # UB Comfort
+                6: 25.72,
+                7: 27.56,
+                8: 29.4,
+                9: 31
             }
 
-            for zone_i, action in enumerate(self.action):
-                self.actuation_dict[f'zn{zone_i}_heating_sp'] = 15.56
-                self.actuation_dict[f'zn{zone_i}_cooling_sp'] = cooling_setpoints[action]
+            action_cmd_print = cooling_setpoints
+            for zone in range(self.dqn_model.action_branches):
+                zone_action = action[zone]
+                zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
+
+                heating_sp = 15.56
+                cooling_sp = cooling_setpoints[zone_action]
+
+                self.actuation_dict[f'zn{zone}_heating_sp'] = 15.56
+                self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
+
+                if self._print:
+                    print(f'\t\tZone{zone} ({action_cmd_print[action]}):'
+                          f' Zn Temp = {round(zone_temp, 2)},'
+                          f' Heating Sp = {round(heating_sp, 2)},'
+                          f' Cooling Sp = {round(cooling_sp, 2)}')
 
         # Offline Learning
         else:
