@@ -653,7 +653,7 @@ class Agent:
                 action = action_permutations[self.action]
 
             # -- Handle RNN Sequence --
-            if not self.rnn_start:
+            if self.run.rnn and not self.rnn_start:
                 # Default action before enough sequence
                 action = [1] * self.dqn_model.action_dim  # Stay
 
@@ -738,7 +738,7 @@ class Agent:
                 action = action_permutations[self.action]
 
             # -- Handle RNN Sequence --
-            if not self.rnn_start:
+            if self.run.rnn and not self.rnn_start:
                 # Default action before enough sequence
                 action = [1] * self.dqn_model.action_dim  # Stay
 
@@ -898,7 +898,7 @@ class Agent:
                 action = action_permutations[self.action]
 
             # -- Handle RNN Sequence --
-            if not self.rnn_start:
+            if self.run.rnn and not self.rnn_start:
                 # Default action before enough sequence
                 action = [3] * self.dqn_model.action_dim
 
