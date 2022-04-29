@@ -579,7 +579,6 @@ class Agent:
                 return 'Exploit'
             else:
                 # Temporary explore until full sequence available
-                # TODO make variable sequence input? or ignore 1st day?
                 if self.run.model == 3:
                     # BDQ-based
                     self.action = np.random.randint(0, self.dqn_model.action_dim, self.dqn_model.action_branches)
@@ -640,15 +639,23 @@ class Agent:
             # -- ENCODE ACTIONS TO HVAC COMMAND --
             n_zones = self.dqn_model.action_branches
 
+            # -- Handle Different Action-Space Architectures --
             # BDQ-Based model
             if self.run.model == 3:
+                # Inference from model
                 action = self.action
             # DQN-Based model
             else:
+                # Inference from model
                 action_options = ''.join([str(action) for action in list(range(self.actuation_dim))])
                 action_permutations = \
                     [[int(action) for action in seq] for seq in itertools.product(action_options, repeat=n_zones)]
                 action = action_permutations[self.action]
+
+            # -- Handle RNN Sequence --
+            if not self.rnn_start:
+                # Default action before enough sequence
+                action = [1] * self.dqn_model.action_dim  # Stay
 
             action_cmd_print = {}
             for zone in range(self.dqn_model.action_branches):
@@ -717,6 +724,7 @@ class Agent:
             # -- ENCODE ACTIONS TO HVAC COMMAND --
             n_zones = self.dqn_model.action_branches
 
+            # -- Handle Different Action-Space Architectures --
             # BDQ-Based model
             if self.run.model == 3:
                 # Inference from model
@@ -729,6 +737,7 @@ class Agent:
                     [[int(action) for action in seq] for seq in itertools.product(action_options, repeat=n_zones)]
                 action = action_permutations[self.action]
 
+            # -- Handle RNN Sequence --
             if not self.rnn_start:
                 # Default action before enough sequence
                 action = [1] * self.dqn_model.action_dim  # Stay
