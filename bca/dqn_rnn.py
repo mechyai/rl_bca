@@ -8,6 +8,7 @@ This BDQN will consist of:
 """
 
 import math
+import importlib
 
 import torch
 import torch.nn as nn
@@ -77,7 +78,7 @@ class DQN_RNN(nn.Module):
     def __init__(self, observation_dim: int, rnn_hidden_size: int, rnn_num_layers: int, action_branches: int,
                  action_dim: int, network_size: list, target_update_freq: int, learning_rate: float, gamma: float,
                  gradient_clip_norm: float, lstm: bool = False,
-                 optimizer: str = 'Adam', **optimizer_kwargs):
+                 optimizer: str = 'Adam', lr_scheduler: str = '', **optimizer_kwargs):
 
         super().__init__()
 
@@ -103,6 +104,13 @@ class DQN_RNN(nn.Module):
         # self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.learning_rate)  # learned policy
         self.optimizer = \
             getattr(optim, optimizer)(self.policy_network.parameters(), lr=learning_rate, **optimizer_kwargs)
+        # Learning rate scheduler
+        if lr_scheduler:
+            torch_lr_scheduler = importlib.import_module('torch.optim.lr_scheduler')
+            self.lr_scheduler = getattr(torch_lr_scheduler, lr_scheduler)
+            # Init lr scheduler
+            self.lr_scheduler = self.lr_scheduler(self.optimizer, mode='min', factor=0.75, patience=3, cooldown=2,
+                                                  verbose=True)
 
         self.target_update_freq = target_update_freq
         self.update_count = 0

@@ -1865,11 +1865,10 @@ class Agent:
             )
 
             # Don't penalize for fan usage during day when it is REQUIRED for occupant ventilation, only Off-hours
-            fan_electricity_off_hours = np.multiply(building_hours == 0, fan_electricity_since_last_interaction)
+            # fan_electricity_off_hours = np.multiply(building_hours == 0, fan_electricity_since_last_interaction)
 
             joules_to_MWh = 2.77778e-10
-            total_hvac_electricity = joules_to_MWh * \
-                                     (cooling_electricity + fan_electricity_off_hours)
+            total_hvac_electricity = joules_to_MWh * (cooling_electricity + fan_electricity_since_last_interaction)
 
             # timestep-wise RTP cost, accounting for HVAC electricity usage
             hvac_electricity_costs = np.multiply(total_hvac_electricity, rtp_since_last_interaction)
@@ -1879,6 +1878,7 @@ class Agent:
             # rtp_hvac_usage = rtp_since_last_interaction[heating_electricity != cooling_electricity]
             # get rid of 0s for when heat/cool OFF
             # self.rtp_histogram_data.extend(list(rtp_hvac_usage))
+            self.rtp_histogram_data.append(list(zip[rtp_since_last_interaction, total_hvac_electricity]))
 
         # print(
         #     f'\tRTP: ${round(rtp_hvac_costs, 2)}, Cumulative: ${round(self.hvac_rtp_costs_total + rtp_hvac_costs, 2)}')

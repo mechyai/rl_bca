@@ -38,9 +38,9 @@ class RunManager:
         # DQN or BDQ
         'model': 3,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
-        'PER': True,
+        'PER': False,
         # RNN
-        'rnn': True,
+        'rnn': False,
 
         # -- BDQ --
         # Fixed
@@ -90,8 +90,8 @@ class RunManager:
             'advantage_streams_size': [64, 64],
 
             'combine_reward': False,  # to keep zone reward contributions separate or not
-
             'td_target': '',  # mean or max or empty ''
+
             'rescale_shared_grad_factor': 1 / (action_branches)
 
 
