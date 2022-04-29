@@ -32,7 +32,7 @@ exp_name = 'lr_scheduler_testing'
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 1000,
-    'skip_benchmark': True,
+    'skip_benchmark': False,
     'exploit_only': False,
     'test': True,
     'load_model': r'',
@@ -168,7 +168,7 @@ if not experiment_params_dict['exploit_only']:
     reporting_freq = 15
     for epoch in range(run_limit):
 
-        if epoch % (reporting_freq - 1) == 0 and epoch != 0:
+        if epoch % (reporting_freq - 1) == 0:
             # ---- Tensor Board ----
             my_tb = TensorboardManager(
                 run_manager,
@@ -225,12 +225,11 @@ if not experiment_params_dict['exploit_only']:
         time_train = round(time_start - time.time(), 2) / 60
 
         # -- Save Model Intermediate --
-        if (epoch % 5 == 0 or epoch == experiment_params_dict['epochs'] - 1) and epoch != 0:
+        if (epoch % 10 == 0 or epoch == experiment_params_dict['epochs'] - 1) and epoch != 0:
             print('\n********** Saved Model ************\n')
             model_name = f'bdq_epoch_{epoch}_of_{experiment_params_dict["epochs"]}'
             torch.save(my_bdq.policy_network.state_dict(),
                        os.path.join(exp_folder, model_name))
-
 
         if epoch % (reporting_freq - 1) == 0 and epoch != 0:
 
