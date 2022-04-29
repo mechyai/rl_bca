@@ -656,6 +656,8 @@ class Agent:
             if self.run.rnn and not self.rnn_start:
                 # Default action before enough sequence
                 action = [1] * self.dqn_model.action_dim  # Stay
+                self.action = action  # save as agent action
+
 
             action_cmd_print = {}
             for zone in range(self.dqn_model.action_branches):
@@ -741,6 +743,7 @@ class Agent:
             if self.run.rnn and not self.rnn_start:
                 # Default action before enough sequence
                 action = [1] * self.dqn_model.action_dim  # Stay
+                self.action = action  # save as agent action
 
             action_cmd_print = {0: 'OFF', 1: 'COOL', 2: 'STAY', None: 'Availability OFF'}
             for zone in range(n_zones):
@@ -901,6 +904,7 @@ class Agent:
             if self.run.rnn and not self.rnn_start:
                 # Default action before enough sequence
                 action = [3] * self.dqn_model.action_dim
+                self.action = action  # save as agent action
 
             occupied_setpoints = {
                 0: self.indoor_temp_ideal_range[1] + 1.5,
@@ -981,6 +985,7 @@ class Agent:
             if self.run.rnn and not self.rnn_start:
                 # Default action before enough sequence
                 action = [5] * self.dqn_model.action_dim  # Stay
+                self.action = action  # save as agent action
 
             # -- ENCODE ACTIONS TO HVAC COMMAND --
             cooling_setpoints = {
