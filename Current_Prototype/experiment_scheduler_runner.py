@@ -21,22 +21,22 @@ train_day_end = None
 test_month_start = 'May'
 test_month_end = 'May'
 test_day_start = None
-test_day_end = None
+test_day_end = 14
 
-model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation_oa1.osm'
+model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation_oa1_STRAIGHT.osm'
 
 # exp_name = 'Tester'
 # exp_name = 'act8_bdq_soft_td_1hr_SPLIT_reward_1zn_1week_overfit'
-exp_name = 'lr_scheduler_testing_pretrained_fixed'
+exp_name = 'act5_simpler_bem_1week'
 
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 1000,
-    'skip_benchmark': False,
+    'skip_benchmark': True,
     'exploit_only': False,
     'test': True,
     'load_model': r'',
-    'print_values': False,
+    'print_values': True,
     'experiment_desc': 'Testing new PER RNN'
 }
 
@@ -165,7 +165,7 @@ if not experiment_params_dict['exploit_only']:
         continued_params_dict = {**continued_params_dict, **{'alpha_start': run.alpha_start,
                                                              'betta_start': run.betta_start}}
 
-    reporting_freq = 15
+    reporting_freq = 10
     for epoch in range(run_limit):
 
         if epoch % reporting_freq == 0:

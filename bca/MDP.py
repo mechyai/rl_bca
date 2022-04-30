@@ -86,10 +86,10 @@ tc_vars = {
     'rtp': [('Schedule Value', f'ERCOT RTM {year}'), normalize_min_max_saturate, 0, 250],
     'dap0': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 0hr Ahead'), normalize_min_max_saturate, 0, 250],
     'dap1': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 1hr Ahead'), normalize_min_max_saturate, 0, 250],
-    'dap2': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 2hr Ahead'), normalize_min_max_saturate, 0, 250],
-    'dap3': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 3hr Ahead'), normalize_min_max_saturate, 0, 250],
-    'dap4': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 4hr Ahead'), normalize_min_max_saturate, 0, 250],
-    'dap5': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 5hr Ahead'), normalize_min_max_saturate, 0, 250],
+    # 'dap2': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 2hr Ahead'), normalize_min_max_saturate, 0, 250],
+    # 'dap3': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 3hr Ahead'), normalize_min_max_saturate, 0, 250],
+    # 'dap4': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 4hr Ahead'), normalize_min_max_saturate, 0, 250],
+    # 'dap5': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 5hr Ahead'), normalize_min_max_saturate, 0, 250],
     # 'dap6': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 6hr Ahead'), normalize_min_max_saturate, 0, 500],
     # 'dap7': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 7hr Ahead'), normalize_min_max_saturate, 0, 500],
     # 'dap8': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 8hr Ahead'), normalize_min_max_saturate, 0, 500],
@@ -188,12 +188,12 @@ tc_meters = {
 tc_weather = {  # used for current and forecasted weather
     'oa_rh': ['outdoor_relative_humidity', normalize_min_max_saturate, 0, 100],  # IDD - %RH, 0-110
     'oa_db': ['outdoor_dry_bulb', normalize_min_max_saturate, outdoor_temp_min, outdoor_temp_max],  # IDD - C, -70-70
-    'oa_pa': ['outdoor_barometric_pressure', normalize_min_max_saturate, 90000, 120000],  # IDD - Pa, 31000-120000
+    # 'oa_pa': ['outdoor_barometric_pressure', normalize_min_max_saturate, 90000, 120000],  # IDD - Pa, 31000-120000
     'sun_up': ['sun_is_up', digitize_bool],  # T/F
     # 'rain': ['is_raining', digitize_bool],  # T/F
     # 'snow': ['is_snowing', digitize_bool],  # T/F
-    'wind_dir': ['wind_direction', normalize_min_max_strict, 0, 360],  # IDD - deg, 0-360
-    'wind_speed': ['wind_speed', normalize_min_max_strict, 0, 40]  # IDD - m/s, 0-40
+    # 'wind_dir': ['wind_direction', normalize_min_max_strict, 0, 360],  # IDD - deg, 0-360
+    # 'wind_speed': ['wind_speed', normalize_min_max_strict, 0, 40]  # IDD - m/s, 0-40
 }
 
 # ACTION SPACE (& Auxiliary Control)

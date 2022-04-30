@@ -27,7 +27,7 @@ class RunManager:
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
-        'eps_start': 0.25,
+        'eps_start': 0.20,
         'eps_end': 0.01,
         'eps_decay': 1e-6,
 
@@ -36,17 +36,17 @@ class RunManager:
         'batch_size': 128,
 
         # DQN or BDQ
-        'model': 3,  # 1=DQN, 2=Dueling DQN, 3=BDQ
+        'model': 2,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
-        'PER': False,
+        'PER': True,
         # RNN
         'rnn': False,
 
         # -- BDQ --
         # Fixed
-        'observation_dim': 54,
+        'observation_dim': 18,
         'action_branches': action_branches,  # n building zones
-        'actuation_function': 8,
+        'actuation_function': 5,
 
         # TD Update
         'optimizer': 'Adagrad',
@@ -56,10 +56,10 @@ class RunManager:
 
         # Reward
         'reward_aggregation': 'sum',  # sum or mean
-        'reward_sparsity_ts': 12,
-        'reward_scale': 0.005,
+        'reward_sparsity_ts': 1,
+        'reward_scale': 0.1,
         'reward_clipping': 0,
-        'lambda_rtp': 0.005,
+        'lambda_rtp': 0.01,
 
         # Network mods
         'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
@@ -76,21 +76,21 @@ class RunManager:
     if selected_params['model'] == 2:
         # Dueling-DQN
         architecture_params = {
-            'shared_network_size': [128, 128],
-            'value_stream_size': [64, 64],
-            'advantage_stream_size': [32, 32]
+            'shared_network_size': [512, 512],
+            'value_stream_size': [256, 256],
+            'advantage_stream_size': [256, 256]
         }
         selected_params = {**selected_params, **architecture_params}
 
     if selected_params['model'] == 3:
         # BDQ-based
         architecture_params = {
-            'shared_network_size': [124],
+            'shared_network_size': [124, 124],
             'value_stream_size': [124, 64],
             'advantage_streams_size': [64, 64],
 
             'combine_reward': False,  # to keep zone reward contributions separate or not
-            'td_target': '',  # mean or max or empty ''
+            'td_target': 'mean',  # mean or max or empty ''
 
             'rescale_shared_grad_factor': 1 / (action_branches)
 
@@ -106,8 +106,8 @@ class RunManager:
 
             # -- BDQ Architecture --
             'lstm': True,
-            'rnn_hidden_size': 64,
-            'rnn_num_layers': 1,
+            'rnn_hidden_size': 96,
+            'rnn_num_layers': 2,
         }
         selected_params = {**selected_params, **rnn_params}
 
@@ -115,8 +115,8 @@ class RunManager:
         per_params = {
             'alpha_start': 1,
             'alpha_decay_factor': None,
-            'betta_start': 0.5,
-            'betta_decay_factor': 5e-7,
+            'betta_start': 0.6,
+            'betta_decay_factor': 5e-6,
         }
         selected_params = {**selected_params, **per_params}
 

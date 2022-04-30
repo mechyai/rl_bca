@@ -311,8 +311,7 @@ class Agent:
         self.time = self.sim.get_ems_data(['t_datetimes'])
         self.var_vals = self.mdp.update_ems_value_from_dict(self.sim.get_ems_data(self.var_names, return_dict=True))
         self.meter_vals = self.mdp.update_ems_value_from_dict(self.sim.get_ems_data(self.meter_names, return_dict=True))
-        self.weather_vals = self.mdp.update_ems_value_from_dict(
-            self.sim.get_ems_data(self.weather_names, return_dict=True))
+        self.weather_vals = self.mdp.update_ems_value_from_dict(self.sim.get_ems_data(self.weather_names, return_dict=True))
 
         # -- MODIFY STATE --
         meter_names = [meter for meter in self.meter_names if 'fan' not in meter]  # remove unwanted fan meters
@@ -321,6 +320,17 @@ class Agent:
         self.var_encoded_vals = self.mdp.get_ems_encoded_values(self.var_names)
         self.meter_encoded_vals = self.mdp.get_ems_encoded_values(meter_names)
         self.weather_encoded_vals = self.mdp.get_ems_encoded_values(self.weather_names)
+
+        # -- REMOVE Uncontrolled Zones --
+        for zone_i_exclude in range(self.dqn_model.action_branches, 6):  # 5 total zones
+            # Manage meters
+            for key in dict(self.meter_encoded_vals).keys():
+                if f'zn{zone_i_exclude}' in key:
+                    del self.meter_encoded_vals[key]
+            # Manage vars
+            for key in dict(self.var_encoded_vals).keys():
+                if f'zn{zone_i_exclude}' in key:
+                    del self.var_encoded_vals[key]
 
         # -- Combine Heating & Cooling Electricity --
         # for meter_name in self.meter_encoded_vals.copy():
@@ -366,7 +376,7 @@ class Agent:
 
         # ----------------------------------- Weather Forecast -----------------------------------
         weather_forecast_list = []
-        hours_ahead = 6
+        hours_ahead = 1
         for hour in range(1, hours_ahead + 1, 1):
             current_hour = self.time.hour
             forecast_day = 'today' if current_hour + hour < 24 else 'tomorrow'
@@ -472,11 +482,11 @@ class Agent:
         return np.array(
             temperature_warnings_list +
             rtp_alert +
-            time_list +
-            weather_forecast_list +
-            building_hours_progress +
+            # time_list +
+            # weather_forecast_list +
+            # building_hours_progress +
             week_state_hot_encoding +
-            prior_data +
+            # prior_data +
             list(self.var_encoded_vals.values()) +
             list(self.weather_encoded_vals.values()) +
             list(self.meter_encoded_vals.values()),

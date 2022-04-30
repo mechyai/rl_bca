@@ -152,7 +152,8 @@ class DuelingDQN_RNN(nn.Module):
         self.step_count = 0
 
     def get_greedy_action(self, state_tensor):
-        x = state_tensor.to(device).T  # single action row vector
+        # x = state_tensor.to(device).mT  # single action row vector
+        x = state_tensor.to(device)  # single action row vector
 
         with torch.no_grad():
             q_value = self.policy_network(x).squeeze(0)
