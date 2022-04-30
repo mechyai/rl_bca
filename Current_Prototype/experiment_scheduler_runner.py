@@ -32,11 +32,11 @@ exp_name = 'act5_simpler_bem_1week'
 # -- Experiment Params --
 experiment_params_dict = {
     'epochs': 1000,
-    'skip_benchmark': True,
+    'skip_benchmark': False,
     'exploit_only': False,
     'test': True,
     'load_model': r'',
-    'print_values': True,
+    'print_values': False,
     'experiment_desc': 'Testing new PER RNN'
 }
 
@@ -230,15 +230,6 @@ if not experiment_params_dict['exploit_only']:
             model_name = f'bdq_epoch_{epoch}_of_{experiment_params_dict["epochs"]}'
             torch.save(my_bdq.policy_network.state_dict(),
                        os.path.join(exp_folder, model_name))
-
-        if (epoch + 1) % reporting_freq == 0 and epoch != 0:
-
-            # -- Save Model --
-            if experiment_params_dict['epochs'] > 0:
-                print('\n********** Saved Model ************\n')
-                model_name = f'bdq__epochs_{experiment_params_dict["epochs"]}'
-                torch.save(my_bdq.policy_network.state_dict(),
-                           os.path.join(exp_folder, model_name))
 
             # ----------------------------------------------- RUN TESTING ----------------------------------------------
 

@@ -50,7 +50,7 @@ class TensorboardManager:
         #     cooling_sp = 29.4
         #     heating_sp = 15.6
         # self.tb.add_scalar('Thermostat/Cooling_SP', cooling_sp, agent.current_step)
-        self.tb.add_scalar('Thermostat/Zone1_Temp', agent.sim.get_ems_data(['zn0_temp']), agent.current_step)
+        self.tb.add_scalar('Thermostat/Zone0_Temp', agent.sim.get_ems_data(['zn0_temp']), agent.current_step)
         # self.tb.add_scalar('Thermostat/Heating_SP', heating_sp, agent.current_step)
 
         # -- Sim Results --
@@ -82,30 +82,30 @@ class TensorboardManager:
         # self.tb.add_histogram('Warm Discomfort per Min', agent.warm_temps_histogram_data)
 
         # Hyperparameter
-        # self.tb.add_hparams(
-        #     hparam_dict=
-        #     {
-        #         **{
-        #             'run_type': run_type,
-        #             'run': run_count,
-        #             'epoch': epoch
-        #         },
-        #         **run._asdict()
-        #     },
-        #     metric_dict=
-        #     {
-        #         'Hparam Reward - All': agent.reward_sum,
-        #         'Hparam Reward - Comfort': agent.reward_component_sum[0],
-        #         'Hparam Reward - RTP': agent.reward_component_sum[1],
-        #         # 'Hparam Reward - Wind': agent.reward_component_sum[2],
-        #     },
-        #     # hparam_domain_discrete=
-        #     # {
-        #     #     **{
-        #     #         'run_type': ['benchmark', 'train', 'exploit', 'test'],
-        #     #         'run': list(range(run_limit)),
-        #     #         'epoch': list(range(experimental_params['epochs']))
-        #     #     },
-        #     #     **self.run_manager.selected_params._asdict()
-        #     # },
-        # )
+        self.tb.add_hparams(
+            hparam_dict=
+            {
+                **{
+                    'run_type': run_type,
+                    'run': run_count,
+                    'epoch': epoch
+                },
+                **run._asdict()
+            },
+            metric_dict=
+            {
+                'Hparam Reward - All': agent.reward_sum.sum(),
+                'Hparam Reward - Comfort': agent.reward_component_sum[0],
+                'Hparam Reward - RTP': agent.reward_component_sum[1],
+                # 'Hparam Reward - Wind': agent.reward_component_sum[2],
+            },
+            # hparam_domain_discrete=
+            # {
+            #     **{
+            #         'run_type': ['benchmark', 'train', 'exploit', 'test'],
+            #         'run': list(range(run_limit)),
+            #         'epoch': list(range(experimental_params['epochs']))
+            #     },
+            #     **self.run_manager.selected_params._asdict()
+            # },
+        )

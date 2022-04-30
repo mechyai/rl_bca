@@ -15,24 +15,25 @@ from bca_manager import _paths_config, experiment_manager
 year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
-train_day_start = 21
+train_day_start = 30
 train_day_end = None
 
 test_month_start = 'May'
 test_month_end = 'May'
 test_day_start = None
-test_day_end = 14
+test_day_end = 30
 
-model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
+model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation_oa1_STRAIGHT.osm'
+model_name = 'BEM_5z_2A_Base_Test.osm'
 
 run_modification = [5e-3, 1e-3, 5e-4, 5e-5, 1e-5, 5e-6, 1e-6]
 
-# exp_name = 'Tester'
-exp_name = 'cool_off_on_RNN_PER_soft_td'
+# exp_name = 'act5_duel_DQN_overfit_rtp_weight_hparam'
+exp_name = 'test'
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 10,
+    'epochs': 2,
     'run_index_start': 0,
     'run_index_limit': 100,
     'skip_baseline': False,
@@ -52,13 +53,9 @@ idf_final_file = os.path.join(bem_folder, f'BEM_V1_{year}.idf')
 epw_file = os.path.join(bem_folder, f'WeatherFiles/EPW/DallasTexas_{year}CST.epw')
 
 # Experiment Folder
-exp_root = os.path.join(_paths_config.repo_root, 'Current_Prototype/Experiments')
+exp_root = os.path.join(_paths_config.repo_root, 'Current_Prototype/HparamTest')
 exp_name = f'{datetime.datetime.now().strftime("%y%m%d-%H%M")}_{exp_name}'
-if experiment_params_dict['exploit_only']:
-    exp_folder = f'{exp_name}_EXPLOIT'
-else:
-    exp_folder = f'{exp_name}'
-exp_folder = os.path.join(exp_root, exp_folder)
+exp_folder = os.path.join(exp_root, f'{exp_name}')
 if not os.path.exists(exp_folder):
     os.makedirs(exp_folder)
 
@@ -160,6 +157,7 @@ for run_num, run in enumerate(runs):
     my_bdq = run_manager.create_bdq(run)
     my_memory = run_manager.create_replay_memory(run)
 
+    reporting_freq = 10
     start_step = 0
     continued_params_dict = {'epsilon_start': run.eps_start}
     if run.PER:
@@ -177,6 +175,9 @@ for run_num, run in enumerate(runs):
                                    f'run_{run_num + 1}-{run_limit}_TRAIN_'
                                    f'{experiment_params_dict["epochs"]}_{train_period}')
         )
+
+        # Update lr tracking
+        run = run._replace(learning_rate=my_bdq.lr_scheduler.optimizer.param_groups[0]['lr'])
 
         print('\n********** Train **********\n')
         time_start = time.time()
@@ -214,12 +215,16 @@ for run_num, run in enumerate(runs):
         continued_params_dict = my_agent.save_continued_params()
         my_memory.reset_between_episode()
 
+        # LR Scheduler
+        if run.lr_scheduler:
+            my_bdq.lr_scheduler.step(my_agent.loss_total)
+
         time_train = round(time_start - time.time(), 2) / 60
 
-        # -- Save Model --
-        if experiment_params_dict['epochs'] > 0:
+        # -- Save Model Intermediate --
+        if ((epoch + 1) % reporting_freq == 0 or epoch == experiment_params_dict['epochs'] - 1) and epoch != 0:
             print('\n********** Saved Model ************\n')
-            model_name = f'bdq_runs_{run_num + 1}_epochs_{experiment_params_dict["epochs"]}'
+            model_name = f'bdq_epoch_{epoch}_of_{experiment_params_dict["epochs"]}'
             torch.save(my_bdq.policy_network.state_dict(),
                        os.path.join(exp_folder, model_name))
 

@@ -32,15 +32,15 @@ class RunManager:
         'eps_decay': 1e-6,
 
         # --- Experience Replay ---
-        'replay_capacity': 2028,
+        'replay_capacity': 2048,
         'batch_size': 128,
 
         # DQN or BDQ
         'model': 2,  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
-        'PER': True,
+        'PER': False,
         # RNN
-        'rnn': True,
+        'rnn': False,
 
         # -- BDQ --
         # Fixed
@@ -57,7 +57,7 @@ class RunManager:
         # Reward
         'reward_aggregation': 'sum',  # sum or mean
         'reward_sparsity_ts': 1,
-        'reward_scale': 0.1,
+        'reward_scale': 0.5,
         'reward_clipping': 0,
         'lambda_rtp': 0.01,
 
@@ -76,25 +76,23 @@ class RunManager:
     if selected_params['model'] == 2:
         # Dueling-DQN
         architecture_params = {
-            'shared_network_size': [512, 512],
-            'value_stream_size': [256, 256],
-            'advantage_stream_size': [256, 256]
+            'duel_shared_network_size': [512, 512],
+            'duel_value_stream_size': [256, 256],
+            'duel_advantage_stream_size': [256, 256]
         }
         selected_params = {**selected_params, **architecture_params}
 
     if selected_params['model'] == 3:
         # BDQ-based
         architecture_params = {
-            'shared_network_size': [124, 124],
-            'value_stream_size': [124, 64],
-            'advantage_streams_size': [64, 64],
+            'bdq_shared_network_size': [124, 124],
+            'bdq_value_stream_size': [124, 64],
+            'bdq_advantage_streams_size': [64, 64],
 
             'combine_reward': False,  # to keep zone reward contributions separate or not
             'td_target': 'mean',  # mean or max or empty ''
 
             'rescale_shared_grad_factor': 1 / (action_branches)
-
-
         }
         selected_params = {**selected_params, **architecture_params}
 
@@ -128,54 +126,77 @@ class RunManager:
         # -- Agent Params --
         'observation_ts_frequency': [5],  # * [5, 10, 15],
         'actuation_ts_frequency': [5],  # * [5, 10, 15],
-        'learning_loops': [5],
+        'learning_loops': [10],
 
         # --- Behavioral Policy ---
-        'eps_start': [0.2, 0.05],
-        'eps_end': [0.001],
-        'eps_decay': [1e-4],
+        'eps_start': [0.2],
+        'eps_end': [0.01],
+        'eps_decay': [1e-6],
 
         # --- Experience Replay ---
-        'replay_capacity': [500, 2000],
-        'batch_size': [8, 32, 96],
+        'replay_capacity': [2048],
+        'batch_size': [128],
 
+        # DQN or BDQ
+        'model': [2],  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
         'PER': [False],
         # RNN
-        'rnn': [True],
+        'rnn': [False],
 
         # -- BDQ --
         # Fixed
-        'observation_dim': [61],
+        'observation_dim': [18],
         'action_branches': [action_branches],  # n building zones
         'actuation_function': [5],  # ----------------------------------------------------------------------------------
 
-        # Architecture
-        'shared_network_size_l1': [96],
-        'shared_network_size_l2': [96],
-        'value_stream_size_l1': [64],
-        'value_stream_size_l2': [64],
-        'advantage_streams_size_l1': [48],
-        'advantage_streams_size_l2': [0],
-
         # TD Update
         'optimizer': ['Adagrad'],
-        'learning_rate': [5e-4],
-        'lr_scheduler': [''],
-        'gamma': [0.8],
+        'learning_rate': [5e-1],
+        'lr_scheduler': ['ReduceLROnPlateau'],
+        'gamma': [0.9],
 
         # Reward
         'reward_aggregation': ['sum'],  # sum or mean
         'reward_sparsity_ts': [1],
-        'lambda_rtp': [0.3 * 3],
-        'reward_scale': [0.01],
+        'reward_scale': [0.5],
+        'reward_clipping': [0],
+        'lambda_rtp': [1, 2], #[2, 1, 0.5, 0.1, 0.05, 0.01, 0.005],
 
         # Network mods
-        'td_target': ['mean'],  # (0) mean or (1) max
-        'gradient_clip_norm': [2],  # [0, 1, 5, 10],  # 0 is nothing
-        'rescale_shared_grad_factor': [1 / (action_branches)],
-        'target_update_freq': [5e2, 5e3],  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
+        'gradient_clip_norm': [1],  # [0, 1, 5, 10],  # 0 is nothing
+        'target_update_freq': [0.01],  # [50, 150, 500, 1e3, 1e4],  # consider n learning loops too
     }
+
+    if 1 in hyperparameter_dict['model']:
+        # DQN-based
+        architecture_params = {
+            'network_size': [[124, 124, 64]]
+        }
+        hyperparameter_dict = {**hyperparameter_dict, **architecture_params}
+
+    if 2 in hyperparameter_dict['model']:
+        # Dueling-DQN
+        architecture_params = {
+            'duel_shared_network_size': [[512, 512]],
+            'duel_value_stream_size': [[256, 256]],
+            'duel_advantage_stream_size': [[256, 256]]
+        }
+        hyperparameter_dict = {**hyperparameter_dict, **architecture_params}
+
+    if 3 in hyperparameter_dict['model']:
+        # BDQ-based
+        architecture_params = {
+            'bdq_shared_network_size': [[124, 124]],
+            'bdq_value_stream_size': [[124, 64]],
+            'bdq_advantage_streams_size': [[64, 64]],
+
+            'combine_reward': [True],  # to keep zone reward contributions separate or not
+            'td_target': ['mean'],  # mean or max or empty ''
+
+            'rescale_shared_grad_factor': [1 / (action_branches)]
+        }
+        hyperparameter_dict = {**hyperparameter_dict, **architecture_params}
 
     if True in hyperparameter_dict['rnn']:
         rnn_params = {
@@ -185,7 +206,7 @@ class RunManager:
 
             # -- BDQ Architecture --
             'lstm': [True],
-            'rnn_hidden_size': [48, 96],
+            'rnn_hidden_size': [64, 128],
             'rnn_num_layers': [1, 2],
         }
         hyperparameter_dict = {**hyperparameter_dict, **rnn_params}
@@ -366,9 +387,9 @@ class RunManager:
                     rnn_num_layers=run.rnn_num_layers,
                     action_branches=run.action_branches,
                     action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
-                    shared_network_size=run.shared_network_size,
-                    value_stream_size=run.value_stream_size,
-                    advantage_stream_size=run.advantage_stream_size,
+                    shared_network_size=run.duel_shared_network_size,
+                    value_stream_size=run.duel_value_stream_size,
+                    advantage_stream_size=run.duel_advantage_stream_size,
                     target_update_freq=run.target_update_freq,
                     learning_rate=run.learning_rate,
                     optimizer=run.optimizer,
@@ -382,9 +403,9 @@ class RunManager:
                     observation_dim=run.observation_dim,
                     action_branches=run.action_branches,
                     action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
-                    shared_network_size=run.shared_network_size,
-                    value_stream_size=run.value_stream_size,
-                    advantage_stream_size=run.advantage_stream_size,
+                    shared_network_size=run.duel_shared_network_size,
+                    value_stream_size=run.duel_value_stream_size,
+                    advantage_stream_size=run.duel_advantage_stream_size,
                     target_update_freq=run.target_update_freq,
                     learning_rate=run.learning_rate,
                     optimizer=run.optimizer,
@@ -401,9 +422,9 @@ class RunManager:
                     rnn_num_layers=run.rnn_num_layers,
                     action_branches=run.action_branches,
                     action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
-                    shared_network_size=run.shared_network_size,
-                    value_stream_size=run.value_stream_size,
-                    advantage_streams_size=run.advantage_streams_size,
+                    shared_network_size=run.bdq_shared_network_size,
+                    value_stream_size=run.bdq_value_stream_size,
+                    advantage_streams_size=run.bdq_advantage_streams_size,
                     target_update_freq=run.target_update_freq,
                     learning_rate=run.learning_rate,
                     optimizer=run.optimizer,
@@ -419,9 +440,9 @@ class RunManager:
                     observation_dim=run.observation_dim,
                     action_branches=run.action_branches,
                     action_dim=Agent.actuation_function_dim(actuation_function_id=run.actuation_function),
-                    shared_network_size=run.shared_network_size,
-                    value_stream_size=run.value_stream_size,
-                    advantage_streams_size=run.advantage_streams_size,
+                    shared_network_size=run.bdq_shared_network_size,
+                    value_stream_size=run.bdq_value_stream_size,
+                    advantage_streams_size=run.bdq_advantage_streams_size,
                     target_update_freq=run.target_update_freq,
                     learning_rate=run.learning_rate,
                     optimizer=run.optimizer,
