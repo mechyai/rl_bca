@@ -40,7 +40,7 @@ class RunManager:
         # PER
         'PER': True,
         # RNN
-        'rnn': False,
+        'rnn': True,
 
         # -- BDQ --
         # Fixed
@@ -106,7 +106,7 @@ class RunManager:
 
             # -- BDQ Architecture --
             'lstm': True,
-            'rnn_hidden_size': 96,
+            'rnn_hidden_size': 64,
             'rnn_num_layers': 2,
         }
         selected_params = {**selected_params, **rnn_params}

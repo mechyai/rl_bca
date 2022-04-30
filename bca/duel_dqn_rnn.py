@@ -98,7 +98,7 @@ class DuelingQNetwork_RNN(nn.Module):
         advs = self.advantage_stream(out)
 
         # Q-Value - Recombine Branches
-        q_vals = value.unsqueeze(2) + advs - advs.mean(1, keepdim=True)  # identifiable method eqn #1
+        q_vals = value + advs - advs.mean(1, keepdim=True)  # identifiable method eqn #1
 
         return q_vals
 

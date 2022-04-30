@@ -23,7 +23,7 @@ exp_name = '_testing'
 # model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation.osm'
 model_name = 'BEM_5z_2A_Base_Test.osm'
 
-run_type = 'exploit'
+run_type = 'train'
 run_modification = [5e-2]  #, 5e-5, 1e-5, 5e-6, 1e-6]
 
 # -- Experiment Params --
