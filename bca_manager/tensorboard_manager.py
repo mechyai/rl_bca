@@ -50,7 +50,7 @@ class TensorboardManager:
         #     cooling_sp = 29.4
         #     heating_sp = 15.6
         # self.tb.add_scalar('Thermostat/Cooling_SP', cooling_sp, agent.current_step)
-        self.tb.add_scalar('Thermostat/Zone1_Temp', agent.sim.get_ems_data(['zn1_temp']), agent.current_step)
+        self.tb.add_scalar('Thermostat/Zone1_Temp', agent.sim.get_ems_data(['zn0_temp']), agent.current_step)
         # self.tb.add_scalar('Thermostat/Heating_SP', heating_sp, agent.current_step)
 
         # -- Sim Results --
