@@ -131,6 +131,7 @@ class Agent:
         self.indoor_temp_unoccupied_range = np.array(
             [15.6 - 0.5, 29.4 + 0.5])  # mimic night cycle manager, + 1/2 temp tolerance
         self.indoor_temp_limits = np.array([15, 30])  # ??? needed?
+        self.setpoint_deadband = 2.5  # distance between cooling and heating sp
 
         # -- TIMING --
         self.weekend_days = ['Friday', 'Saturday', 'Sunday', 'Monday']
@@ -1027,8 +1028,8 @@ class Agent:
                 zone_action = action[zone]
                 zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
 
-                heating_sp = 15.56
                 cooling_sp = cooling_setpoints[zone_action]
+                heating_sp = 21.1 if cooling_sp - 21.1 > self.setpoint_deadband else cooling_sp - self.setpoint_deadband
 
                 self.actuation_dict[f'zn{zone}_heating_sp'] = 15.56
                 self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
