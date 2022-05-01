@@ -72,8 +72,6 @@ zn2 = 'Perimeter_ZN_2 ZN'
 zn3 = 'Perimeter_ZN_3 ZN'
 zn4 = 'Perimeter_ZN_4 ZN'
 
-# Rename overwrite
-zn0 = zn1
 
 
 tc_intvars = {}
@@ -89,8 +87,8 @@ tc_vars = {
     'rtp': [('Schedule Value', f'ERCOT RTM {year}'), normalize_min_max_saturate, 0, 250],
     'dap0': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 0hr Ahead'), normalize_min_max_saturate, 0, 250],
     'dap1': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 1hr Ahead'), normalize_min_max_saturate, 0, 250],
-    # 'dap2': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 2hr Ahead'), normalize_min_max_saturate, 0, 250],
-    # 'dap3': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 3hr Ahead'), normalize_min_max_saturate, 0, 250],
+    'dap2': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 2hr Ahead'), normalize_min_max_saturate, 0, 250],
+    'dap3': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 3hr Ahead'), normalize_min_max_saturate, 0, 250],
     # 'dap4': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 4hr Ahead'), normalize_min_max_saturate, 0, 250],
     # 'dap5': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 5hr Ahead'), normalize_min_max_saturate, 0, 250],
     # 'dap6': [('Schedule Value', f'ERCOT DAM 12-Hr Forecast {year} - 6hr Ahead'), normalize_min_max_saturate, 0, 500],
@@ -113,23 +111,23 @@ tc_vars = {
     # 'zn0_fan_electricity': [('Fan Electricity Energy', zn0)],
 
     # -- Zone 1 --
-    'zn1_temp': [('Zone Air Temperature', zn1), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
+    # 'zn1_temp': [('Zone Air Temperature', zn1), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
     # 'zn1_RH': [('Zone Air Relative Humidity', zn1), normalize_high_low_saturate, utils.f_to_c(0), utils.f_to_c(100)],
-    'zn1_cooling_sp_var': [('Zone Thermostat Cooling Setpoint Temperature', zn1), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
+    # 'zn1_cooling_sp_var': [('Zone Thermostat Cooling Setpoint Temperature', zn1), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
     # 'zn1_heating_sp_var': [('Zone Thermostat Heating Setpoint Temperature', zn1)],
     # 'zn1_fan_electricity': [('Fan Electricity Energy', zn1)],
 
     # -- Zone 2 --
-    'zn2_temp': [('Zone Air Temperature', zn2), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
+    # 'zn2_temp': [('Zone Air Temperature', zn2), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
     # 'zn2_RH': [('Zone Air Relative Humidity', zn2), normalize_high_low_saturate, utils.f_to_c(0), utils.f_to_c(100)],
-    'zn2_cooling_sp_var': [('Zone Thermostat Cooling Setpoint Temperature', zn2), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
+    # 'zn2_cooling_sp_var': [('Zone Thermostat Cooling Setpoint Temperature', zn2), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
     # 'zn2_heating_sp_var': [('Zone Thermostat Heating Setpoint Temperature', zn2)],
     # 'zn2_fan_electricity': [('Fan Electricity Energy', zn2)],
 
     # -- Zone 3 --
-    'zn3_temp': [('Zone Air Temperature', zn3), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
+    # 'zn3_temp': [('Zone Air Temperature', zn3), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
     # 'zn3_RH': [('Zone Air Relative Humidity', zn3), normalize_high_low_saturate, utils.f_to_c(0), utils.f_to_c(100)],
-    'zn3_cooling_sp_var': [('Zone Thermostat Cooling Setpoint Temperature', zn3), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
+    # 'zn3_cooling_sp_var': [('Zone Thermostat Cooling Setpoint Temperature', zn3), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
     # 'zn3_heating_sp_var': [('Zone Thermostat Heating Setpoint Temperature', zn3)],
     # 'zn3_fan_electricity': [('Fan Electricity Energy', zn3)],
 

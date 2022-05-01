@@ -44,7 +44,7 @@ class RunManager:
 
         # -- BDQ --
         # Fixed
-        'observation_dim': 18,
+        'observation_dim': 22,
         'action_branches': action_branches,  # n building zones
         'actuation_function': 5,
 
@@ -146,7 +146,7 @@ class RunManager:
 
         # -- BDQ --
         # Fixed
-        'observation_dim': [18],
+        'observation_dim': [22],
         'action_branches': [action_branches],  # n building zones
         'actuation_function': [5],  # ----------------------------------------------------------------------------------
 
@@ -161,7 +161,7 @@ class RunManager:
         'reward_sparsity_ts': [1],
         'reward_scale': [0.5],
         'reward_clipping': [0],
-        'lambda_rtp': [0.3, 0.2, 0.1],
+        'lambda_rtp': [0.2, 0.1, 0.05],
 
         # Network mods
         'gradient_clip_norm': [1],  # [0, 1, 5, 10],  # 0 is nothing

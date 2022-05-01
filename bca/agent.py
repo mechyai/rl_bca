@@ -50,7 +50,7 @@ class Agent:
             2: 6,  # act_strict_setpoints_2
             3: 3,  # act_step_strict_setpoints_3
             4: 6,  # act_default_adjustments_4
-            5: 10,  # act_cool_only_5
+            5: 9,  # act_cool_only_5
             6: 7,  # act_cool_only_default_adjustment_6
             7: 2,  # act_cool_only_on_off_7
             8: 3,  # act_cool_only_on_off_stay_8
@@ -367,7 +367,7 @@ class Agent:
         # ----------------------------------- RTP High-Price Signal -----------------------------------
         rtp = self.var_vals['rtp']
         # Add extra RTP pricing state signal
-        if rtp > 75:
+        if rtp > 50:
             rtp_alert = [1]
         elif rtp < 15:
             rtp_alert = [-1]
@@ -484,7 +484,7 @@ class Agent:
             rtp_alert +
             # time_list +
             # weather_forecast_list +
-            # building_hours_progress +
+            building_hours_progress +
             week_state_hot_encoding +
             # prior_data +
             list(self.var_encoded_vals.values()) +
@@ -969,7 +969,7 @@ class Agent:
         """
 
         # Check action space dim aligns with created BDQ
-        self._action_dimension_check(this_actuation_functions_dims=10)
+        self._action_dimension_check(this_actuation_functions_dims=9)
 
         if actuate:
             # -- EXPLOITATION vs EXPLORATION --
@@ -1011,15 +1011,15 @@ class Agent:
             #     9: 31
             # }
             cooling_setpoints = {
-                1: 19.1,
-                2: 21.1,  # LB Comfort
-                3: 21.8,
-                4: 22.5,
-                5: 23.2,
-                6: 23.89,  # UB Comfort
-                7: 24.5,
-                8: 25.5,
-                9: 26.5
+                0: 19.1,
+                1: 21.1,  # LB Comfort
+                2: 21.8,
+                3: 22.5,
+                4: 23.2,
+                5: 23.89,  # UB Comfort
+                6: 24.5,
+                7: 25.5,
+                8: 26.5
             }
 
             action_cmd_print = cooling_setpoints
