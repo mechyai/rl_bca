@@ -276,7 +276,7 @@ class Agent:
         self.reward_sum += self.reward
 
         # Don't record results until SequenceMemory (RNN) has enough results to inference
-        if not self.rnn_start and self.run.rnn:
+        if not self.rnn_start and self.run.rnn and learn:
             # Reset performance results
             self.comfort_dissatisfaction = 0
             self.hvac_rtp_costs = 0
