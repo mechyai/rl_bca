@@ -23,13 +23,13 @@ test_month_end = 'May'
 test_day_start = 14
 test_day_end = None
 
-# model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation_oa1_STRAIGHT.osm'
-model_name = 'BEM_5z_2A_Base_Test.osm'
+model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation_oa1_STRAIGHT.osm'
+# model_name = 'BEM_5z_2A_Base_Test.osm'
 
-# exp_name = 'act5_duel_DQN_overfit_rtp_weight_hparam'
-exp_name = 'test'
+exp_name = 'act5_duel_DQN_overfit_rtp_weight_hparam_2nd'
+# exp_name = 'test'
 
-reporting_freq = 1
+reporting_freq = 15
 
 # -- Experiment Params --
 experiment_params_dict = {
@@ -204,9 +204,9 @@ for run_num, run in enumerate(runs):
             agent=my_agent,
             experimental_params=experiment_params_dict,
             run=run,
-            run_count=0,
+            run_count=run_num,
             run_limit=run_limit,
-            epoch=0,
+            epoch=epoch,
             run_type=run_type
         )
 
@@ -259,9 +259,9 @@ for run_num, run in enumerate(runs):
         agent=my_agent,
         experimental_params=experiment_params_dict,
         run=run,
-        run_count=0,
+        run_count=run_num,
         run_limit=run_limit,
-        epoch=0,
+        epoch=epoch,
         run_type=run_type
     )
 
@@ -300,9 +300,9 @@ for run_num, run in enumerate(runs):
         agent=agent,
         experimental_params=experiment_params_dict,
         run=run,
-        run_count=0,
+        run_count=run_num,
         run_limit=run_limit,
-        epoch=0,
+        epoch=epoch,
         run_type=run_type
     )
 

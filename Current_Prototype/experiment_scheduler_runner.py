@@ -209,7 +209,7 @@ if not experiment_params_dict['exploit_only']:
             run=run,
             run_count=0,
             run_limit=run_limit,
-            epoch=0,
+            epoch=epoch,
             run_type=run_type
         )
 
@@ -265,7 +265,7 @@ if not experiment_params_dict['exploit_only']:
                 run=run,
                 run_count=0,
                 run_limit=run_limit,
-                epoch=0,
+                epoch=epoch,
                 run_type=run_type
             )
 
@@ -304,7 +304,7 @@ if not experiment_params_dict['exploit_only']:
                 run=run,
                 run_count=0,
                 run_limit=run_limit,
-                epoch=0,
+                epoch=epoch,
                 run_type=run_type
             )
 
