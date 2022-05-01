@@ -214,10 +214,10 @@ class Agent:
             self.reward = np.fmax(self.reward, self.run.reward_clipping)
 
         # Get total reward per component
-        reward_component_sums = np.array(list(self.reward_dict.values())).sum(axis=0)  # sum reward per component
+        reward_component_sums = np.array(list(self.reward_dict.values())).sum(axis=0) * self.run.reward_scale  # sum reward per component
         self.reward_component_sum = np.array(list(zip(self.reward_component_sum, reward_component_sums))).sum(axis=1)
         # Get total reward per zone
-        reward_zone_sums = np.array(list(self.reward_dict.values())).sum(axis=1)  # sum reward per zone
+        reward_zone_sums = np.array(list(self.reward_dict.values())).sum(axis=1) * self.run.reward_scale  # sum reward per zone
         self.reward_zone_sum = np.array(list(zip(self.reward_zone_sum, reward_zone_sums))).sum(axis=1)
 
         # -- STORE INTERACTIONS --
@@ -1323,10 +1323,9 @@ class Agent:
                 too_warm_temps = too_warm_temps[too_warm_temps != 0]  # get only too cold zone temps
 
                 # MSE penalty for temps above and below comfortable bounds
-                reward = - (((too_cold_temps - temp_bounds_cold[:, 0]) * 2) ** 2).sum() \
-                         - ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
-                # reward = - (abs(too_cold_temps - temp_bounds_cold[:, 0])).sum() \
-                #          - (abs(too_warm_temps - temp_bounds_warm[:, 1])).sum()
+                reward = - (abs(too_cold_temps - temp_bounds_cold[:, 0]) ** self.run.comfort_p_norm).sum() \
+                         - (abs(too_warm_temps - temp_bounds_warm[:, 1]) ** self.run.comfort_p_norm).sum()
+
                 reward *= lambda_comfort
 
                 reward_per_component = np.append(reward_per_component, reward)
