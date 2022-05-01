@@ -1029,9 +1029,10 @@ class Agent:
                 zone_temp = self.mdp.ems_master_list[f'zn{zone}_temp'].value
 
                 cooling_sp = cooling_setpoints[zone_action]
-                heating_sp = 21.1 if cooling_sp - 21.1 > self.setpoint_deadband else cooling_sp - self.setpoint_deadband
+                # heating_sp = 21.1 if cooling_sp - 21.1 > self.setpoint_deadband else cooling_sp - self.setpoint_deadband
+                heating_sp = 15.56
 
-                self.actuation_dict[f'zn{zone}_heating_sp'] = 15.56
+                self.actuation_dict[f'zn{zone}_heating_sp'] = heating_sp
                 self.actuation_dict[f'zn{zone}_cooling_sp'] = cooling_sp
 
                 if self._print:
@@ -1326,9 +1327,7 @@ class Agent:
                 # MSE penalty for temps above and below comfortable bounds
                 reward = - (abs(too_cold_temps - temp_bounds_cold[:, 0]) ** self.run.comfort_p_norm).sum() \
                          - (abs(too_warm_temps - temp_bounds_warm[:, 1]) ** self.run.comfort_p_norm).sum()
-
                 reward *= lambda_comfort
-
                 reward_per_component = np.append(reward_per_component, reward)
 
                 """
@@ -1361,7 +1360,6 @@ class Agent:
                 # reward = (cooling_timesteps_cost + heating_timesteps_cost).sum()
                 reward = cooling_timesteps_cost.sum()
                 reward *= lambda_rtp
-
                 reward_per_component = np.append(reward_per_component, reward)
 
                 """
