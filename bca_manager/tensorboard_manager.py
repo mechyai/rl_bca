@@ -80,17 +80,26 @@ class TensorboardManager:
         # self.tb.add_histogram('Temp Discomfort per Min', discomfort_histogram)
         # self.tb.add_histogram('Cold Discomfort per Min', agent.cold_temps_histogram_data)
         # self.tb.add_histogram('Warm Discomfort per Min', agent.warm_temps_histogram_data)
-
+        #
         # Hyperparameter
+        #Pre-process hyperparameter dict
+        run_hparam = run._asdict()
+        for key, value in dict(run_hparam).items():
+            if hasattr(value, '__iter__') and not isinstance(value, str):
+                for i, value_i in enumerate(value):
+                    new_key = key + f'_{i+1}'
+                    run_hparam[new_key] = value_i
+                del run_hparam[key]
+
         self.tb.add_hparams(
             hparam_dict=
             {
                 **{
-                    'run_type': run_type,
+                    # 'run_type': run_type,
                     'run': run_count,
                     'epoch': epoch
                 },
-                **run._asdict()
+                **run_hparam
             },
             metric_dict=
             {
