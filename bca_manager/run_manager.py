@@ -27,9 +27,9 @@ class RunManager:
         'learning_loops': 10,
 
         # --- Behavioral Policy ---
-        'eps_start': 0.20,
+        'eps_start': 0.25,
         'eps_end': 0.01,
-        'eps_decay': 1e-6,
+        'eps_decay': 5e-7,
 
         # --- Experience Replay ---
         'replay_capacity': 2048,
@@ -40,7 +40,7 @@ class RunManager:
         # PER
         'PER': False,
         # RNN
-        'rnn': False,
+        'rnn': True,
 
         # -- BDQ --
         # Fixed
@@ -104,7 +104,7 @@ class RunManager:
 
             # -- BDQ Architecture --
             'lstm': True,
-            'rnn_hidden_size': 64,
+            'rnn_hidden_size': 128,
             'rnn_num_layers': 2,
         }
         selected_params = {**selected_params, **rnn_params}
@@ -161,7 +161,7 @@ class RunManager:
         'reward_sparsity_ts': [1],
         'reward_scale': [0.5],
         'reward_clipping': [0],
-        'lambda_rtp': [1, 2], #[2, 1, 0.5, 0.1, 0.05, 0.01, 0.005],
+        'lambda_rtp': [0.3, 0.2, 0.1],
 
         # Network mods
         'gradient_clip_norm': [1],  # [0, 1, 5, 10],  # 0 is nothing
