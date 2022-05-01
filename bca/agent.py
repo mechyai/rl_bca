@@ -998,17 +998,28 @@ class Agent:
                 self.action = action  # save as agent action
 
             # -- ENCODE ACTIONS TO HVAC COMMAND --
+            # cooling_setpoints = {
+            #     0: 18.1,
+            #     1: 19.1,
+            #     2: 21.1,  # LB Comfort
+            #     3: 22,
+            #     4: 23,
+            #     5: 23.89,  # UB Comfort
+            #     6: 25.72,
+            #     7: 27.56,
+            #     8: 29.4,
+            #     9: 31
+            # }
             cooling_setpoints = {
-                0: 18.1,
                 1: 19.1,
                 2: 21.1,  # LB Comfort
-                3: 22,
-                4: 23,
-                5: 23.89,  # UB Comfort
-                6: 25.72,
-                7: 27.56,
-                8: 29.4,
-                9: 31
+                3: 21.8,
+                4: 22.5,
+                5: 23.2,
+                6: 23.89,  # UB Comfort
+                7: 24.5,
+                8: 25.5,
+                9: 26.5
             }
 
             action_cmd_print = cooling_setpoints
