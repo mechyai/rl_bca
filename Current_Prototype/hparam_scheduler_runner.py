@@ -16,13 +16,11 @@ year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
 train_day_start = 21
-train_day_start = 30
 train_day_end = None
 
 test_month_start = 'May'
 test_month_end = 'May'
 test_day_start = 14
-test_day_start = 30
 test_day_end = None
 
 # model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation_oa1_STRAIGHT.osm'
@@ -35,7 +33,7 @@ reporting_freq = 1
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 2,
+    'epochs': 50,
     'run_index_start': 0,
     'run_index_limit': 100,
     'skip_baseline': False,
