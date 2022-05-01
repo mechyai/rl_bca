@@ -60,6 +60,7 @@ class RunManager:
         'reward_scale': 0.5,
         'reward_clipping': 0,
         'lambda_rtp': 0.01,
+        'comfort_p_norm': 1,
 
         # Network mods
         'gradient_clip_norm': 1,  # [0, 1, 5, 10],  # 0 is nothing
@@ -162,6 +163,7 @@ class RunManager:
         'reward_scale': [0.5],
         'reward_clipping': [0],
         'lambda_rtp': [0.2, 0.1, 0.05],
+        'comfort_p_norm': [1, 2],
 
         # Network mods
         'gradient_clip_norm': [1],  # [0, 1, 5, 10],  # 0 is nothing
