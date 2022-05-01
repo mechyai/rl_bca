@@ -72,6 +72,9 @@ zn2 = 'Perimeter_ZN_2 ZN'
 zn3 = 'Perimeter_ZN_3 ZN'
 zn4 = 'Perimeter_ZN_4 ZN'
 
+# Rename overwrite
+zn0 = zn1
+
 
 tc_intvars = {}
 
