@@ -25,7 +25,7 @@ def run_experiment(run: RunManager.Run,
                    ):
     """This runs an entire simulation for given parameters and objects."""
 
-    if run_type == 'benchmark':
+    if run_type == 'benchmark' or run_type == 'baseline':
         learn = False
         act = False
         exploit = False
