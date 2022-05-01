@@ -3099,7 +3099,7 @@ OS:Schedule:Day,
   ,                                       !- Interpolate to Timestep
   24,                                     !- Hour 1
   0,                                      !- Minute 1
-  0;                                      !- Value Until Time 1
+  1;                                      !- Value Until Time 1
 
 OS:Schedule:Day,
   {f711fa7a-a07d-4654-b18e-43d17c12df22}, !- Handle
