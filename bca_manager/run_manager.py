@@ -143,7 +143,7 @@ class RunManager:
         # PER
         'PER': [False],
         # RNN
-        'rnn': [False],
+        'rnn': [True],
 
         # -- BDQ --
         # Fixed
@@ -162,7 +162,7 @@ class RunManager:
         'reward_sparsity_ts': [1],
         'reward_scale': [0.5],
         'reward_clipping': [0],
-        'lambda_rtp': [0.2, 0.1, 0.05],
+        'lambda_rtp': [0.1, 0.05],
         'comfort_p_norm': [1, 2],
 
         # Network mods
