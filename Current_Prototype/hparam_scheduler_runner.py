@@ -15,7 +15,7 @@ from bca_manager import _paths_config, experiment_manager
 year = MDP.year
 train_month_start = 'April'
 train_month_end = 'April'
-train_day_start = 21
+train_day_start = 23
 train_day_end = None
 
 test_month_start = 'May'
@@ -26,14 +26,14 @@ test_day_end = None
 model_name = 'BEM_5z_2A_Base_Testbed_no_ventilation_oa1_STRAIGHT.osm'
 # model_name = 'BEM_5z_2A_Base_Test.osm'
 
-exp_name = 'act5_duel_DQN_overfit_rtp_weight_hparam_2nd'
+exp_name = 'act5_duel_DQN_RNN_overfit_rtp_weight_comfort_pnorm_2nd'
 # exp_name = 'test'
 
-reporting_freq = 15
+reporting_freq = 25
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 50,
+    'epochs': 100,
     'run_index_start': 0,
     'run_index_limit': 100,
     'skip_baseline': False,
@@ -164,6 +164,13 @@ for run_num, run in enumerate(runs):
     if run.PER:
         continued_params_dict = {**continued_params_dict, **{'alpha_start': run.alpha_start,
                                                              'betta_start': run.betta_start}}
+    # ---- Tensor Board ----
+    my_tb = TensorboardManager(
+        run_manager,
+        name_path=os.path.join(exp_folder,
+                               f'run_{run_num}-{run_limit}_TRAIN_'
+                               f'{experiment_params_dict["epochs"]}_{train_period}')
+    )
 
     # ---- Tensor Board ----
     my_tb = TensorboardManager(
