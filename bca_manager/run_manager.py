@@ -29,7 +29,7 @@ class RunManager:
         # --- Behavioral Policy ---
         'eps_start': 0.25,
         'eps_end': 0.01,
-        'eps_decay': 5e-7,
+        'eps_decay': 5e-6,
 
         # --- Experience Replay ---
         'replay_capacity': 2048,
@@ -141,7 +141,7 @@ class RunManager:
         # DQN or BDQ
         'model': [2],  # 1=DQN, 2=Dueling DQN, 3=BDQ
         # PER
-        'PER': [False],
+        'PER': [True],
         # RNN
         'rnn': [True],
 
@@ -204,12 +204,12 @@ class RunManager:
         rnn_params = {
             # -- State Sequence --
             'sequence_ts_spacing': [1, 6],
-            'sequence_length': [6, 12],
+            'sequence_length': [6],
 
             # -- BDQ Architecture --
             'lstm': [True],
-            'rnn_hidden_size': [64, 128],
-            'rnn_num_layers': [1, 2],
+            'rnn_hidden_size': [128],
+            'rnn_num_layers': [2],
         }
         hyperparameter_dict = {**hyperparameter_dict, **rnn_params}
 
