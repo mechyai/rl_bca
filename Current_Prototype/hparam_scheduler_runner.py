@@ -33,7 +33,7 @@ reporting_freq = 25
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 100,
+    'epochs': 50,
     'run_index_start': 0,
     'run_index_limit': 100,
     'skip_baseline': False,
@@ -164,14 +164,6 @@ for run_num, run in enumerate(runs):
     if run.PER:
         continued_params_dict = {**continued_params_dict, **{'alpha_start': run.alpha_start,
                                                              'betta_start': run.betta_start}}
-    # ---- Tensor Board ----
-    my_tb = TensorboardManager(
-        run_manager,
-        name_path=os.path.join(exp_folder,
-                               f'run_{run_num}-{run_limit}_TRAIN_'
-                               f'{experiment_params_dict["epochs"]}_{train_period}')
-    )
-
     # ---- Tensor Board ----
     my_tb = TensorboardManager(
         run_manager,
