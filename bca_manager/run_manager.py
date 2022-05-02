@@ -155,14 +155,14 @@ class RunManager:
         'optimizer': ['Adagrad'],
         'learning_rate': [5e-1],
         'lr_scheduler': ['ReduceLROnPlateau'],
-        'gamma': [0.9],
+        'gamma': [0.99],
 
         # Reward
         'reward_aggregation': ['sum'],  # sum or mean
         'reward_sparsity_ts': [1],
         'reward_scale': [0.5],
         'reward_clipping': [0],
-        'lambda_rtp': [0.1, 0.05],
+        'lambda_rtp': [0.125, 0.075, 0.025],
         'comfort_p_norm': [1, 2],
 
         # Network mods
@@ -217,8 +217,8 @@ class RunManager:
         per_params = {
             'alpha_start': [1],
             'alpha_decay_factor': [None],
-            'betta_start': [0.4],
-            'betta_decay_factor': [1e-5],
+            'betta_start': [0.6],
+            'betta_decay_factor': [5e-6],
         }
         hyperparameter_dict = {**hyperparameter_dict, **per_params}
 
