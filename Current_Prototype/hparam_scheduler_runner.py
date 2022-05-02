@@ -153,6 +153,8 @@ if not experiment_params_dict['skip_baseline']:
 
 for run_num, run in enumerate(runs):
 
+    run_num = run_num + experiment_params_dict['run_index_start']
+
     # Create new BDQ model
     my_bdq = run_manager.create_bdq(run)
     my_memory = run_manager.create_replay_memory(run)
@@ -163,17 +165,17 @@ for run_num, run in enumerate(runs):
         continued_params_dict = {**continued_params_dict, **{'alpha_start': run.alpha_start,
                                                              'betta_start': run.betta_start}}
 
+    # ---- Tensor Board ----
+    my_tb = TensorboardManager(
+        run_manager,
+        name_path=os.path.join(exp_folder,
+                               f'run_{run_num}-{run_limit}_TRAIN_'
+                               f'{experiment_params_dict["epochs"]}_{train_period}')
+    )
+
     for epoch in range(experiment_params_dict['epochs']):
 
         print(f'\nRun {run_num} of {run_limit}, Epoch {epoch + 1} of {experiment_params_dict["epochs"]}\n{run}\n')
-
-        # ---- Tensor Board ----
-        my_tb = TensorboardManager(
-            run_manager,
-            name_path=os.path.join(exp_folder,
-                                   f'run_{run_num}-{run_limit}_TRAIN_'
-                                   f'{experiment_params_dict["epochs"]}_{train_period}')
-        )
 
         # Update lr tracking
         run = run._replace(learning_rate=my_bdq.lr_scheduler.optimizer.param_groups[0]['lr'])
